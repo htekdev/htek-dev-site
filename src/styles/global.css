@@ -55,3 +55,8 @@ body {
   background: rgba(0, 229, 255, 0.3);
   color: var(--color-text-primary);
 }
+
+/* Remove default underline from all links — must be unlayered to beat Tailwind v4 preflight */
+a {
+  text-decoration-line: none !important;
+}
