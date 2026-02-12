@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+/* ===== htek.dev Brand System ===== */
+
+@theme {
+  --color-bg-primary: #0A0A0F;
+  --color-bg-secondary: #12121A;
+  --color-bg-tertiary: #1A1A2E;
+  --color-border: #2A2A3C;
+  --color-text-primary: #EDEDED;
+  --color-text-secondary: #8B8BA3;
+  --color-text-tertiary: #5A5A72;
+  --color-accent-cyan: #00E5FF;
+  --color-accent-purple: #7C3AED;
+  --color-accent-teal: #06B6D4;
+  --color-accent-pink: #EC4899;
+  --color-glow-cyan: rgba(0, 229, 255, 0.15);
+  --color-glow-purple: rgba(124, 58, 237, 0.15);
+
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Global dark theme */
+html {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-cyan);
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(0, 229, 255, 0.3);
+  color: var(--color-text-primary);
+}
