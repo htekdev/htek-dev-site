@@ -1,0 +1,85 @@
+---
+const stats = [
+  { value: '34+', label: 'Public Repos' },
+  { value: '278', label: 'Contributions' },
+  { value: '5', label: 'NPM Packages' },
+  { value: '1', label: 'PS Gallery Module' },
+];
+
+const statsCardUrl =
+  'https://github-readme-stats.vercel.app/api?username=htekdev&show_icons=true&theme=transparent&hide_border=true&title_color=00E5FF&text_color=8B8BA3&icon_color=7C3AED&bg_color=12121A';
+const topLangsUrl =
+  'https://github-readme-stats.vercel.app/api/top-langs/?username=htekdev&layout=compact&theme=transparent&hide_border=true&title_color=00E5FF&text_color=8B8BA3&bg_color=12121A';
+const heatmapUrl = 'https://ghchart.rshah.org/00E5FF/htekdev';
+---
+
+<section id="github-activity" class="min-h-screen py-20 px-6">
+  <div class="max-w-5xl mx-auto">
+    <!-- Section Header -->
+    <div class="text-center mb-16">
+      <h2 class="text-4xl md:text-5xl font-heading font-bold text-text-primary mb-4">
+        GitHub Activity
+      </h2>
+      <div class="w-20 h-1 bg-accent-cyan rounded-full mx-auto mb-4"></div>
+      <p class="text-text-secondary text-lg">Building in the open</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+      <div class="bg-bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 hover:border-accent-cyan/30 hover:shadow-[0_0_20px_var(--color-glow-cyan)] transition-all duration-300 flex items-center justify-center">
+        <img
+          src={statsCardUrl}
+          alt="htekdev's GitHub stats"
+          class="w-full max-w-md"
+          loading="lazy"
+        />
+      </div>
+      <div class="bg-bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 hover:border-accent-cyan/30 hover:shadow-[0_0_20px_var(--color-glow-cyan)] transition-all duration-300 flex items-center justify-center">
+        <img
+          src={topLangsUrl}
+          alt="htekdev's top languages"
+          class="w-full max-w-md"
+          loading="lazy"
+        />
+      </div>
+    </div>
+
+    <!-- Contribution Heatmap -->
+    <div class="bg-bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 mb-12 hover:border-accent-cyan/30 hover:shadow-[0_0_20px_var(--color-glow-cyan)] transition-all duration-300">
+      <h3 class="text-lg font-heading font-semibold text-text-primary mb-4">Contribution Graph</h3>
+      <img
+        src={heatmapUrl}
+        alt="htekdev's GitHub contribution heatmap"
+        class="w-full"
+        loading="lazy"
+      />
+    </div>
+
+    <!-- Quick Stats Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+      {stats.map((stat) => (
+        <div class="bg-bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-4 text-center hover:border-accent-cyan/30 transition-all duration-300">
+          <div class="text-2xl md:text-3xl font-heading font-bold text-accent-cyan mb-1">
+            {stat.value}
+          </div>
+          <div class="text-sm text-text-secondary">{stat.label}</div>
+        </div>
+      ))}
+    </div>
+
+    <!-- CTA -->
+    <div class="text-center">
+      <a
+        href="https://github.com/htekdev"
+        target="_blank"
+        rel="noopener"
+        class="inline-flex items-center gap-2 px-8 py-3 rounded-lg border border-accent-cyan/60 text-accent-cyan hover:border-accent-cyan hover:shadow-[0_0_20px_rgba(0,229,255,0.2)] hover:bg-accent-cyan/5 transition-all duration-300"
+      >
+        Follow me on GitHub
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>

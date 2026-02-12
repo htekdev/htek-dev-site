@@ -1,0 +1,40 @@
+---
+const socialLinks = [
+  { label: 'GitHub', url: 'https://github.com/htekdev', icon: '⌨️' },
+  { label: 'LinkedIn', url: 'https://linkedin.com/in/htekdev', icon: '💼' },
+  { label: 'DEV.to', url: 'https://dev.to/htekdev', icon: '📝' },
+  { label: 'YouTube', url: 'https://youtube.com/@htekdev', icon: '🎬' },
+];
+---
+
+<footer class="bg-bg-secondary border-t border-border">
+  <div class="max-w-6xl mx-auto px-6 py-10 flex flex-col items-center gap-6">
+    <!-- Logo -->
+    <a href="#" class="font-mono text-accent-cyan text-lg hover:text-accent-teal transition-colors duration-300">
+      &gt; htek.dev_
+    </a>
+
+    <!-- Social icons -->
+    <div class="flex items-center gap-6">
+      {socialLinks.map((link) => (
+        <a
+          href={link.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={link.label}
+          class="text-text-tertiary hover:text-accent-cyan transition-colors duration-300 text-lg"
+          title={link.label}
+        >
+          {link.icon}
+        </a>
+      ))}
+    </div>
+
+    <!-- Copyright -->
+    <div class="text-text-tertiary text-sm text-center flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+      <span>Built with ❤️ and GitHub Copilot</span>
+      <span class="hidden sm:inline text-border">|</span>
+      <span>&copy; 2025 Hector Flores</span>
+    </div>
+  </div>
+</footer>

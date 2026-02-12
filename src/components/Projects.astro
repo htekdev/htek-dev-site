@@ -1,0 +1,68 @@
+---
+import ProjectCard from './ProjectCard.astro';
+
+const projects = [
+  {
+    name: 'gh-repo-migration-iops-template',
+    description: 'Automated framework for 500+ enterprise GitHub migrations from Azure DevOps, BitBucket, SVN',
+    stars: 3,
+    language: 'PowerShell',
+    url: 'github.com/htekdev/gh-repo-migration-iops-template',
+  },
+  {
+    name: 'github-sre-agent',
+    description: 'AI-powered SRE agent for GitHub Actions using GitHub Copilot SDK',
+    stars: 1,
+    language: 'TypeScript',
+    url: 'github.com/htekdev/github-sre-agent',
+  },
+  {
+    name: 'vidpipe',
+    description: 'CLI tool that auto-processes video recordings: transcribes, removes silence, generates captions, creates shorts',
+    stars: 1,
+    language: 'TypeScript',
+    url: 'github.com/htekdev/vidpipe',
+  },
+  {
+    name: 'XConfigMaster',
+    description: 'Extensible, Highly Configurable DevOps Pipeline Language',
+    stars: 2,
+    language: 'PowerShell',
+    url: 'github.com/htekdev/XConfigMaster',
+  },
+  {
+    name: 'full-stack-demo',
+    description: 'Full-stack application demo with infrastructure as code',
+    stars: 1,
+    language: 'HCL',
+    url: 'github.com/htekdev/full-stack-demo',
+  },
+  {
+    name: 'architecture-diagrams',
+    description: 'Visual architecture diagram collection for solution design',
+    stars: 1,
+    language: 'Markdown',
+    url: 'github.com/htekdev/architecture-diagrams',
+  },
+];
+---
+
+<section id="projects" class="py-20 px-6">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-16">
+      <h2 class="text-3xl md:text-4xl font-heading font-bold text-text-primary mb-3">
+        Featured Projects
+      </h2>
+      <div class="w-16 h-1 bg-accent-cyan mx-auto rounded-full mb-4"></div>
+      <p class="text-text-secondary text-lg">Open source tools and frameworks</p>
+    </div>
+
+    <!-- Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {projects.map((project) => (
+        <ProjectCard {...project} />
+      ))}
+    </div>
+  </div>
+</section>

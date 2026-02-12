@@ -1,0 +1,36 @@
+---
+const clients = [
+  { name: 'NFL', description: 'Data ingestion/reporting for NFL Surface analytics' },
+  { name: 'NYPD', description: 'C# UWP application development + DevOps' },
+  { name: 'MasterCard', description: 'Lead Automation Testing, DevOps, and Production Migrations for Track platform' },
+  { name: 'Navy Federal', description: 'Lead DevOps SME and CI/CD advisory' },
+  { name: 'Enbridge', description: '500+ GitHub migrations, DevOps automation at scale' },
+  { name: 'Microsoft', description: 'GitHub Copilot & AI adoption across Fortune 100' },
+];
+---
+
+<section id="enterprise" class="py-24 px-6">
+  <div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-16">
+      <h2 class="text-4xl md:text-5xl font-heading font-bold mb-4">
+        Enterprise <span class="text-accent-cyan">Impact</span>
+      </h2>
+      <p class="text-text-secondary text-lg">Trusted by industry leaders</p>
+    </div>
+
+    <!-- Client Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {clients.map((client) => (
+        <div class="group relative rounded-xl border border-border/60 bg-bg-secondary/40 backdrop-blur-md p-6 hover:border-accent-cyan/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(0,229,255,0.08)]">
+          <h3 class="text-2xl font-heading font-bold text-text-primary group-hover:text-accent-cyan transition-colors duration-300 mb-2">
+            {client.name}
+          </h3>
+          <p class="text-sm text-text-secondary leading-relaxed">
+            {client.description}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

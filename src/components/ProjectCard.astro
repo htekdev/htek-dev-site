@@ -1,0 +1,52 @@
+---
+interface Props {
+  name: string;
+  description: string;
+  stars: number;
+  language: string;
+  url: string;
+}
+
+const { name, description, stars, language, url } = Astro.props;
+
+const languageColors: Record<string, string> = {
+  PowerShell: '#012456',
+  TypeScript: '#3178C6',
+  HCL: '#844FBA',
+  Markdown: '#083FA1',
+};
+
+const dotColor = languageColors[language] ?? '#6B7280';
+---
+
+<a
+  href={`https://${url}`}
+  target="_blank"
+  rel="noopener"
+  class="group block rounded-xl bg-bg-secondary/50 backdrop-blur-sm border border-border/50 p-6 transition-all duration-300 hover:border-accent-cyan/40 hover:shadow-[0_0_20px_rgba(0,229,255,0.08)] hover:-translate-y-1"
+>
+  <!-- Language -->
+  <div class="flex items-center gap-2 mb-4">
+    <span class="inline-block h-3 w-3 rounded-full" style={`background:${dotColor}`}></span>
+    <span class="text-xs font-mono text-text-secondary">{language}</span>
+  </div>
+
+  <!-- Name + Description -->
+  <h3 class="font-heading font-bold text-text-primary text-lg mb-2 group-hover:text-accent-cyan transition-colors duration-300">
+    {name}
+  </h3>
+  <p class="text-sm text-text-secondary leading-relaxed mb-6">{description}</p>
+
+  <!-- Footer -->
+  <div class="flex items-center justify-between mt-auto">
+    <span class="flex items-center gap-1 text-xs text-text-secondary">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
+      </svg>
+      {stars}
+    </span>
+    <span class="text-xs font-mono text-accent-cyan opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      View on GitHub →
+    </span>
+  </div>
+</a>
