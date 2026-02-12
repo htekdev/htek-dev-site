@@ -10,11 +10,11 @@
   --color-text-primary: #EDEDED;
   --color-text-secondary: #8B8BA3;
   --color-text-tertiary: #5A5A72;
-  --color-accent-cyan: #00E5FF;
+  --color-accent-cyan: #2DD4BF;
   --color-accent-purple: #7C3AED;
   --color-accent-teal: #06B6D4;
   --color-accent-pink: #EC4899;
-  --color-glow-cyan: rgba(0, 229, 255, 0.15);
+  --color-glow-cyan: rgba(45, 212, 191, 0.15);
   --color-glow-purple: rgba(124, 58, 237, 0.15);
 
   --font-heading: 'Space Grotesk', system-ui, sans-serif;
