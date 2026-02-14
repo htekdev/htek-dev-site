@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { getCollection } from 'astro:content';
+
+const articles = (await getCollection('articles'))
+  .filter(a => !a.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout title="Articles — htek.dev" description="Thoughts on AI, development, and the future of software by Hector Flores.">
+  <Navbar />
+  <main class="max-w-5xl mx-auto px-6 pt-32 pb-16">
+    <h1 class="text-4xl md:text-5xl font-heading font-bold gradient-text">Articles</h1>
+    <p class="text-text-muted mt-2">Thoughts on AI, development, and the future of software.</p>
+    
+    <div class="space-y-6 mt-12">
+      {articles.map((article) => (
+        <ArticleCard
+          title={article.data.title}
+          description={article.data.description}
+          pubDate={article.data.pubDate}
+          slug={article.id}
+          tags={article.data.tags}
+        />
+      ))}
+    </div>
+    
+    {articles.length === 0 && (
+      <p class="text-text-muted italic mt-12">No articles published yet. Check back soon.</p>
+    )}
+  </main>
+  <Footer />
+</BaseLayout>

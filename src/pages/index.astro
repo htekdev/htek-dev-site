@@ -3,28 +3,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Navbar from '../components/Navbar.astro';
 import Hero from '../components/Hero.astro';
 import About from '../components/About.astro';
-import Timeline from '../components/Timeline.astro';
-import Projects from '../components/Projects.astro';
-import Blog from '../components/Blog.astro';
-import Skills from '../components/Skills.astro';
-import Enterprise from '../components/Enterprise.astro';
-import GitHubActivity from '../components/GitHubActivity.astro';
-import Contact from '../components/Contact.astro';
+import WritingPreview from '../components/WritingPreview.astro';
+import Connect from '../components/Connect.astro';
 import Footer from '../components/Footer.astro';
 ---
 
 <BaseLayout>
   <Navbar />
-  <main>
+  <main id="main-content">
     <Hero />
     <About />
-    <Timeline />
-    <Projects />
-    <Blog />
-    <Skills />
-    <Enterprise />
-    <GitHubActivity />
-    <Contact />
+    <WritingPreview />
+    <Connect />
   </main>
   <Footer />
 </BaseLayout>

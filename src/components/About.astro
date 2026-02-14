@@ -1,67 +1,20 @@
 ---
-const stats = [
-  { value: '14+', label: 'Years Experience' },
-  { value: '500+', label: 'GitHub Migrations' },
-  { value: 'Fortune 500', label: 'Enterprise Clients' },
-];
 ---
 
-<section id="about" class="min-h-screen py-20 px-6">
-  <div class="max-w-7xl mx-auto">
-    <!-- Section Header -->
-    <div class="mb-16">
-      <h2 class="text-4xl md:text-5xl font-heading font-bold text-text-primary mb-4">About</h2>
-      <div class="w-20 h-1 bg-accent-cyan rounded-full"></div>
-    </div>
+<section id="about" class="fade-in bg-bg-void py-24 md:py-32">
+  <div class="max-w-5xl mx-auto px-6">
+    <h2 class="text-3xl md:text-5xl font-heading font-bold leading-tight text-text-primary">
+      I help developers build <span class="gradient-text">the future with AI.</span>
+    </h2>
 
-    <!-- Two-Column Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-12 items-start">
-      <!-- Left: Headshot Placeholder -->
-      <div class="lg:col-span-2 flex justify-center lg:justify-start">
-        <div class="relative group">
-          <div
-            class="w-64 h-80 rounded-2xl bg-gradient-to-br from-accent-cyan/20 via-accent-purple/20 to-accent-pink/20 border border-border/50 flex items-center justify-center backdrop-blur-sm group-hover:border-accent-cyan/30 transition-all duration-500"
-          >
-            <span class="text-6xl font-heading font-bold bg-gradient-to-br from-accent-cyan to-accent-purple bg-clip-text text-transparent">
-              HF
-            </span>
-          </div>
-          <!-- Decorative glow -->
-          <div class="absolute -inset-1 bg-gradient-to-br from-accent-cyan/10 to-accent-purple/10 rounded-2xl blur-xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        </div>
-      </div>
+    <p class="mt-8 text-lg md:text-xl text-text-secondary leading-relaxed max-w-3xl">
+      As a Senior Solutions Engineer at Microsoft, I work at the intersection of
+      developer experience and artificial intelligence. I champion GitHub Copilot
+      and AI-powered workflows to help engineering teams ship better software,
+      faster. My passion lies in making complex technology feel intuitive and
+      accessible.
+    </p>
 
-      <!-- Right: Bio & Info -->
-      <div class="lg:col-span-3 space-y-8">
-        <!-- Role Callout -->
-        <div class="bg-bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-5 hover:border-accent-cyan/30 transition-all duration-300">
-          <p class="font-mono text-sm text-accent-cyan mb-1">&gt; current_role</p>
-          <p class="text-xl font-heading font-semibold text-text-primary">Senior Solutions Engineer</p>
-          <p class="text-text-secondary">Microsoft &mdash; GitHub Copilot &amp; AI</p>
-        </div>
-
-        <!-- Bio -->
-        <div class="space-y-4 text-text-secondary leading-relaxed">
-          <p>
-            As a father, husband, son, best friend, mentor, and mentee, I am passionate about the ever-evolving world of software engineering. My journey began with low-level programming (C, Assembly) and progressed through desktop and web development before I found my true calling in cloud engineering.
-          </p>
-          <p>
-            Co-Founder of <span class="text-accent-cyan">DID Health</span>, a blockchain-based health platform reimagining how personal health data is owned and shared.
-          </p>
-        </div>
-
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {stats.map((stat) => (
-            <div class="bg-bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-5 text-center hover:border-accent-cyan/30 transition-all duration-300 group">
-              <p class="text-3xl font-heading font-bold text-accent-cyan group-hover:text-accent-teal transition-colors duration-300">
-                {stat.value}
-              </p>
-              <p class="text-sm text-text-secondary mt-1">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <div class="mt-16 border-b border-white/10"></div>
   </div>
 </section>

@@ -1,72 +1,95 @@
 ---
 const navLinks = [
   { label: 'About', href: '#about' },
-  { label: 'Journey', href: '#timeline' },
-  { label: 'Projects', href: '#projects' },
-  { label: 'Blog', href: '#blog' },
-  { label: 'Skills', href: '#skills' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Writing', href: '#writing' },
+  { label: 'Connect', href: '#connect' },
+  { label: 'Articles', href: '/articles' },
 ];
 ---
 
-<nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-bg-primary/80 border-b border-border/50">
-  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+<nav aria-label="Main navigation" class="fixed top-0 left-0 right-0 z-50 bg-bg-void/80 backdrop-blur-xl border-b border-border-muted">
+  <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
     <!-- Logo -->
-    <a href="/" class="font-mono text-accent-cyan text-lg font-medium hover:text-accent-teal transition-colors">
-      <span class="text-text-tertiary">&gt;</span> htek.dev<span class="animate-pulse">_</span>
+    <a href="/" class="font-mono text-sm font-medium text-text-primary hover:text-accent-cyan transition-colors">
+      htek.dev
     </a>
 
     <!-- Desktop Nav -->
-    <div class="hidden md:flex items-center gap-8">
+    <div class="hidden md:flex items-center space-x-8">
       {navLinks.map((link) => (
         <a
           href={link.href}
-          class="text-sm text-text-secondary hover:text-accent-cyan transition-colors duration-300"
+          class="text-sm text-text-muted hover:text-text-primary transition-colors"
         >
           {link.label}
         </a>
       ))}
-      <a
-        href="https://github.com/htekdev"
-        target="_blank"
-        rel="noopener"
-        class="text-sm px-4 py-2 rounded-lg border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 transition-all duration-300"
-      >
-        GitHub
-      </a>
     </div>
 
-    <!-- Mobile Menu Button -->
+    <!-- Mobile Hamburger Button -->
     <button
       id="mobile-menu-btn"
-      class="md:hidden text-text-secondary hover:text-accent-cyan transition-colors"
-      aria-label="Toggle menu"
+      class="md:hidden text-text-muted hover:text-text-primary transition-colors"
+      aria-label="Open menu"
+      aria-expanded="false"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
       </svg>
     </button>
   </div>
-
-  <!-- Mobile Menu -->
-  <div id="mobile-menu" class="hidden md:hidden border-t border-border/50 bg-bg-primary/95 backdrop-blur-xl">
-    <div class="px-6 py-4 flex flex-col gap-4">
-      {navLinks.map((link) => (
-        <a
-          href={link.href}
-          class="text-text-secondary hover:text-accent-cyan transition-colors py-2"
-        >
-          {link.label}
-        </a>
-      ))}
-    </div>
-  </div>
 </nav>
 
+<!-- Mobile Menu Overlay -->
+<div id="mobile-menu" class="fixed inset-0 bg-bg-void/95 backdrop-blur-xl z-50 hidden flex-col items-center justify-center">
+  <!-- Close Button -->
+  <button
+    id="mobile-menu-close"
+    class="absolute top-4 right-6 text-text-muted hover:text-text-primary transition-colors"
+    aria-label="Close menu"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+
+  <!-- Mobile Links -->
+  <nav class="flex flex-col items-center space-y-6">
+    {navLinks.map((link) => (
+      <a
+        href={link.href}
+        class="mobile-nav-link text-2xl font-heading font-semibold text-text-muted hover:text-text-primary transition-colors"
+      >
+        {link.label}
+      </a>
+    ))}
+  </nav>
+</div>
+
 <script>
-  const btn = document.getElementById('mobile-menu-btn');
-  const menu = document.getElementById('mobile-menu');
-  btn?.addEventListener('click', () => {
-    menu?.classList.toggle('hidden');
+  const openBtn = document.getElementById('mobile-menu-btn');
+  const closeBtn = document.getElementById('mobile-menu-close');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  function openMenu() {
+    mobileMenu?.classList.remove('hidden');
+    mobileMenu?.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    openBtn?.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeMenu() {
+    mobileMenu?.classList.add('hidden');
+    mobileMenu?.classList.remove('flex');
+    document.body.style.overflow = '';
+    openBtn?.setAttribute('aria-expanded', 'false');
+  }
+
+  openBtn?.addEventListener('click', openMenu);
+  closeBtn?.addEventListener('click', closeMenu);
+
+  // Close when a mobile link is clicked
+  document.querySelectorAll('.mobile-nav-link').forEach((link) => {
+    link.addEventListener('click', closeMenu);
   });
 </script>

@@ -1,0 +1,107 @@
+---
+import type { WithContext, WebSite, Person, Article, BreadcrumbList } from 'schema-dts';
+
+interface Props {
+  title: string;
+  description: string;
+  type?: 'website' | 'article';
+  image?: string;
+  url?: string;
+  publishDate?: Date;
+  modifiedDate?: Date;
+  tags?: string[];
+}
+
+const {
+  title,
+  description,
+  type = 'website',
+  image,
+  url,
+  publishDate,
+  modifiedDate,
+  tags,
+} = Astro.props;
+
+const siteUrl = 'https://htek.dev';
+
+const person: WithContext<Person> = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Hector Flores',
+  jobTitle: 'Senior Solutions Engineer',
+  worksFor: {
+    '@type': 'Organization',
+    name: 'Microsoft',
+  },
+  url: siteUrl,
+  sameAs: [
+    'https://github.com/htekdev',
+    'https://linkedin.com/in/htekdev',
+    'https://x.com/htekdev',
+    'https://dev.to/htekdev',
+    'https://youtube.com/@htekdev',
+    'https://instagram.com/htekdev',
+  ],
+};
+
+const schemas: object[] = [];
+
+if (type === 'website') {
+  const website: WithContext<WebSite> = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'htek.dev',
+    url: siteUrl,
+    description,
+  };
+  schemas.push(website, person);
+} else if (type === 'article') {
+  const article: WithContext<Article> = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: title,
+    description,
+    ...(image && { image }),
+    ...(publishDate && { datePublished: publishDate.toISOString() }),
+    ...(modifiedDate && { dateModified: modifiedDate.toISOString() }),
+    ...(tags && tags.length > 0 && { keywords: tags.join(', ') }),
+    author: {
+      '@type': 'Person',
+      name: 'Hector Flores',
+      url: siteUrl,
+    },
+  };
+
+  const breadcrumb: WithContext<BreadcrumbList> = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: siteUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Articles',
+        item: `${siteUrl}/articles`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: title,
+        ...(url && { item: url }),
+      },
+    ],
+  };
+
+  schemas.push(article, breadcrumb);
+}
+---
+
+{schemas.map((schema) => (
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+))}

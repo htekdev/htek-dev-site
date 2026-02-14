@@ -1,30 +1,36 @@
 @import "tailwindcss";
 
-/* ===== htek.dev Brand System ===== */
+/* ===== Luminous Void Design System ===== */
 
 @theme {
-  --color-bg-primary: #0A0A0F;
-  --color-bg-secondary: #12121A;
-  --color-bg-tertiary: #1A1A2E;
-  --color-border: #2A2A3C;
-  --color-text-primary: #EDEDED;
-  --color-text-secondary: #8B8BA3;
-  --color-text-tertiary: #5A5A72;
-  --color-accent-cyan: #2DD4BF;
-  --color-accent-purple: #7C3AED;
-  --color-accent-teal: #06B6D4;
-  --color-accent-pink: #EC4899;
-  --color-glow-cyan: rgba(45, 212, 191, 0.15);
-  --color-glow-purple: rgba(124, 58, 237, 0.15);
+  /* Backgrounds */
+  --color-bg-void: #0d1117;
+  --color-bg-surface: #161b22;
+  --color-bg-overlay: #1c2128;
 
-  --font-heading: 'Space Grotesk', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  /* Borders */
+  --color-border-default: #30363d;
+  --color-border-muted: #21262d;
+
+  /* Text */
+  --color-text-primary: #f0f6fc;
+  --color-text-secondary: #c9d1d9;
+  --color-text-muted: #8b949e;
+
+  /* Aurora accents */
+  --color-accent-cyan: #58a6ff;
+  --color-accent-violet: #bc8cff;
+  --color-accent-rose: #f78166;
+
+  /* Typography */
+  --font-heading: 'Montserrat', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
 /* Global dark theme */
 html {
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-void);
   color: var(--color-text-primary);
   font-family: var(--font-body);
   scroll-behavior: smooth;
@@ -35,28 +41,70 @@ body {
   overflow-x: hidden;
 }
 
-/* Scrollbar styling */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-primary);
+  background: var(--color-bg-void);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: var(--color-border-default);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-accent-cyan);
 }
 
-/* Selection styling */
+/* Selection */
 ::selection {
-  background: rgba(0, 229, 255, 0.3);
+  background: rgba(88, 166, 255, 0.3);
   color: var(--color-text-primary);
 }
 
-/* Remove default underline from all links — must be unlayered to beat Tailwind v4 preflight */
-a {
-  text-decoration-line: none !important;
+/* Aurora gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #58a6ff, #bc8cff, #f78166);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 2px;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgb(22 27 34 / 0.5);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--color-border-default);
+}
+
+/* Fade-in on scroll */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
 }

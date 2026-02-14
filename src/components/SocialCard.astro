@@ -1,0 +1,43 @@
+---
+interface Props {
+  platform: string;
+  url: string;
+  handle: string;
+  description: string;
+  brandColor: string;
+  icon: string;
+}
+
+const { platform, url, handle, description, brandColor, icon } = Astro.props;
+---
+
+<a
+  href={url}
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label={`${platform} profile`}
+  class="social-card group block rounded-xl bg-bg-surface border border-border-muted p-6 transition-all duration-300 hover:-translate-y-1"
+  style={`--brand-color: ${brandColor}`}
+>
+  <div class="flex items-start gap-4">
+    <!-- Icon -->
+    <div class="social-icon flex-shrink-0 text-text-primary transition-colors duration-300" set:html={icon} />
+
+    <div class="min-w-0">
+      <h3 class="font-heading font-semibold text-text-primary">{platform}</h3>
+      <span class="font-mono text-sm text-text-muted">{handle}</span>
+      <p class="text-text-secondary text-sm mt-1">{description}</p>
+    </div>
+  </div>
+</a>
+
+<style>
+  .social-card:hover {
+    border-color: var(--brand-color);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--brand-color) 15%, transparent);
+  }
+
+  .social-card:hover .social-icon {
+    color: var(--brand-color);
+  }
+</style>

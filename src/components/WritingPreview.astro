@@ -1,0 +1,37 @@
+---
+import { getCollection } from 'astro:content';
+import ArticleCard from './ArticleCard.astro';
+
+const articles = (await getCollection('articles'))
+  .filter(a => !a.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+---
+
+<section id="writing" class="fade-in py-24 md:py-32">
+  <div class="max-w-5xl mx-auto px-6">
+    <h2 class="text-3xl md:text-4xl font-heading font-bold gradient-text">Writing</h2>
+    <p class="text-text-muted mt-2">Thoughts on AI, development, and the future of software</p>
+
+    {articles.length > 0 ? (
+      <>
+        <div class="space-y-6 mt-12">
+          {articles.map(article => (
+            <ArticleCard
+              title={article.data.title}
+              description={article.data.description}
+              pubDate={article.data.pubDate}
+              slug={article.id}
+              tags={article.data.tags}
+            />
+          ))}
+        </div>
+        <a href="/articles" class="text-accent-cyan text-sm hover:underline mt-8 inline-block">
+          View all articles →
+        </a>
+      </>
+    ) : (
+      <p class="text-text-muted italic mt-12">Articles coming soon.</p>
+    )}
+  </div>
+</section>
