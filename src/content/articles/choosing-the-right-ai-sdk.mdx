@@ -1,0 +1,99 @@
+---
+title: "Choosing the Right AI SDK: Foundry vs Copilot vs OpenAI"
+description: "A 3-question decision tree for picking between Azure AI Foundry Agent Service, GitHub Copilot SDK, and OpenAI Agents SDK — with real case studies and rewrite risk."
+pubDate: 2026-02-04
+tags: ["AI", "Software Architecture", "GitHub Copilot", "Azure", "Developer Experience"]
+draft: false
+---
+
+## Your Leadership Wants "the Best One"
+
+Every architecture review I've sat in this year eventually hits the same question: "Which AI agent SDK should we use?" And every time, someone wants a single answer. Foundry. Copilot. OpenAI. Pick one.
+
+That's the wrong framing. [BMW achieved 12× faster data analysis](https://www.microsoft.com/en/customers/story/25683-bmw-ag-azure) with Foundry Agent Service. I built an SRE agent with [GitHub Copilot SDK](https://github.blog/news-insights/company-news/build-an-agent-into-any-app-with-the-github-copilot-sdk/) in two hours. [Commerzbank handles 30,000+ monthly agent conversations](https://www.microsoft.com/en/customers/story/25676-commerzbank-ag-azure-ai-foundry-agent-service) in a regulated banking environment. All three SDKs. All three successful. The difference isn't capability — it's constraints.
+
+Give your leadership this instead: the one that matches your constraints TODAY with the least rewrite risk for where you're headed.
+
+## The 3-Question Decision Tree
+
+I boil the choice down to three questions. Answer them in order, and you'll land in the right place.
+
+### Question 1: "Do we need enterprise governance TODAY?"
+
+If you're in a regulated industry — finance, healthcare, government — and compliance isn't a roadmap item but a launch blocker, the answer is [Azure AI Foundry Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/quickstart). It ships with native [Microsoft Purview integration](https://learn.microsoft.com/en-us/purview/ai-azure-foundry), Content Safety, and Entra Agent ID out of the box. The [Foundry Control Plane](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/foundry-control-plane-where-developers-build-operate-and-govern-every-agent/4467885) gives you a single pane for building, operating, and governing your entire agent estate.
+
+Commerzbank's AI agent Ava resolves 75% of customer requests autonomously — in one of the world's most regulated banking environments. That's the kind of compliance-first architecture Foundry enables.
+
+### Question 2: "Do we want orchestration solved for us?"
+
+If you're already in the GitHub ecosystem and want to embed agentic capabilities without building a platform from scratch, [GitHub Copilot SDK](https://github.blog/changelog/2026-01-14-copilot-sdk-in-technical-preview) is the play. It exposes the same agentic core that powers [GitHub Copilot CLI](https://github.blog/changelog/2026-01-14-github-copilot-cli-enhanced-agents-context-management-and-new-ways-to-install) — planning, tool calls, MCP support, state management, streaming — as a programmable layer in [Node.js, Python, Go, and .NET](https://devblogs.microsoft.com/semantic-kernel/build-ai-agents-with-github-copilot-sdk-and-microsoft-agent-framework).
+
+Authentication and model routing are handled automatically. You write your product logic; the SDK handles the orchestration plumbing. When I built my SRE agent, I went from zero to a working prototype with MCP server integration in two hours. No custom planner, no tool loop wiring, no auth boilerplate.
+
+### Question 3: "Do we want maximum flexibility with minimal abstraction?"
+
+If you need multi-cloud portability, want to avoid platform lock-in, or you're a startup iterating fast, the [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) is the answer. It gives you four primitives — Agents, Tools, Handoffs, and Guardrails — and gets out of your way. It's [open-source under MIT](https://openai.github.io/openai-agents-python/), supports [100+ LLMs via LiteLLM](https://github.com/openai/openai-agents-python), and you pay only for API calls.
+
+The SDK evolved from OpenAI's experimental [Swarm](https://github.com/openai/swarm) framework into a production-ready system with built-in tracing for debugging agent workflows. Need durability guarantees? The [official Temporal integration](https://temporal.io/blog/announcing-openai-agents-sdk-integration) gives you crash-proof execution without added code complexity.
+
+## Side-by-Side Comparison
+
+| Dimension | Azure AI Foundry Agent Service | GitHub Copilot SDK | OpenAI Agents SDK |
+|---|---|---|---|
+| **Primary role** | Enterprise AI agent platform | Embeddable agentic runtime | Lightweight multi-agent framework |
+| **Status** | GA (May 2025) | Technical Preview (Jan 2026) | GA v0.9.0 (Feb 2026) |
+| **Languages** | Python, C#, JavaScript | Node/TS, Python, Go, .NET | Python, JavaScript/TypeScript |
+| **License** | Azure consumption | GitHub Copilot subscription | MIT (open-source) |
+| **MCP support** | ✅ Yes | ✅ Native | ⚠️ Community |
+| **Guardrails** | Enterprise-grade (Purview, Content Safety) | Built-in | Input/output validation |
+| **Model routing** | BYO (Azure OpenAI) | Automatic (curated) | BYO (100+ LLMs) |
+| **Auth** | Azure Entra | Automatic (GitHub) | BYO |
+| **Tracing** | Foundry Control Plane | Built-in | Built-in |
+
+For a deeper feature-by-feature breakdown, the [Microsoft AI Decision Framework](https://microsoft.github.io/Microsoft-AI-Decision-Framework/docs/feature-comparison.html) provides an excellent reference, and [this DEV.to comparison](https://dev.to/vevarunsharma/github-copilot-sdk-vs-azure-ai-foundry-agents-which-one-should-your-company-use-1n7n) covers the Copilot SDK vs Foundry nuances well.
+
+## The Question Nobody Asks: Rewrite Risk
+
+Every SDK locks you into something. The real question is: what's the cost of changing your mind later?
+
+| SDK | Lock-in level | What you're tied to | Escape cost |
+|---|---|---|---|
+| **Foundry** | High | Azure ecosystem, Purview, Entra | Significant rewrite to leave Azure |
+| **Copilot SDK** | Medium | GitHub model routing, auth | Can swap but lose auto-routing |
+| **OpenAI Agents SDK** | Low | Nothing (MIT, open-source) | You own all infrastructure complexity |
+
+**Foundry** is the right bet if you're already Azure-invested. The lock-in is real, but so is the value — you aren't rebuilding compliance from scratch. **Copilot SDK** ties you to GitHub's model curation, which is fine if you trust their roadmap (I do). **OpenAI Agents SDK** gives you full portability, but you own the hosting, monitoring, and compliance tooling.
+
+My rule of thumb: if your team would need more than two sprints to migrate away from an SDK, you're locked in. Plan accordingly.
+
+## Microsoft's Layered Strategy: They're Not Competing
+
+Here's what most comparison articles miss: these SDKs occupy different layers of the same stack. As [Microsoft's own decision framework](https://techcommunity.microsoft.com/blog/educatordeveloperblog/choosing-the-right-intelligence-layer-for-your-application/4493143) explains:
+
+- **Copilot SDK** puts Copilot *inside* your app
+- **[Microsoft Agent Framework](https://learn.microsoft.com/en-us/microsoft-365/agents-sdk/choose-agent-solution)** lets you build your app *out of* agents
+- **Foundry** provides the managed platform and governance underneath both
+- **OpenAI SDK** exists for the open ecosystem — Microsoft benefits either way through Azure OpenAI hosting
+
+The [Semantic Kernel integration](https://devblogs.microsoft.com/semantic-kernel/build-ai-agents-with-github-copilot-sdk-and-microsoft-agent-framework) announced in January 2026 makes this concrete: you can compose Copilot SDK agents alongside Azure OpenAI agents within the same Agent Framework, swapping providers without restructuring your code.
+
+The recent [rebrand from "Azure AI Foundry" to "Microsoft Foundry"](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/sdk-overview) signals that agents are first-class citizens across the entire Microsoft ecosystem, not just Azure. And [Agent 365](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/foundry-control-plane-where-developers-build-operate-and-govern-every-agent/4467885) unifies governance through Defender, Entra, Intune, and Purview — managing agents the same way enterprises manage users.
+
+## When to Use What: Quick Reference
+
+| Scenario | Recommended SDK | Why |
+|---|---|---|
+| Regulated enterprise (finance, healthcare) | **Foundry** | Purview compliance, DLP, audit trails |
+| Developer tools / IDE extensions | **Copilot SDK** | Same runtime as Copilot, native MCP |
+| Multi-cloud / vendor-agnostic | **OpenAI Agents SDK** | MIT license, LiteLLM, no platform lock-in |
+| Rapid prototyping / startup | **OpenAI Agents SDK** | Minimal abstraction, free SDK |
+| Internal SRE / ops automation | **Copilot SDK** | I built one in 2 hours — it works |
+| Existing Azure-heavy stack | **Foundry** | Native Azure integration, resource co-location |
+| Already using GitHub Copilot org-wide | **Copilot SDK** | Auth handled, model routing included |
+| Need production durability | **OpenAI Agents SDK + [Temporal](https://temporal.io/blog/announcing-openai-agents-sdk-integration)** | Durable execution for long-running agents |
+
+## The Bottom Line
+
+There's no "best" SDK — there's the one that matches your constraints today with the least rewrite risk for where you're headed tomorrow. Start with the decision tree. Answer three questions honestly. Ship the agent that solves a real problem this sprint, not the one that looks best on an architecture slide.
+
+The teams shipping production agents right now aren't debating frameworks. They picked one, built something, and iterated. BMW didn't spend six months evaluating — they [deployed multi-agent AI on Foundry](https://www.microsoft.com/en/customers/story/25683-bmw-ag-azure) and got 12× faster results. I didn't overthink my SRE agent — I picked [Copilot SDK](https://github.blog/news-insights/company-news/build-an-agent-into-any-app-with-the-github-copilot-sdk/), had it running in two hours, and moved on to the next problem. That's the play.

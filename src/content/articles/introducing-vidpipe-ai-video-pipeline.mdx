@@ -1,0 +1,203 @@
+---
+title: "Introducing vidpipe — My AI Video Editor That Does Everything"
+description: "I built an agentic video pipeline that turns recordings into shorts, captions, and posts. Now it's open source."
+pubDate: 2026-02-14
+tags: ["Open Source", "AI", "Automation", "GitHub Copilot"]
+draft: false
+---
+
+## I Spent 200+ Hours Editing Videos Last Year
+
+Every content creator faces the same problem: recording once means editing three times. You need a TikTok short (9:16, 60 seconds, karaoke captions), a LinkedIn version (16:9, burned subs), a blog post for SEO, and social posts for five platforms. Every asset needs scheduling, previewing, and tracking.
+
+That was five weeks of my life last year — chopping silence, syncing captions, extracting highlights, writing posts. The content was valuable. The process was brutal.
+
+So I automated it. I built an [agentic video pipeline](https://htekdev.github.io/vidpipe/) that takes one recording and outputs everything a creator needs. Then I used it for my own work. It processed [the video where I built it](/articles/video-pipeline-with-fleet-mode).
+
+Today, I'm open-sourcing it. It's called **vidpipe**, and it's [on GitHub](https://github.com/htekdev/vidpipe).
+
+## What vidpipe Actually Does
+
+vidpipe is a **CLI tool that watches a folder and automatically generates 15 outputs from every video you drop in.** It's the "record once, publish everywhere" workflow [industry guides keep recommending](https://www.postquick.ai/blog/repurpose-content-for-social-media), but actually built.
+
+Here's the 15-stage pipeline:
+
+| Stage | What It Produces |
+|-------|------------------|
+| 1. **Ingestion** | Validates codecs, extracts metadata |
+| 2. **Transcription** | Full word-level transcript via [Whisper](https://github.com/openai/whisper) |
+| 3. **Silence Removal** | AI agent decides which pauses to cut (max 20%) |
+| 4. **Captions** | Timed SRT/VTT subtitles with word-level sync |
+| 5. **Caption Burn** | [FFmpeg](https://ffmpeg.org/) hard-codes karaoke-style captions |
+| 6. **Shorts** | 6 vertical clips (15-60s, multi-segment) |
+| 7. **Medium Clips** | 3 clips (1-3 min, crossfade transitions) |
+| 8. **Chapters** | Detects topic shifts, generates timestamps |
+| 9. **Summary** | Concise video summary |
+| 10. **Social Media** | Post variants for 5 platforms (TikTok, YouTube, Instagram, LinkedIn, X) |
+| 11. **Short Posts** | Platform-native text for each short clip (30 posts total) |
+| 12. **Medium Clip Posts** | Platform-native text for medium clips (15 posts total) |
+| 13. **Blog** | 800–1200 word article with [web-sourced links via Exa AI](https://docs.exa.ai/reference/getting-started) |
+| 14. **Queue Build** | Generates posting schedule for [Late API](https://getlate.dev/blog/complete-guide-social-media-api-automation) |
+| 15. **Git Push** | Auto-commits outputs and posts to GitHub |
+
+Drop a 20-minute recording in the watched folder. Walk away. Come back to 54 assets ready to publish.
+
+## The Agentic Architecture
+
+I wrote about [the future of agentic video editing](/articles/agentic-video-editing-future) last week. vidpipe is what that looks like in production.
+
+It's built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk), which [exposes the same production-tested agent runtime](https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md) behind Copilot CLI. Every stage is a specialized **AI agent**:
+
+- **SilenceRemovalAgent** — detects silence, decides which segments to cut based on context
+- **ShortsAgent** — analyzes transcripts for viral moments, plans 6 multi-segment shorts
+- **MediumVideoAgent** — identifies chapter-length content, assembles clips with transitions
+- **ChapterAgent**, **SummaryAgent**, **SocialMediaAgent**, **BlogAgent**
+
+Each agent uses **structured tool calls** like `detect_silence`, `plan_shorts`, `write_summary`, `search_links`. The [Copilot SDK handles JSON-RPC communication](https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md) and multi-turn conversations automatically.
+
+This follows the [multi-agent collaboration pattern](https://arxiv.org/abs/2411.04468) Microsoft Research outlined in their Magentic-One paper. [Recent surveys](https://www.researchgate.net/publication/387577302) position the Copilot SDK alongside CrewAI and LangChain as production-ready agentic platforms.
+
+## Transcription That Actually Works
+
+vidpipe uses [OpenAI Whisper](https://github.com/openai/whisper), trained on 680,000 hours of audio. [Benchmarks show](https://diyai.io/ai-tools/speech-to-text/openai-whisper-vs-google-speech-to-text/) Whisper achieves **8.06% word error rate**, outperforming Google Speech-to-Text (16.51%–20.63% WER).
+
+Whisper supports [99+ languages](https://deepgram.com/learn/benchmarking-top-open-source-speech-models) and provides word-level timestamps — essential for karaoke captions. The [turbo model processes ~8x faster](https://diyai.io/ai-tools/speech-to-text/openai-whisper-vs-google-speech-to-text/) than large, so vidpipe defaults to turbo.
+
+Word-level accuracy is the foundation. If the transcript is wrong, everything downstream breaks. Whisper's [9.7/10 grammar accuracy](https://diyai.io/ai-tools/speech-to-text/openai-whisper-vs-google-speech-to-text/) means clean input for AI agents.
+
+## Karaoke Captions That Look Good
+
+[Over 90% of Gen Z and Millennials](https://marketingltb.com/blog/statistics/short-form-video-statistics/) watch videos on mute. Karaoke captions — where each word highlights in sync — [significantly improve engagement](https://bigvu.tv/blog/how-to-add-karaoke-captions-to-videos) and accessibility.
+
+vidpipe generates SRT/VTT caption files with word-level timestamps and uses [FFmpeg filters](https://ffmpeg.org/ffmpeg.html) to burn them into video. [FFmpeg is the industry standard](https://www.ffmpeg.org/documentation.html) for media processing. The implementation follows the [same timing approach](https://www.ai-engineer.io/tutorials/build-karaoke-style-captions-for-video) AI Engineer documented, but runs server-side for batch processing.
+
+## AI Silence Removal (Not the Dumb Kind)
+
+Most silence removal tools are binary: detect silence, cut it out. This destroys pacing. A pause after a joke? Gone. A beat for emphasis? Deleted. Natural breathing room? Chopped.
+
+vidpipe's **SilenceRemovalAgent** uses context-aware decision-making. It detects silence with FFmpeg's `silencedetect` filter, but then asks an AI agent: *Should this silence be removed?* The agent considers:
+
+- Transcript context (is this mid-sentence or between topics?)
+- Duration (0.5 seconds vs. 3 seconds)
+- Position (intro, outro, or main content?)
+- Accumulated removal (stays under 20% of total runtime)
+
+The result is videos that feel tight but not frantic. You keep the natural rhythm. You lose the dead air.
+
+## Shorts Extraction (6 Per Video)
+
+[Short-form video generates 12x more shares](https://personifycorp.com/blog/video-marketing-in-2024-trends-and-statistics-you-cant-afford-to-ignore/) than traditional content. With [TikTok holding ~40% market share](https://marketingltb.com/blog/statistics/short-form-video-statistics/), Reels at ~20%, and YouTube Shorts at ~20%, vertical content is essential.
+
+The **ShortsAgent** identifies 6 viral moments. Each short runs 15–60 seconds, can span multiple non-contiguous segments, renders in 9:16 with captions, and comes with 5 platform-native posts. That's **30 ready-to-publish assets** from shorts alone.
+
+## Medium Clips (Chapter-Length Content)
+
+The **MediumVideoAgent** identifies complete ideas that need 1–3 minutes. Each clip spans a single topic, includes crossfade transitions if needed, renders in 16:9, and generates 5 platform-native posts. That's **15 more assets**.
+
+## Face Detection & Blog Posts
+
+If you record with a webcam, vidpipe uses [ONNX-based face detection](https://github.com/mrkomiljon/face_detection_onnx) to automatically crop the webcam region for clean split-screen layouts.
+
+The **BlogAgent** writes **800–1200 word articles** enriched with links from [Exa AI's embeddings-based search](https://docs.exa.ai/reference/getting-started). Not SEO spam — real content with proper attribution, ready for your blog or [Dev.to](https://dev.to/ketanchavan/using-the-devto-api-2025-3hko).
+
+## Auto-Publish Scheduling
+
+vidpipe integrates with [Late API](https://getlate.dev/blog/complete-guide-social-media-api-automation), supporting **13+ platforms** from a single endpoint. Approve the queue in vidpipe's review web app; Late handles publication across TikTok, YouTube, Instagram, LinkedIn, X, Facebook, and more.
+
+## Built for Modern Node.js
+
+vidpipe is **TypeScript (ES2022, ESM)** with [modern packaging practices](https://blog.worldmaker.net/2024/03/13/node-packaging/). Requires **Node.js 20+** per [Commander.js v14's requirement](https://agentfactory.panaversity.org/docs/TypeScript-Language-Realtime-Interaction/cli-tools-developer-experience/cli-foundations-commander). Uses [TypeScript's `"module": "nodenext"`](https://typescriptlang.org/docs/handbook/modules/guides/choosing-compiler-options.html) and [pure ESM](https://snyk.io/blog/building-npm-package-compatible-with-esm-and-cjs-2024/) for simplified packaging.
+
+Core dependencies:
+
+- **[Commander.js](https://betterstack.com/community/guides/scaling-nodejs/commander-explained/)** — most widely used CLI framework
+- **[Sharp](https://sharp.pixelplumbing.com/)** — [4x-5x faster than ImageMagick](https://github.com/lovell/sharp), 31,891 stars
+- **[Winston](https://github.com/winstonjs/winston)** — structured logging
+- **Chokidar** — file system watching
+
+Full stack documented in the [GitHub repo](https://github.com/htekdev/vidpipe).
+
+## Getting Started (3 Commands)
+
+Install from npm:
+
+```bash
+npm install -g vidpipe
+```
+
+Run the interactive setup:
+
+```bash
+vidpipe init
+```
+
+Process a video:
+
+```bash
+vidpipe path/to/video.mp4
+```
+
+That's it. The first run will check prerequisites (`ffmpeg`, `ffprobe`, API keys) and guide you through configuration. After that, it's just `vidpipe [video-path]`.
+
+Want continuous processing? Use watch mode:
+
+```bash
+vidpipe --watch-dir ~/Videos/Recordings
+```
+
+vidpipe monitors the folder and processes new videos automatically as they appear.
+
+Check system health:
+
+```bash
+vidpipe --doctor
+```
+
+Review generated posts before publishing:
+
+```bash
+vidpipe review
+```
+
+View the posting schedule:
+
+```bash
+vidpipe schedule
+```
+
+Full documentation is at **[htekdev.github.io/vidpipe](https://htekdev.github.io/vidpipe/)**.
+
+## Multi-LLM Support
+
+vidpipe defaults to **GitHub Copilot** with Claude Opus 4.6, but supports [BYOK (Bring Your Own Key)](https://github.com/github/copilot-sdk) for OpenAI and Anthropic — useful for teams with existing AI infrastructure.
+
+## Why I'm Open-Sourcing This
+
+I built vidpipe for me. It saved 150+ hours in the first month.
+
+The creator economy is exploding: [74% of organizations increased creator marketing investment in 2024](https://www.creatoriq.com/blog/creatoriq-wrapped-2024), campaigns up 17% YoY, $79M paid to creators (47% increase). [Brands published 9.5 social posts per day](https://www.postquick.ai/blog/content-repurpose) in 2024 — an "uncomfortable math problem."
+
+[Nearly half of B2B marketers](https://www.airops.com/blog/ai-workflows-content-repurposing) say inability to scale content blocks productivity. The "record once, publish everywhere" strategy is [widely recommended](https://www.airops.com/blog/ai-workflows-content-repurposing) but rarely automated.
+
+vidpipe automates it. Now it's yours.
+
+## What I Hope You Build
+
+This is production code. It's ISC licensed. You can:
+
+- Use it as-is for your own content creation
+- Fork it and add your own agents (thumbnail generation with DALL-E? YouTube upload automation? Podcast conversion?)
+- Study the agentic architecture and build your own pipelines
+- Contribute back improvements, bug fixes, and new features
+
+I'm particularly interested in seeing:
+
+- Integration with more platforms (Bluesky, Mastodon, Threads native API)
+- Support for multi-speaker detection (interviews, panels, podcasts)
+- AI-generated B-roll and visual overlays
+- Voice cloning for dubbed translations
+- A hosted version for non-technical creators
+
+The [GitHub repo](https://github.com/htekdev/vidpipe) has contribution guidelines and a roadmap. The [npm package](https://www.npmjs.com/package/vidpipe) is published. The [docs](https://htekdev.github.io/vidpipe/) are live.
+
+Your recordings shouldn't sit on your hard drive. Now they won't.

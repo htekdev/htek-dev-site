@@ -1,0 +1,98 @@
+---
+title: "20 Minutes, Two Prompts, a Complete Video Pipeline"
+description: "How I used GitHub Copilot CLI's /fleet mode to build a 14-stage video processing pipeline in 20 minutes with just two prompts."
+pubDate: 2026-02-12
+tags: ["AI", "GitHub Copilot", "Automation", "Developer Experience"]
+draft: false
+---
+
+## The Pipeline That Processed Itself Into Existence
+
+If you're watching the video I posted on [LinkedIn](https://www.linkedin.com/posts/htekdev_aiproductivity-softwaredevelopment-futureofwork-activity-7426611056929710080-OQIV), you're looking at proof. That video was transcribed, captioned, clipped into shorts, and turned into social posts by the very pipeline I built to do those things — a 14-stage video processing system scaffolded in 20 minutes with two prompts. The tool didn't just build the system. It processed its own creation story.
+
+I've written before about [the shift from writing code to directing it](/articles/building-the-future-with-ai). This project made that shift visceral. I didn't write a single line of TypeScript. I described what I wanted, answered a few clarifying questions, and watched parallel agents assemble a production-quality pipeline while I sipped coffee.
+
+The tool that made this possible is [GitHub Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli) and its experimental `/fleet` command.
+
+## What Fleet Mode Actually Does
+
+Fleet mode is an experimental feature [introduced by Evan Boyle](https://www.linkedin.com/posts/evan-boyle-107a1445_new-in-experimental-mode-in-copilot-cli-activity-7425264653586403328-DarZ) that enables **parallel sub-agent orchestration** inside [Copilot CLI](https://github.blog/ai-and-ml/github-copilot/power-agentic-workflows-in-your-terminal-with-github-copilot-cli/). Instead of one agent grinding through tasks sequentially, `/fleet` decomposes your request into parallelizable work units and dispatches multiple [sub-agents](https://code.visualstudio.com/docs/copilot/agents/subagents) simultaneously.
+
+Here's the workflow:
+
+1. **Prompt ingestion** — You describe a complex system in natural language
+2. **Clarifying questions** — The orchestrator asks targeted questions to fill context gaps
+3. **Planning** — Fleet mode decomposes the project into dependency-aware tasks, tracked in a [SQLite database per session](https://github.blog/changelog/2026-01-21-github-copilot-cli-plan-before-you-build-steer-as-you-go/)
+4. **Parallel dispatch** — Multiple `general-purpose` sub-agents spawn concurrently, each assigned to a specific module
+5. **Integration** — After parallel work completes, a final pass resolves conflicts and ensures coherence
+
+The [January 2026 changelog](https://github.blog/changelog/2026-01-14-github-copilot-cli-enhanced-agents-context-management-and-new-ways-to-install/) confirmed four built-in agent types — Explore, Task, Plan, and Code-review — that Copilot delegates to automatically. [WinBuzzer reported](https://winbuzzer.com/2026/01/16/github-copilot-cli-gains-specialized-agents-parallel-execution-and-smarter-context-management-xcxwbn/) that version 0.0.382 transforms sequential agent handoffs into concurrent execution, cutting complex tasks from 90 seconds to 30.
+
+Paired with **autopilot mode** (cycle with `Shift+Tab`), the agent keeps working until the job is done — no confirmation pauses, no hand-holding.
+
+## The 14-Stage Pipeline
+
+My two prompts described a system that watches for new video files and automatically generates everything a content creator needs. Fleet mode decomposed it into 14 stages:
+
+| # | Stage | What It Does |
+|---|-------|-------------|
+| 1 | File Watcher | Monitors a directory for new video files using `chokidar` |
+| 2 | Video Ingestion | Validates codecs and extracts metadata via `ffprobe` |
+| 3 | Audio Extraction | Strips audio track with FFmpeg for transcription |
+| 4 | Transcription | Generates full transcript via Whisper API |
+| 5 | Caption Generation | Formats timed SRT/VTT subtitles with word-level timestamps |
+| 6 | Caption Burning | Hard-codes captions into the video using FFmpeg filters |
+| 7 | Chapter Detection | Analyzes transcript for topic shifts, generates chapter markers |
+| 8 | Summary Generation | Produces concise summaries from the full transcript |
+| 9 | Shorts Generation | Clips vertical short-form videos (9:16) from highlight moments |
+| 10 | Thumbnail Generation | Extracts key frames for video and shorts thumbnails |
+| 11 | Social Post Generation | Writes platform-specific posts for LinkedIn and X |
+| 12 | Blog Content Generation | Transforms transcript into long-form blog content |
+| 13 | Documentation | Auto-generates README and pipeline docs |
+| 14 | Output Organization | Structures artifacts into organized directories with manifest |
+
+The generated code was clean, modular TypeScript with proper `try/catch` error handling and [Winston](https://github.com/winstonjs/winston) structured logging throughout. Each stage follows a pipeline pattern with defined inputs and outputs feeding the next — the kind of architecture you'd expect from a [well-structured Node.js logging setup](https://betterstack.com/community/guides/logging/how-to-install-setup-and-use-winston-and-morgan-to-log-node-js-applications/), not a speedrun.
+
+Reddit users on [r/GithubCopilot](https://www.reddit.com/r/GithubCopilot/comments/1qzi2rq/opus_46_fast_and_fleet_has_changed_my_workflow/) report similar experiences — one commenter described watching "3 agents arguing about architecture in your terminal" before converging on a solution. Another [thread](https://github.com/orgs/community/discussions/182489) showed 5 sub-agents completing a complex refactoring in about 7 minutes of wall time with only 52 seconds of actual API time.
+
+## The Three Skills That Matter Now
+
+Building this pipeline didn't require me to know FFmpeg filter syntax or Winston transport configuration. It required three things:
+
+### Context Engineering
+
+[Context engineering](https://sombrainc.com/blog/ai-context-engineering-guide) is replacing prompt engineering as the critical AI skill. It's not about finding magic words — it's about [structuring what information the model can access](https://pub.towardsai.net/context-engineering-is-the-new-prompt-engineering-11a22053c1f6) when generating a response. I provided examples of video pipeline architectures, named the specific tools I wanted (FFmpeg, Whisper, chokidar), and described the output directory structure. The AI didn't have to guess — I gave it the context to succeed.
+
+### Architectural Thinking
+
+I didn't describe individual functions. I described a system: data flow, stage boundaries, error propagation, and output contracts. The AI translated system-level thinking into implementation. If I'd prompted at the function level, I'd still be typing.
+
+### Articulation Clarity
+
+The difference between a mediocre AI output and a great one is how clearly you describe what's in your head. My two prompts weren't clever tricks — they were precise descriptions of a video processing system with clearly defined stage responsibilities and output expectations.
+
+## How Fleet Mode Compares
+
+The [agentic coding landscape in 2026](https://www.prismlabs.uk/blog/ai-coding-agents-comparison-2026) is crowded. Here's where the major tools stand:
+
+| Tool | Type | Parallel Agents | Best For |
+|------|------|:-:|----------|
+| **Copilot CLI** (Fleet) | Terminal agent | ✅ | GitHub integration, zero-cost entry for subscribers |
+| **[Claude Code](https://ybuild.ai/en/blog/cursor-vs-claude-code-vs-windsurf-ai-coding-tools-2026)** | Terminal agent | ✅ | Deep reasoning with Opus-class models |
+| **[Cursor](https://www.codecademy.com/article/agentic-ide-comparison-cursor-vs-windsurf-vs-antigravity)** | AI IDE | ✅ | Familiar IDE UX, inline editing |
+| **Windsurf** | Agentic IDE | ✅ | Beginner-friendly autonomous execution |
+| **[Devin](https://cognition.ai/)** | Autonomous agent | ✅ | End-to-end delivery, [enterprise adoption](https://www.digitalapplied.com/blog/devin-ai-autonomous-coding-complete-guide) |
+
+Each tool has real strengths. Claude Code's reasoning with Opus 4.6 is [genuinely superior for complex logic](https://www.viableedge.com/blog/openclaw-vs-alternatives-agentic-ai-comparison). Cursor offers the most polished inline diff experience. Devin handles fully autonomous end-to-end delivery, backed by a [$10.2 billion valuation](https://dynamicbusiness.com/ai-tools/cognition-ai-empowers-developers-with-autonomous-coding.html).
+
+But Copilot CLI's fleet mode hits a sweet spot for my workflow: it's terminal-native, included with my existing Copilot subscription, deeply integrated with the GitHub ecosystem, and [extensible via MCP and ACP](https://github.blog/changelog/2026-01-28-acp-support-in-copilot-cli-is-now-in-public-preview/). For greenfield scaffolding projects like this video pipeline, the combination of `/plan`, `/fleet`, and autopilot is unmatched.
+
+## What This Means for Developers
+
+The productivity numbers here aren't incremental improvements. A 14-stage pipeline that would take 2–4 weeks to hand-build emerged in 20 minutes. That's not a 5x speedup — it's closer to 100x for this class of problem.
+
+But the takeaway isn't "AI writes code faster." It's that **implementation is being commoditized**. The competitive advantage is shifting from "can you code this?" to "can you envision this?" The developer who can articulate a clear system design, bring the right context, and think in terms of architecture will extract dramatically more value from these tools than someone who treats them as fancy autocomplete.
+
+> "If you're watching this video, you're looking at proof. This pipeline processed itself into existence in front of your eyes."
+
+The self-referential nature of this project — the pipeline processing its own creation video — isn't just a fun demo. It's a signal. We're entering an era where the gap between imagining a system and having a working system is collapsing to minutes. The developers who thrive won't be the fastest typists. They'll be the clearest thinkers.
