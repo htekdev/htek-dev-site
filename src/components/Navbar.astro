@@ -1,10 +1,9 @@
 ---
 const navLinks = [
-  { label: 'About', href: '#about' },
-  { label: 'Writing', href: '#writing' },
-  { label: 'Connect', href: '#connect' },
+  { label: 'About', href: '/#about' },
+  { label: 'Writing', href: '/#writing' },
+  { label: 'Connect', href: '/#connect' },
   { label: 'Articles', href: '/articles' },
-  { label: 'Consulting', href: '/consulting' },
 ];
 ---
 
@@ -25,6 +24,12 @@ const navLinks = [
           {link.label}
         </a>
       ))}
+      <a
+        href="/consulting"
+        class="consulting-link text-sm font-semibold transition-all"
+      >
+        Consulting
+      </a>
     </div>
 
     <!-- Mobile Hamburger Button -->
@@ -64,6 +69,12 @@ const navLinks = [
         {link.label}
       </a>
     ))}
+    <a
+      href="/consulting"
+      class="mobile-nav-link consulting-link text-2xl font-heading font-semibold transition-all"
+    >
+      Consulting
+    </a>
   </nav>
 </div>
 
@@ -94,3 +105,20 @@ const navLinks = [
     link.addEventListener('click', closeMenu);
   });
 </script>
+
+<style>
+  .consulting-link {
+    background: linear-gradient(to right, #00E5FF, #7C3AED);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-decoration: none;
+  }
+
+  .consulting-link:hover {
+    background: linear-gradient(to right, #33EBFF, #8B5CF6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+</style>
