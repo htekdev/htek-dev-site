@@ -1,0 +1,148 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout
+  title="Consulting — htek.dev"
+  description="Enterprise consulting for GitHub migrations, AI adoption, and cloud architecture. Book a free consultation with Hector Flores."
+>
+  <Navbar />
+  <main id="main-content">
+
+    <!-- Hero -->
+    <section id="consulting-hero" class="relative min-h-[70vh] flex items-center bg-bg-void overflow-hidden">
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div class="w-[600px] h-[600px] bg-accent-cyan/5 rounded-full blur-3xl"></div>
+      </div>
+      <div class="relative max-w-5xl mx-auto px-6 pt-32 pb-16 text-center">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-6">// consulting</span>
+        <h1 class="text-4xl md:text-6xl font-heading font-bold text-text-primary mb-6">
+          Enterprise <span class="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">Consulting</span>
+        </h1>
+        <p class="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-10">
+          I help engineering teams adopt AI, migrate to GitHub, and modernize their infrastructure — backed by 500+ enterprise migrations and deep expertise in developer productivity.
+        </p>
+        <a href="#book" class="inline-block bg-accent-cyan text-bg-void font-semibold px-8 py-3 rounded-lg hover:opacity-90 transition-opacity">
+          Book a Free Consultation
+        </a>
+      </div>
+    </section>
+
+    <!-- Services -->
+    <section class="fade-in py-24 md:py-32 bg-bg-primary">
+      <div class="max-w-6xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// services</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-12">How I Can Help</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          <!-- Card 1 -->
+          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl p-6">
+            <span class="text-3xl mb-4 block">🔄</span>
+            <h3 class="text-xl font-heading font-semibold text-text-primary mb-3">GitHub Migrations &amp; DevOps</h3>
+            <p class="text-text-secondary text-sm mb-4">
+              End-to-end migration from Azure DevOps, BitBucket, SVN, and more — with automation that cuts migration time from hours to minutes.
+            </p>
+            <ul class="space-y-2 text-sm text-text-muted">
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Migration planning &amp; execution</li>
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Custom automation frameworks</li>
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> CI/CD pipeline modernization</li>
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Repository strategy &amp; governance</li>
+            </ul>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl p-6">
+            <span class="text-3xl mb-4 block">🤖</span>
+            <h3 class="text-xl font-heading font-semibold text-text-primary mb-3">AI &amp; Developer Productivity</h3>
+            <p class="text-text-secondary text-sm mb-4">
+              Hands-on adoption strategy for GitHub Copilot and AI-powered development workflows that measurably boost developer output and satisfaction.
+            </p>
+            <ul class="space-y-2 text-sm text-text-muted">
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> GitHub Copilot rollout &amp; training</li>
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> AI workflow integration</li>
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Developer experience optimization</li>
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Productivity measurement &amp; ROI</li>
+            </ul>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl p-6">
+            <span class="text-3xl mb-4 block">☁️</span>
+            <h3 class="text-xl font-heading font-semibold text-text-primary mb-3">Cloud Architecture &amp; Modernization</h3>
+            <p class="text-text-secondary text-sm mb-4">
+              Architecture reviews, cloud migrations, and platform engineering that scale with your team.
+            </p>
+            <ul class="space-y-2 text-sm text-text-muted">
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Azure &amp; cloud architecture</li>
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Infrastructure as code</li>
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Platform engineering</li>
+              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Technical debt reduction</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Track Record -->
+    <section class="fade-in py-24 md:py-32 bg-bg-void">
+      <div class="max-w-5xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// track record</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-12">Why Work With Me</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+            <span class="text-3xl md:text-4xl font-heading font-bold text-accent-cyan block mb-1">500+</span>
+            <span class="text-text-muted text-sm">Repos Migrated</span>
+          </div>
+          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+            <span class="text-3xl md:text-4xl font-heading font-bold text-accent-cyan block mb-1">Enterprise</span>
+            <span class="text-text-muted text-sm">Scale Experience</span>
+          </div>
+          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+            <span class="text-3xl md:text-4xl font-heading font-bold text-accent-cyan block mb-1">10+</span>
+            <span class="text-text-muted text-sm">Years in Enterprise Tech</span>
+          </div>
+        </div>
+
+        <h3 class="text-lg font-heading font-semibold text-text-primary mb-4">Read my technical writing</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a href="/articles/lessons-from-500-github-migrations" class="block group bg-bg-surface border border-border-muted rounded-xl p-5 transition-all duration-300 hover:border-accent-cyan/30 hover:-translate-y-0.5">
+            <span class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors">Lessons from 500+ GitHub Migrations</span>
+          </a>
+          <a href="/articles/context-engineering-key-to-ai-development" class="block group bg-bg-surface border border-border-muted rounded-xl p-5 transition-all duration-300 hover:border-accent-cyan/30 hover:-translate-y-0.5">
+            <span class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors">Context Engineering: The Key to AI Development</span>
+          </a>
+          <a href="/articles/stanford-study-ai-roi-in-engineering" class="block group bg-bg-surface border border-border-muted rounded-xl p-5 transition-all duration-300 hover:border-accent-cyan/30 hover:-translate-y-0.5">
+            <span class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors">Stanford Study: AI's Real ROI</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Calendly Booking -->
+    <section id="book" class="fade-in py-24 md:py-32 bg-bg-primary relative overflow-hidden">
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div class="w-[600px] h-[600px] bg-accent-cyan/5 rounded-full blur-3xl"></div>
+      </div>
+      <div class="relative max-w-5xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// let's talk</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">
+          Book a <span class="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">Free Consultation</span>
+        </h2>
+        <p class="text-text-secondary text-lg max-w-2xl mb-10">
+          Every engagement starts with a conversation. Let's discuss your challenges and explore how I can help.
+        </p>
+        <div class="calendly-inline-widget" data-url="https://calendly.com/htekdev/free-consultation?background_color=0a0a0f&text_color=e2e8f0&primary_color=00e5ff" style="min-width:320px;height:700px;"></div>
+        <script is:inline type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+        <p class="text-text-muted text-sm mt-6">
+          Having trouble with the widget? <a href="https://calendly.com/htekdev/free-consultation" target="_blank" rel="noopener noreferrer" class="text-accent-cyan hover:underline">Book directly on Calendly →</a>
+        </p>
+      </div>
+    </section>
+
+  </main>
+  <Footer />
+</BaseLayout>

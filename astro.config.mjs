@@ -3,9 +3,13 @@ import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
+import rehypeWrapTables from './src/plugins/rehype-wrap-tables.mjs';
 
 export default defineConfig({
   site: 'https://htek.dev',
+  markdown: {
+    rehypePlugins: [rehypeWrapTables],
+  },
   integrations: [
     react(),
     mdx(),

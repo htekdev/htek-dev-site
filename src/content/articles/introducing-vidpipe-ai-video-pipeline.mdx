@@ -1,9 +1,17 @@
 ---
-title: "Introducing vidpipe — My AI Video Editor That Does Everything"
-description: "I built an agentic video pipeline that turns recordings into shorts, captions, and posts. Now it's open source."
-pubDate: 2026-02-14
-tags: ["Open Source", "AI", "Automation", "GitHub Copilot"]
+title: Introducing vidpipe — My AI Video Editor That Does Everything
+description: >-
+  I built an agentic video pipeline that turns recordings into shorts, captions,
+  and posts. Now it's open source.
+pubDate: 2026-02-14T00:00:00.000Z
+tags:
+  - Open Source
+  - AI
+  - Automation
+  - GitHub Copilot
 draft: false
+devto_id: 3256679
+devto_hash: ed4a153d87fb1a7a
 ---
 
 ## I Spent 200+ Hours Editing Videos Last Year
@@ -26,7 +34,7 @@ Here's the 15-stage pipeline:
 |-------|------------------|
 | 1. **Ingestion** | Validates codecs, extracts metadata |
 | 2. **Transcription** | Full word-level transcript via [Whisper](https://github.com/openai/whisper) |
-| 3. **Silence Removal** | AI agent decides which pauses to cut (max 20%) |
+| 3. **Video Cleaning** | ProducerAgent + Gemini vision trims dead air, filler, bad takes (max 20%) |
 | 4. **Captions** | Timed SRT/VTT subtitles with word-level sync |
 | 5. **Caption Burn** | [FFmpeg](https://ffmpeg.org/) hard-codes karaoke-style captions |
 | 6. **Shorts** | 6 vertical clips (15-60s, multi-segment) |
@@ -48,9 +56,9 @@ I wrote about [the future of agentic video editing](/articles/agentic-video-edit
 
 It's built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk), which [exposes the same production-tested agent runtime](https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md) behind Copilot CLI. Every stage is a specialized **AI agent**:
 
-- **SilenceRemovalAgent** — detects silence, decides which segments to cut based on context
-- **ShortsAgent** — analyzes transcripts for viral moments, plans 6 multi-segment shorts
-- **MediumVideoAgent** — identifies chapter-length content, assembles clips with transitions
+- **ProducerAgent** — cleans video by trimming dead air, filler words, bad takes, and redundant content
+- **ShortsAgent** — analyzes transcripts + Gemini clip direction for viral moments, plans 6 multi-segment shorts
+- **MediumVideoAgent** — identifies chapter-length content with Gemini clip direction, assembles clips with transitions
 - **ChapterAgent**, **SummaryAgent**, **SocialMediaAgent**, **BlogAgent**
 
 Each agent uses **structured tool calls** like `detect_silence`, `plan_shorts`, `write_summary`, `search_links`. The [Copilot SDK handles JSON-RPC communication](https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md) and multi-turn conversations automatically.
@@ -71,28 +79,32 @@ Word-level accuracy is the foundation. If the transcript is wrong, everything do
 
 vidpipe generates SRT/VTT caption files with word-level timestamps and uses [FFmpeg filters](https://ffmpeg.org/ffmpeg.html) to burn them into video. [FFmpeg is the industry standard](https://www.ffmpeg.org/documentation.html) for media processing. The implementation follows the [same timing approach](https://www.ai-engineer.io/tutorials/build-karaoke-style-captions-for-video) AI Engineer documented, but runs server-side for batch processing.
 
-## AI Silence Removal (Not the Dumb Kind)
+## AI Video Cleaning (Not Just Silence Removal)
 
-Most silence removal tools are binary: detect silence, cut it out. This destroys pacing. A pause after a joke? Gone. A beat for emphasis? Deleted. Natural breathing room? Chopped.
+Most silence removal tools are binary: detect silence, cut it out. This destroys pacing and misses the bigger picture — filler words, false starts, and repeated explanations are just as wasteful as dead air.
 
-vidpipe's **SilenceRemovalAgent** uses context-aware decision-making. It detects silence with FFmpeg's `silencedetect` filter, but then asks an AI agent: *Should this silence be removed?* The agent considers:
+vidpipe's **ProducerAgent** takes a two-AI approach. First, [Gemini 2.5 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash) watches the raw video and produces **editorial notes** — frame-by-frame observations about what's happening: where the speaker stumbles, repeats themselves, stares at the screen, or fills time. Gemini sees the video; LLMs can't.
 
-- Transcript context (is this mid-sentence or between topics?)
-- Duration (0.5 seconds vs. 3 seconds)
-- Position (intro, outro, or main content?)
-- Accumulated removal (stays under 20% of total runtime)
+Then the ProducerAgent (running on your configured LLM) interprets those notes alongside the transcript. It decides what to cut:
 
-The result is videos that feel tight but not frantic. You keep the natural rhythm. You lose the dead air.
+- Dead air and long pauses between topics
+- Filler words and false starts ("um", "so basically", "let me try that again")
+- Bad takes and repeated explanations
+- Redundant content that adds nothing
+
+The agent is conservative — it caps removal at **10–20% of total runtime** and preserves intentional pauses, demonstrations, and natural rhythm. Cuts are executed via `singlePassEdit()` for frame-accurate results in a single FFmpeg re-encode.
 
 ## Shorts Extraction (6 Per Video)
 
 [Short-form video generates 12x more shares](https://personifycorp.com/blog/video-marketing-in-2024-trends-and-statistics-you-cant-afford-to-ignore/) than traditional content. With [TikTok holding ~40% market share](https://marketingltb.com/blog/statistics/short-form-video-statistics/), Reels at ~20%, and YouTube Shorts at ~20%, vertical content is essential.
 
-The **ShortsAgent** identifies 6 viral moments. Each short runs 15–60 seconds, can span multiple non-contiguous segments, renders in 9:16 with captions, and comes with 5 platform-native posts. That's **30 ready-to-publish assets** from shorts alone.
+After cleaning, Gemini makes a **second pass** over the cleaned video to generate **clip direction** — suggested hooks, timestamps, platform fit, and engagement potential for short-form content. This is multimodal analysis: Gemini sees the visuals, not just the transcript.
+
+The **ShortsAgent** receives this clip direction as supplementary context but makes its own decisions. Each short runs 15–60 seconds, can span multiple non-contiguous segments from the cleaned video, renders in 9:16 with captions, and comes with 5 platform-native posts. That's **30 ready-to-publish assets** from shorts alone.
 
 ## Medium Clips (Chapter-Length Content)
 
-The **MediumVideoAgent** identifies complete ideas that need 1–3 minutes. Each clip spans a single topic, includes crossfade transitions if needed, renders in 16:9, and generates 5 platform-native posts. That's **15 more assets**.
+The **MediumVideoAgent** also receives Gemini's clip direction and identifies complete ideas that need 1–3 minutes. Each clip is cut from the cleaned video, spans a single topic, includes crossfade transitions if needed, renders in 16:9, and generates 5 platform-native posts. That's **15 more assets**.
 
 ## Face Detection & Blog Posts
 
@@ -170,6 +182,8 @@ Full documentation is at **[htekdev.github.io/vidpipe](https://htekdev.github.io
 ## Multi-LLM Support
 
 vidpipe defaults to **GitHub Copilot** with Claude Opus 4.6, but supports [BYOK (Bring Your Own Key)](https://github.com/github/copilot-sdk) for OpenAI and Anthropic — useful for teams with existing AI infrastructure.
+
+**Gemini** handles video understanding separately via the [`@google/genai` SDK](https://ai.google.dev/gemini-api/docs). Two dedicated passes — editorial notes for cleaning and clip direction for shorts/mediums — use `gemini-2.5-flash` by default. Gemini is purpose-built for multimodal video analysis, so it runs outside the Copilot/OpenAI/Claude provider abstraction.
 
 ## Why I'm Open-Sourcing This
 

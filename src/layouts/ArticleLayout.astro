@@ -94,28 +94,30 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
 <style>
   .article-content :global(h2) {
-    font-size: 1.5rem;
+    font-size: 1.875rem;
     font-weight: 700;
-    margin-top: 3rem;
-    margin-bottom: 1rem;
+    line-height: 1.25;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
     color: var(--color-text-primary);
     font-family: var(--font-heading);
   }
 
   .article-content :global(h3) {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 600;
+    line-height: 1.25;
     margin-top: 2rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.625rem;
     color: var(--color-text-primary);
     font-family: var(--font-heading);
   }
 
   .article-content :global(p) {
     color: var(--color-text-secondary);
-    line-height: 1.625;
-    margin-bottom: 1.5rem;
-    font-size: 1rem;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
   }
 
   .article-content :global(a) {
@@ -128,7 +130,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
   .article-content :global(code) {
     font-family: var(--font-mono);
-    font-size: 0.875rem;
+    font-size: 1rem;
     background-color: var(--color-bg-surface);
     padding: 0.125rem 0.375rem;
     border-radius: 0.25rem;
@@ -141,10 +143,10 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
     border-radius: 0.5rem;
     padding: 1rem;
     overflow-x: auto;
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
     font-family: var(--font-mono);
-    font-size: 0.875rem;
+    font-size: 1rem;
   }
 
   .article-content :global(pre code) {
@@ -157,7 +159,9 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
   .article-content :global(ul),
   .article-content :global(ol) {
     color: var(--color-text-secondary);
-    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
     padding-left: 1.5rem;
   }
 
@@ -174,18 +178,55 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
   }
 
   .article-content :global(blockquote) {
-    border-left: 2px solid var(--color-accent-cyan);
-    padding-left: 1rem;
+    border-left: 3px solid var(--color-accent-cyan);
+    padding-left: 1.25rem;
     font-style: italic;
+    font-size: 1.25rem;
+    line-height: 1.5;
     color: var(--color-text-muted);
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
   }
 
   .article-content :global(img) {
     border-radius: 0.5rem;
     margin-top: 1.5rem;
     margin-bottom: 1.5rem;
+  }
+
+  .article-content :global(.table-wrapper) {
+    overflow-x: auto;
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .article-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.125rem;
+    line-height: 1.5;
+  }
+
+  .article-content :global(thead) {
+    background-color: var(--color-bg-surface);
+  }
+
+  .article-content :global(th) {
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-border-default);
+    font-weight: 700;
+    text-align: left;
+    color: var(--color-text-primary);
+  }
+
+  .article-content :global(td) {
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-border-default);
+    color: var(--color-text-secondary);
+  }
+
+  .article-content :global(tbody tr:hover) {
+    background-color: var(--color-bg-surface);
   }
 
   .article-content :global(hr) {
