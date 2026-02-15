@@ -7,11 +7,9 @@
  *   DEVTO_API_KEY=<key> node scripts/sync-devto.mjs [--dry-run]
  */
 
-import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
-import matter from "gray-matter";
+import { sleep, computeHash, convertBody, writeFrontmatter, readArticles } from "./lib/sync-utils.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ARTICLES_DIR = path.resolve(__dirname, "..", "src", "content", "articles");
@@ -43,14 +41,6 @@ const DRY_RUN = process.argv.includes("--dry-run");
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function computeHash(payload) {
-  return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex").slice(0, 16);
-}
-
 function mapTags(tags) {
   if (!Array.isArray(tags)) return [];
   const mapped = tags.map((t) => {
@@ -58,45 +48,6 @@ function mapTags(tags) {
     return TAG_MAP[key] ?? key.replace(/\s+/g, "");
   });
   return [...new Set(mapped)].slice(0, 4);
-}
-
-function convertBody(body) {
-  let out = body;
-
-  // Strip MDX import lines
-  out = out.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, "");
-  out = out.replace(/^import\s+['"].*?['"];?\s*$/gm, "");
-
-  // Strip JSX self-closing component tags (non-HTML)
-  // Match <ComponentName ... /> but not standard HTML tags
-  out = out.replace(/<([A-Z][A-Za-z0-9.]*)\b[^>]*\/>/g, "");
-
-  // Strip JSX opening + closing pairs of non-HTML tags (single-line and multiline)
-  out = out.replace(/<([A-Z][A-Za-z0-9.]*)\b[^>]*>[\s\S]*?<\/\1>/g, "");
-
-  // Convert relative article links: ](/articles/slug) → ](https://htek.dev/articles/slug/)
-  out = out.replace(
-    /\]\(\/articles\/([^)]+)\)/g,
-    (_, slug) => {
-      const cleanSlug = slug.endsWith("/") ? slug : slug + "/";
-      return `](${SITE_URL}/articles/${cleanSlug})`;
-    }
-  );
-
-  // Convert relative image src="/..." to absolute
-  out = out.replace(/src="\/(?!\/)/g, `src="${SITE_URL}/`);
-
-  // Convert remaining relative markdown image/link paths ](/ → ](https://htek.dev/
-  // But not already-absolute URLs and not the article links we already handled
-  out = out.replace(
-    /\]\(\/(?!articles\/|\/)/g,
-    `](${SITE_URL}/`
-  );
-
-  // Clean up blank lines left by stripped imports/components
-  out = out.replace(/\n{3,}/g, "\n\n");
-
-  return out.trim();
 }
 
 // ── DEV.to API helpers ──────────────────────────────────────────────
@@ -176,22 +127,14 @@ async function main() {
   }
 
   // Read all MDX files
-  const files = fs
-    .readdirSync(ARTICLES_DIR)
-    .filter((f) => f.endsWith(".mdx"))
-    .sort();
+  const articles = readArticles(ARTICLES_DIR);
 
   let created = 0;
   let updated = 0;
   let skipped = 0;
 
-  for (const file of files) {
-    const filePath = path.join(ARTICLES_DIR, file);
-    const raw = fs.readFileSync(filePath, "utf-8");
-    const { data: frontmatter, content } = matter(raw);
-
+  for (const { file, filePath, slug, frontmatter, content } of articles) {
     const title = frontmatter.title;
-    const slug = file.replace(/\.mdx$/, "");
 
     // Skip drafts
     if (frontmatter.draft === true) {
@@ -209,7 +152,7 @@ async function main() {
     }
 
     const canonicalUrl = `${SITE_URL}/articles/${slug}/`;
-    const bodyMarkdown = convertBody(content);
+    const bodyMarkdown = convertBody(content, SITE_URL);
     const tags = mapTags(frontmatter.tags);
 
     const payload = {
@@ -301,14 +244,6 @@ async function main() {
   }
 
   console.log(`\nSync complete: ${created} created, ${updated} updated, ${skipped} skipped`);
-}
-
-function writeFrontmatter(filePath, fields) {
-  const raw = fs.readFileSync(filePath, "utf-8");
-  const parsed = matter(raw);
-  Object.assign(parsed.data, fields);
-  const updated = matter.stringify(parsed.content, parsed.data);
-  fs.writeFileSync(filePath, updated, "utf-8");
 }
 
 main().catch((err) => {

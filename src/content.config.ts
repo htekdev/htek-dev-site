@@ -13,6 +13,9 @@ const articles = defineCollection({
     draft: z.boolean().default(false),
     devto_id: z.number().optional(),
     devto_hash: z.string().optional(),
+    hashnode_id: z.string().optional(),
+    hashnode_hash: z.string().optional(),
+    medium_id: z.string().optional(),
   }),
 });
 
