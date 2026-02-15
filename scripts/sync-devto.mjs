@@ -33,6 +33,10 @@ const TAG_MAP = {
   "engineering leadership": "leadership",
   "career": "career",
   "video editing": "video",
+  "devchallenge": "devchallenge",
+  "githubchallenge": "githubchallenge",
+  "cli": "cli",
+  "githubcopilot": "githubcopilot",
 };
 
 const DRY_RUN = process.argv.includes("--dry-run");
