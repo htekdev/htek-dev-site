@@ -146,7 +146,7 @@ async function main() {
     const bodyMarkdown = convertBody(content, SITE_URL);
     const tags = mapTags(frontmatter.tags);
 
-    const contentHash = computeHash({ title, bodyMarkdown, tags, canonicalUrl });
+    const contentHash = computeHash({ title, bodyMarkdown, tags, canonicalUrl, heroImage: frontmatter.heroImage });
     const hashnodeId = frontmatter.hashnode_id;
 
     // Skip if unchanged
@@ -171,9 +171,11 @@ async function main() {
           input: {
             id: hashnodeId,
             title,
+            slug,
             contentMarkdown: bodyMarkdown,
             tags: tags.map((t) => ({ slug: t, name: t })),
             originalArticleURL: canonicalUrl,
+            ...(frontmatter.heroImage && { coverImageOptions: { coverImageURL: `${SITE_URL}${frontmatter.heroImage}` } }),
           },
         });
 
@@ -196,9 +198,11 @@ async function main() {
           input: {
             publicationId,
             title,
+            slug,
             contentMarkdown: bodyMarkdown,
             tags: tags.map((t) => ({ slug: t, name: t })),
             originalArticleURL: canonicalUrl,
+            ...(frontmatter.heroImage && { coverImageOptions: { coverImageURL: `${SITE_URL}${frontmatter.heroImage}` } }),
           },
         });
 

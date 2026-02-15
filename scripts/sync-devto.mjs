@@ -45,7 +45,7 @@ function mapTags(tags) {
   if (!Array.isArray(tags)) return [];
   const mapped = tags.map((t) => {
     const key = t.toLowerCase();
-    return TAG_MAP[key] ?? key.replace(/\s+/g, "");
+    return TAG_MAP[key] ?? key.replace(/[^a-z0-9]/g, "");
   });
   return [...new Set(mapped)].slice(0, 4);
 }
@@ -60,6 +60,7 @@ async function devtoFetch(endpoint, options = {}) {
     headers: {
       "Content-Type": "application/json",
       "api-key": apiKey,
+      "User-Agent": "htek-dev-sync/1.0",
       ...options.headers,
     },
   });
@@ -163,6 +164,7 @@ async function main() {
         tags,
         canonical_url: canonicalUrl,
         description: frontmatter.description || "",
+        ...(frontmatter.heroImage && { main_image: `${SITE_URL}${frontmatter.heroImage}` }),
       },
     };
 
@@ -176,7 +178,7 @@ async function main() {
     }
 
     // Skip if content hasn't changed since last sync
-    const contentHash = computeHash(payload);
+    const contentHash = computeHash({ ...payload, heroImage: frontmatter.heroImage });
     if (devtoId && frontmatter.devto_hash === contentHash) {
       console.log(`[SKIP] ${title} (unchanged)`);
       skipped++;

@@ -3,6 +3,11 @@
 /**
  * Syncs MDX articles from src/content/articles/ to Medium.
  *
+ * ⚠️  DEPRECATED (Jan 2025): Medium removed integration tokens from their settings.
+ * New tokens cannot be generated. This script only works with pre-existing tokens.
+ * It is NOT included in the CI/CD workflow (sync-articles.yml).
+ * To use manually: MEDIUM_ACCESS_TOKEN=<existing-token> node scripts/sync-medium.mjs
+ *
  * Usage:
  *   MEDIUM_ACCESS_TOKEN=<token> node scripts/sync-medium.mjs [--dry-run]
  *
