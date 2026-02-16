@@ -1,0 +1,90 @@
+---
+title: "VS Code's January 2026 Update Turns Your Editor Into an AI Agent Platform"
+description: "VS Code 1.109 ships multi-agent workflows, Claude integration, Copilot Memory, and terminal sandboxing. Here's everything that changed."
+pubDate: 2026-02-16
+tags:
+  - GitHub Copilot
+  - VS Code
+  - AI
+  - Developer Experience
+draft: false
+---
+
+## Your Editor Just Became an Agent Orchestrator
+
+On February 4, 2026, the [VS Code 1.109 release](https://code.visualstudio.com/updates) quietly shipped one of the most consequential updates in the editor's history. Not because of any single feature — but because of what they add up to. VS Code isn't just an editor with AI bolted on anymore. It's becoming an **agent orchestration platform**.
+
+This release introduces multi-agent workflows, integrates Anthropic's Claude directly alongside Copilot, makes the skills system generally available, and adds terminal command sandboxing. A week later, [VS Code Insiders 1.110](https://code.visualstudio.com/updates/v1_110) pushed the envelope further with language-aware symbol navigation for agents and multimodal Claude support. I've been running Insiders daily, and the pace is staggering.
+
+Here's what shipped, why it matters, and what you should try first.
+
+## Multi-Agent Development: The Headline Feature
+
+The biggest story in 1.109 is **agent-driven workflows**. VS Code now supports seamless delegation across local agents, background agents, cloud agents, and [GitHub Copilot](https://github.com/features/copilot) — all within the same session. You can kick off a task with Copilot, hand off subtasks to specialized agents, and get results back in a unified interface.
+
+**Agent session management** got a significant overhaul. Sessions are now portable across workspaces, and managing multiple concurrent agent conversations is far more intuitive than the previous tab-soup experience.
+
+The real power move? **Claude agent integration** is now in public preview. [Anthropic's Claude](https://www.anthropic.com/claude/code) runs directly inside VS Code as a first-class agent alongside Copilot. You're not locked into a single AI provider — you can use the right model for the right task. This is a fundamentally different philosophy than what we had six months ago.
+
+Three more changes cement the multi-agent story:
+
+- **Skills system enabled by default** — no more experimental flags. Extensions can expose skills that any agent can invoke, and organizations can deploy skills across their entire team.
+- **Parallel subagent execution** — agents can delegate to multiple subagents simultaneously, dramatically speeding up complex multi-step tasks.
+- **Fine-grained tool access controls** — admins can restrict which tools agents have access to, balancing capability with safety. This is critical for enterprise adoption.
+
+If you've been following [my piece on custom Copilot agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents), this release is the platform those agents run on. The agent customization capabilities — workflow orchestrations and org-wide skill deployment — turn VS Code into a genuine agent development environment.
+
+## Copilot Chat Gets Smarter
+
+The Copilot Chat experience in 1.109 isn't just incrementally better — it's rethought. According to the [GitHub Changelog](https://github.blog/changelog/2026-02-04-github-copilot-in-visual-studio-code-v1-109-january-release), key improvements include:
+
+- **Faster streaming with thinking tokens** — responses feel noticeably snappier, and you can see the model's reasoning process in real-time.
+- **Copilot Memory** — the feature I've been waiting for. Copilot now retains relevant context across interactions, so it doesn't forget what you told it three prompts ago. If you've read [my article on context engineering](/articles/context-engineering-key-to-ai-development), you know why this matters — context is the single biggest bottleneck in AI-assisted development.
+- **Mermaid diagrams in chat** — ask Copilot to explain an architecture, and it renders interactive diagrams inline. No more copying code into a separate tool.
+- **Message queueing** — you can send follow-up messages while a response is still streaming. No more waiting for the model to finish before course-correcting.
+- **Experimental "Ask Questions" tool** — agents can now ask you clarifying questions mid-task instead of guessing. This is a small UX change with massive implications for task accuracy.
+
+The revamped **inline chat editor** also deserves a mention. It's tighter, more responsive, and the new Preview button lets you render and edit generated Markdown content without leaving the flow.
+
+## Code Completions Level Up
+
+Two changes to completions that sound small but feel huge in practice:
+
+**Colorized code completions** — ghost text now renders with syntax highlighting instead of monochrome gray. It sounds cosmetic, but it dramatically improves readability when you're scanning a suggestion to decide whether to accept it.
+
+**Partial acceptance by click** — you can now click inside a completion to accept only up to that point. Combined with the existing word-by-word acceptance, this gives you much finer control over what you take from a suggestion.
+
+The **Plan agent** also landed — a structured approach to implementation planning that breaks complex tasks into discrete steps before generating code. This is particularly useful for multi-file refactors where you want to review the strategy before committing to it.
+
+## Security and Trust
+
+For anyone deploying Copilot in an enterprise context, the security updates in 1.109 are significant:
+
+- **Terminal command sandboxing** (experimental, macOS/Linux) — when agents want to run shell commands, dangerous operations require explicit approval. This addresses one of the biggest concerns I hear from engineering leaders about giving AI agents terminal access.
+- **Auto-approval rules** — define trusted command patterns that skip the approval dialog. So `npm test` can run freely while `rm -rf` still requires confirmation.
+- **Syntax highlighting in agent mode commands** — small but practical. You can actually read the commands agents propose before approving them.
+
+## MCP and Terminal Enhancements
+
+The [Model Context Protocol](https://modelcontextprotocol.io/) got several upgrades: dynamic context from MCP servers, private registry support, custom UI surfaces, and improved server management. If you're building custom integrations, MCP is becoming the standard plumbing.
+
+On the terminal side, [Kitty keyboard protocol](https://code.visualstudio.com/docs/terminal/advanced) support and `win32-input-mode` arrive alongside inline terminal output improvements. These changes make the terminal more capable as an agent interaction surface — which tracks with the multi-agent direction of the release.
+
+## What's Coming in 1.110 Insiders
+
+The [February 2026 Insiders build](https://code.visualstudio.com/updates/v1_110) previews what's next:
+
+- **`find_symbol` tool for Agent Mode** — language-aware symbol navigation across your entire codebase. Supported for C++, C#, Razor, TypeScript, and more. This makes agents significantly better at understanding your code structure.
+- **Claude agent improvements** — image attachments in chat prompts (multimodal input), subagent invocation rendering with progress streaming, and the ability to view terminal output from commands Claude runs.
+- **Context window usage control** — you can now see how much of the context window you've consumed, get recommendations, and manually compact conversations. Essential for long sessions.
+- **Large tool output handling** — outputs are saved to temporary files instead of stuffed into the context window, improving model accuracy on complex tasks.
+
+## The Bigger Picture
+
+This VS Code release doesn't exist in a vacuum. [Visual Studio 2026 v18.3](https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-notes) shipped Copilot unit testing for C# (.NET) as generally available — auto-generating, running, and fixing tests across xUnit, NUnit, and MSTest. [Agent HQ](https://github.blog/changelog/2026-02-04-github-copilot-in-visual-studio-code-v1-109-january-release) launched in public preview alongside the GitHub Copilot SDK. And the old GitHub Copilot extension was officially deprecated in favor of the unified GitHub Copilot Chat extension.
+
+Layer in [Copilot CLI shipping seven releases in ten days](/articles/copilot-cli-biggest-week-yet) and the [research showing 60-75% of developers feel more fulfilled](/articles/copilot-developer-fulfillment) using these tools, and a clear picture emerges: GitHub isn't building an AI assistant. They're building an AI development platform — and VS Code is the control plane.
+
+## What to Try First
+
+If you take one thing from this roundup: enable Copilot Memory and try a multi-agent session. Start a task with Copilot, let it delegate to subagents, and watch how the orchestration works. Then try Claude for comparison on the same task. The future of coding isn't picking one AI — it's orchestrating several. VS Code 1.109 is the first release that makes that feel real.
