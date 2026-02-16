@@ -1,0 +1,78 @@
+---
+title: "Agentic DevOps: The Next Evolution of Shift Left"
+description: "DevOps protected teams from velocity. Agentic AI creates velocity so extreme we need DevOps designed for agents, not humans."
+pubDate: 2026-02-16
+tags: ["AI", "DevOps", "GitHub Copilot", "Automation"]
+draft: false
+---
+
+## DevOps Was Built to Protect Us From Speed. Now Speed Has a New Definition.
+
+I fell in love with DevOps years ago. After cutting my teeth on software engineering and assembly code, then moving into consulting and cloud-based development, I discovered the real challenge wasn't writing condition statements — it was infrastructure, automation, resilience, and making systems bulletproof. DevOps gave me a framework for all of that.
+
+But over the past year, something clicked. Agentic AI isn't just another tool bolted onto the pipeline. It's fundamentally reshaping what "shift left" means — and it's doing it so aggressively that the DevOps practices I built my career on need to evolve. Not disappear. Evolve. When blockchain and other hyped technologies came along, I saw cool experiments. With AI, I see a cross-sectional revolution — one that touches every industry, every workflow, every team.
+
+Here's what that evolution actually looks like, and why I think **Agentic DevOps** is the concept every engineering team needs to understand right now.
+
+## What "Shift Left" Actually Means
+
+If you've been in the DevOps world, you've heard "shift left" a thousand times. But let me strip it back to basics because context matters for where we're going.
+
+DevOps is the cohesion between developers and operations. The main objective has always been to **shift left** — move testing, deployment, and validation earlier in the product lifecycle. Instead of deploying to production and then testing, you test before you even merge to main. Instead of waiting weeks to deploy, you deploy sooner to get feedback faster.
+
+The keyword driving all of this was **velocity**. Development teams needed to operate faster while maintaining quality. So we built quality gates, deployment gates, automated testing suites — unit tests, integration tests, automated UI/UX testing. All of these run automatically when changes come in, protecting the team from the risks that come with moving fast.
+
+The [2025 DORA report](https://cloud.google.com/devops/state-of-devops) confirms that this formula still works — teams with strong delivery throughput and stability metrics consistently outperform. But it also signals something new: AI is changing how we measure and achieve that performance. The old "low-medium-high-elite" clusters are gone, [replaced by archetypes](https://redmonk.com/rstephens/2025/12/18/dora2025/) that better capture how AI-augmented teams actually operate.
+
+DevOps gave us the tools to ship safely at speed. But what happens when "speed" goes from human pace to agent pace?
+
+## Agentic AI Is Shifting Everything Further Left
+
+Here's where it gets fascinating. Traditional DevOps lives in pipelines — automated tests in your PRs, CI/CD workflows, deployment gates. There's some local DevOps too: Docker, local test suites. But when we say "DevOps," we usually picture pipelines running somewhere in the cloud.
+
+With agentic AI, everything is shifting even more left — all the way into the development environment itself. Everything you'd need to test a product is right there in your development suite. It's no longer the separate phases of development, testing, and deployment. It's just *creating*.
+
+This is the realization that opened my eyes. I wrote about how [context engineering is the key to AI-assisted development](/articles/context-engineering-key-to-ai-development) — giving AI agents the right information at the right time. Agentic DevOps is the operational counterpart: giving AI agents the right *processes* at the right time. If context engineering defines what agents see, Agentic DevOps defines what agents can do — and what guardrails keep them safe.
+
+[Opsera's analysis of agentic DevOps in 2026](https://opsera.ai/blog/what-agentic-devops-really-means-for-engineering-teams-in-2026/) nails the distinction: the inner loop (writing and testing code) is already fast. The bottleneck has moved to the outer loop — approvals, policy checks, environment promotion, cross-tool handoffs. That outer loop is exactly where agents can operate autonomously, but only if we build the right DevOps infrastructure to support them.
+
+## What Agentic DevOps Actually Looks Like
+
+So what *is* Agentic DevOps? Two things:
+
+1. **DevOps processes designed to enable your agents** — not your humans, your agents
+2. **Processes that give humans decision power over those agents**
+
+That second point is critical. Agents operate at astronomical velocity. My [custom agents for GitHub Copilot](/articles/top-5-mistakes-creating-custom-github-copilot-agents) can research, validate, and generate content faster than I can read the output. A coding agent can open a PR, write tests, and push changes while I'm still thinking about the architecture. That speed is the point — but it's also the risk.
+
+> DevOps was a tool we used to protect us from velocity. With agentic development, we need a new tool to protect us from the much higher velocity.
+
+Unit tests and integration tests are great. But I think we need more:
+
+- **Automated black-box testing** — agents testing the system from the outside, like a user would
+- **Automated UI/UX testing** — visual and interaction validation without human eyes
+- **Automated requirements testing** — this one is the game-changer
+
+Requirements verification has always been a purely human endeavor. A backlog of items, a human reviewing them, passing or failing. It's deeply humanistic. But agents can now qualify requirements and verify they've been met. [NVIDIA's HEPH framework](https://developer.nvidia.com/blog/building-ai-agents-to-automate-software-test-case-creation/) already demonstrates AI agents generating test cases directly from requirements documentation, automating what was always considered impossible to automate. [UiPath's agentic testing approach](https://www.uipath.com/ai/what-is-agentic-testing) takes it further — agents that don't just execute tests but generate, adapt, and evolve test suites across the full testing lifecycle.
+
+This is a fundamental shift in what we consider automatable. And it means the definition of "quality gate" is about to expand dramatically.
+
+## The Ultimate Shift Left: Testing in Production
+
+Here's the vision that makes people uncomfortable: what if an agent could make changes, test integration, deploy to a micro environment, *and* test in live production?
+
+Before you dismiss it, consider this — GitHub already does it. They've been using [branch deployments](https://github.blog/2023-02-02-enabling-branch-deployments-through-issueops-with-github-actions/) for years, deploying PRs to production *before* they're merged. Feature flags gate the exposure, live production tests validate the changes, and only after passing do they get merged. The [branch-deploy GitHub Action](https://github.com/github/branch-deploy) makes this pattern available to any team.
+
+Now imagine giving that entire workflow to an agent. You express an idea — a requirement, a feature request, even a rough sketch. The agent implements it, writes tests, deploys to a branch environment, runs production validation, and reports back. You review results instead of code. You focus on *what* to build instead of *how* to build it.
+
+> You can just throw ideas because the validity of the implementation can be completely owned by the agent.
+
+That's the ultimate shift left. The human focuses on requirements and vision. The agent handles implementation, validation, and even production verification. As I discussed in [how agentic AI is transforming development teams](/articles/building-the-future-with-ai), we're moving from a world where development was the bottleneck to one where the bottleneck is knowing what to build and for whom.
+
+## The Bottom Line
+
+Agentic DevOps isn't a rebrand of what we already have. It's a new discipline — one that designs pipelines, gates, and validation for agents operating at machine speed, while keeping humans in control of the decisions that matter.
+
+The teams that get this right will ship faster, catch issues earlier, and free their engineers to focus on product thinking instead of pipeline babysitting. The teams that don't will discover the hard way that giving agents unlimited velocity without proper guardrails is just chaos with extra steps.
+
+Start with your existing DevOps foundation. Then ask: if an agent were running this workflow instead of a human, what breaks? That question is where Agentic DevOps begins.

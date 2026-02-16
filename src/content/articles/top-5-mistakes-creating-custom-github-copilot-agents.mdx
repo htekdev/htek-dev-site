@@ -1,0 +1,106 @@
+---
+title: "Top 5 Mistakes When Creating Custom Agents for GitHub Copilot"
+description: "I built a multi-agent system and learned the hard way. Here are the mistakes that'll sink your custom GitHub Copilot agents before they ship."
+pubDate: 2026-02-16
+tags: ["GitHub Copilot", "AI", "Multi-Agent Systems", "Developer Experience"]
+draft: false
+---
+
+## I Built a 4-Agent System. Here's What Broke First.
+
+I recently built a multi-agent article-writing system for this blog: four specialized agents working together — `article-writer`, `fact-extractor`, `link-vetter`, and `synthesizer`. Each one had a clearly defined job. Each one had access to exactly the tools it needed. And each one had detailed instructions explaining how to do its work.
+
+Except one of those agents — the article-writer — had instructions so detailed and verbose that it lost sight of its actual objective. I gave it 15 pages of guidance on formatting, fact-checking, tone matching, source attribution, and audience targeting. The result? Paralysis. The agent got so caught up in the minutiae that it forgot to write compelling articles. That failure taught me something: building effective [custom agents for GitHub Copilot](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents) requires discipline, focus, and brutal editing — not more detail.
+
+Most custom agents fail not because the underlying model is weak, but because developers skip the hard parts: clear scoping, context management, real-world testing, and error handling. Here are the five mistakes I see over and over — mistakes I've made myself.
+
+## Mistake #1: Over-Engineering Your Instructions
+
+"More detail equals better results" sounds logical. It's also a trap. When I first wrote instructions for my article-writer agent, I thought comprehensive meant better. I documented every edge case, every formatting rule, every possible writing scenario. The instructions ballooned to thousands of words. The agent's performance got worse.
+
+Here's the reality: [GitHub custom agents have a 30,000 character limit](https://docs.github.com/en/copilot/reference/custom-agents-configuration) for instructions. That sounds generous until you realize that every character you add competes for the model's attention. Research on [context rot in AI systems](https://medium.com/ai-pace/context-engineering-mitigating-context-rot-in-ai-systems-21eb2c43dd18) shows that as you feed more tokens, the model's ability to recall and act on critical information diminishes. Your instructions aren't stored in perfect memory — they're part of a probabilistic attention mechanism.
+
+[Anthropic's prompt engineering guidance](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-4-best-practices) is explicit: "be explicit" does not mean "be verbose." Every word should earn its place. Research backs this up — studies show that [eliminating unnecessary words can generate equally good, if not better, outcomes](https://medium.com/ai-pace/context-engineering-mitigating-context-rot-in-ai-systems-21eb2c43dd18). When your instructions ramble, the model struggles to extract the signal from the noise.
+
+I rewrote my article-writer's instructions from 5,000 words down to 800. I cut every example that didn't add new information. I removed every sentence that rephrased an earlier point. Performance improved immediately. The agent stopped hedging, stopped overthinking, and started delivering.
+
+If you're building custom agents, treat your instructions like production code: ruthlessly refactor, apply the single responsibility principle, and use [prompt compression techniques](https://gist.ly/youtube-summarizer/mastering-prompt-compression-the-lazy-and-technical-methods) where appropriate. Clarity beats comprehensiveness every time.
+
+## Mistake #2: Building God Agents Instead of Focused Agents
+
+My article-writing system works because I decomposed it. I didn't build one "super-agent" that researches, fact-checks, writes, edits, and publishes. I built four specialized agents, each with a single responsibility:
+
+- **fact-extractor**: Pulls verified claims from research materials
+- **link-vetter**: Validates URLs for accessibility and relevance
+- **synthesizer**: Composes the final article from vetted inputs
+- **article-writer**: Orchestrates the full workflow
+
+This isn't accidental. [GitHub's own documentation emphasizes](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-custom-agents) that custom agents are "specialized versions" of Copilot, not general-purpose replacements. They're designed for focused tasks with clear boundaries. When you try to make a single agent handle everything, you recreate the god prompt antipattern I wrote about in [Your "God Prompt" Is the New Monolith](/articles/your-god-prompt-is-the-new-monolith).
+
+The industry has landed on this same principle independently. [EPAM's research on agent architectures](https://www.epam.com/insights/ai/blogs/single-responsibility-agents-and-multi-agent-workflows) shows that "each agent should have one clearly defined purpose." [Microsoft's guidance on single vs. multi-agent trade-offs](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ai-agents/single-agent-multiple-agents) walks through when to decompose and when to stay simple. The answer depends on your complexity, but the default should be focused agents.
+
+Here's the mental model I use: if you wouldn't put this logic in the same microservice, don't put it in the same agent. [VS Code's "Feature Builder" pattern](https://code.visualstudio.com/docs/copilot/customization/custom-agents) demonstrates orchestration in practice — one agent coordinates multiple specialists. You can scope tool access precisely using [the `tools` array in your agent config](https://docs.github.com/en/copilot/reference/custom-agents-configuration), ensuring each agent only sees the tools it needs.
+
+The decision framework is clear: go single-agent when your task is straightforward and doesn't branch conditionally. Go multi-agent when specialists need to improve independently, workflows require different expertise, or you're hitting reliability issues from trying to cram too much into one context window. [Agent architecture patterns](https://agentsarcade.com/blog/choosing-single-agent-vs-multi-agent-architectures) like Router, Supervisor, Pipeline, and Hierarchical give you proven templates for composition.
+
+## Mistake #3: Ignoring Context Window Reality
+
+Developers treat context windows like infinite memory. They're not. When I started building my multi-agent system, I assumed I could feed each agent the full research corpus, all vetted links, the entire article outline, and every style guide rule. That assumption broke instantly.
+
+Context windows vary widely by model: [GPT-4o offers 128K tokens, Claude Opus 4 provides 200K, and Gemini 2.0 Flash extends to 400K+](https://codingscape.com/blog/llms-with-largest-context-windows). Those numbers sound huge until you're working with real data. A single research paper can consume 10K+ tokens. A codebase README might be 5K. Your agent's instructions are already eating 2K. Suddenly, that 128K window feels cramped.
+
+Worse, a context window isn't "working memory" in the human sense. It's [probabilistic attention over a token sequence](https://www.tokentally.co/blog/context-window-explained). The model doesn't have perfect recall of everything in context — it has learned patterns for which parts of the context are likely to matter. As [I wrote about in my article on context engineering](/articles/context-engineering-key-to-ai-development), the quality of AI output directly depends on what the model can see and how that information is structured.
+
+When you hit context limits, you need strategies: chunking long documents, summarizing older conversation turns, selective retrieval instead of dumping everything. [Context optimization research](https://reintech.io/blog/llm-context-window-optimization-strategies-long-document-processing) shows that techniques like hierarchical summarization and relevance filtering can maintain performance while staying under token budgets. [Agenta.ai's guide to managing context length](https://agenta.ai/blog/top-6-techniques-to-manage-context-length-in-llms) outlines six practical approaches, from prompt compression to retrieval-augmented generation.
+
+I redesigned my fact-extractor to return structured summaries instead of full-text excerpts. I built my link-vetter to output categorized lists instead of verbose explanations. I trained my synthesizer to work with condensed inputs. These changes weren't compromises — they were necessities. [GPT-5.1's efficiency improvements](https://developers.openai.com/cookbook/examples/gpt-5/gpt-5-1_prompting_guide/) show the industry moving toward better token consumption, but the fundamental constraint remains.
+
+Design for the context limit you have, not the one you wish you had. [Choosing the right LLM based on context window size](https://unstructured.io/insights/choosing-the-right-llm-a-guide-to-context-window-sizes) matters, but good architecture matters more.
+
+## Mistake #4: Skipping Real-World Testing
+
+AI agents are non-deterministic. That breaks traditional testing assumptions. You can't write a unit test that asserts "the agent returns exactly this string" because the agent might return a semantically equivalent but textually different response on the next run. This reality trips up every team I've seen try to test custom agents.
+
+[Anthropic's engineering team puts it clearly](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents): "Without good evaluations, teams get stuck in reactive loops — catching issues only in production." The autonomy, intelligence, and flexibility that make agents useful also make them [harder to evaluate](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents). You need a different testing paradigm.
+
+The shift is from execution checks to **behavioral validation**. Instead of asking "Did the agent return this exact output?" you ask "Did the agent choose the right action at the right time?" [Galileo AI's guide to agent testing](https://galileo.ai/learn/ai-observability/ai-agent-testing-behavioral-validation) frames this distinction well: verifying that a function executed isn't the same as verifying it was the right function to run right now.
+
+Here's what I actually do when testing my agents:
+
+- **Pass^k methodology**: Run critical tests multiple times. [Cresta's practical guide to AI agent testing](https://cresta.com/blog/when-to-use-what-a-practical-guide-to-ai-agent-testing-and-evaluation) explains why — non-determinism means a single test run proves nothing. Run the same prompt five times. If it succeeds four times and fails once, you have a reliability problem.
+
+- **Edge case hunting**: I deliberately feed my agents malformed inputs, missing data, conflicting instructions. [TestRigor's guide to edge test cases](https://testrigor.com/blog/what-are-edge-test-cases/) applies to AI systems just as much as traditional software. The difference is that AI agents often fail gracefully in ways that look like success until you inspect the output closely.
+
+- **Real-world inputs, not sanitized examples**: I don't test with perfect, well-formatted data. I test with messy URLs, ambiguous research claims, and conflicting source material — the kind of inputs my agents will actually see in production.
+
+Research validates this approach. An [empirical study on AI agent development](https://arxiv.org/html/2509.19185v2) found "limited understanding of how developers verify correct functioning" of agents. The industry is still figuring this out. But [Hitachi Solutions' practical guide](https://www.hitachi-solutions.co.uk/blog/2025/08/how-to-test-ai-agents-effectively-a-practical-guide-for-digital-solution/) identifies four dimensions worth testing: accuracy, compliance, consistency, and trust. The [reactive cycle anti-pattern](https://www.xugj520.cn/en/archives/ai-agent-evaluations-guide-2025.html) — where you only discover agent failures after users complain — is what kills confidence in AI systems.
+
+Test behavior. Test with real inputs. Test pass^k times. That's the only way to know your agents work.
+
+## Mistake #5: Missing Error Handling and Graceful Degradation
+
+December 12, 2024. OpenAI went down for four hours. [Claude 3.5 Sonnet and Gemini Flash 1.5 were basically unusable](https://medium.com/@mota_ai/building-ai-that-never-goes-down-the-graceful-degradation-playbook-d7428dc34ca3). Every AI agent that depended on a single provider collapsed. The teams that survived were the ones that built fallback paths.
+
+This isn't theoretical. I watched production systems go dark because developers assumed their LLM API would always be available. They didn't implement retries. They didn't add circuit breakers. They didn't design degradation paths. When the API went down, their agents stopped working entirely.
+
+The [SHIELDA framework](https://arxiv.org/abs/2508.07935) offers a structured approach: trace execution-phase exceptions back to reasoning-phase root causes. That's critical because AI agent errors aren't always execution failures — sometimes the agent makes a bad decision upstream that manifests as a downstream crash. Traditional exception handling doesn't capture that.
+
+Real-world case studies prove the value of resilience patterns. One team documented [847 cascading failures before implementing a multi-layer resilience pattern](https://www.linkedin.com/pulse/building-production-ready-ai-agents-multi-layer-pattern-afolabi-iubme). After? Zero. The difference: circuit breakers, timeout enforcement, fallback strategies, and health checks. [DEV.to's guide to production-grade AI agents](https://dev.to/akshaygupta1996/production-grade-ai-agents-architecture-patterns-that-actually-work-19h) walks through the circuit breaker pattern in detail — when an LLM repeatedly fails, stop calling it and return a cached response or simplified output instead.
+
+[LLM-friendly error handling for MCP servers](https://medium.com/@kumaran.isk/llm-friendly-error-handling-designing-mcp-servers-for-ai-df427f6dfd2f) emphasizes that error messages themselves need to be designed for AI consumption. A stack trace might be useful for a human developer, but an agent needs structured, actionable error information it can reason about.
+
+I redesigned my agents to fail gracefully. If my link-vetter can't reach a URL, it returns a partial result with a warning instead of crashing the entire pipeline. If my fact-extractor times out on a slow API, it works with cached data. If my synthesizer can't access the primary LLM, it falls back to a smaller, faster model with adjusted expectations. These patterns follow [Vatsal Shah's 10 best practices for reliable AI agents](https://vatsalshah.in/blog/10-best-practices-reliable-ai-agents).
+
+The [graceful degradation playbook](https://medium.com/@mota_ai/building-ai-that-never-goes-down-the-graceful-degradation-playbook-d7428dc34ca3) is simple: design for partial functionality under failure. A degraded agent that delivers 70% value is better than a crashed agent that delivers zero.
+
+## Build With Discipline, Not Just Detail
+
+These five mistakes are avoidable. Over-engineering instructions, building god agents, ignoring context limits, skipping real-world testing, and missing error handling all share a root cause: treating custom agents like magic instead of software.
+
+Custom agents aren't magic. They're software. They need clear requirements, scoped responsibilities, resource constraints, comprehensive testing, and failure modes. The agents that survive production are the ones built with those principles baked in from day one.
+
+The tooling is maturing fast. [GitHub Copilot Extensions](https://docs.github.com/en/copilot/how-tos/build-copilot-extensions/setting-up-copilot-extensions) give you a platform. The [Model Context Protocol (MCP)](https://docs.github.com/en/copilot/concepts/about-mcp) standardizes how agents access context. [Agent Mode 101](https://github.blog/ai-and-ml/github-copilot/agent-mode-101-all-about-github-copilots-powerful-mode/) shows what's possible. The [Awesome Copilot community repo](https://github.com/github/awesome-copilot) collects patterns and examples. [GitHub's best practices guide](https://docs.github.com/en/copilot/tutorials/coding-agent/get-the-best-results) gives you a starting point.
+
+But none of that tooling will save you from these five mistakes. You have to build with discipline: focused instructions, single-responsibility agents, context-aware design, behavioral testing, and resilient error handling.
+
+The agents I trust in production are the ones that respect constraints, focus on one job, and fail gracefully. They're the ones I built after learning these lessons the hard way. Build yours the same way — and they'll work when the LLM API goes down.
