@@ -74,29 +74,36 @@ const result = await harness.runAgent({
 // result.iterations tracks every step for observability
 ```
 
-The `allowedTools` guardrail blocks any tool not in the list — *before* execution. In my tests, when the LLM tried calling `execute_sql` (not in the allowlist), the harness intercepted it, sent a `[BLOCKED]` message back to the LLM, and the agent adapted. That's control at every iteration, not just at the boundary.
+The `allowedTools` guardrail blocks any tool not in the list — *before* execution. In my tests, when the LLM tried calling `execute_sql` (not in the allowlist), the harness intercepted it, sent a `[BLOCKED]` message back to the LLM, and the agent adapted its approach without human intervention. That's control at every iteration, not just at the boundary.
 
-### Plan-Then-Execute With Harness Control
+### What Happens Inside the Loop
 
-The most compelling pattern I found was **plan-then-execute** with two harnesses. A planning harness generates a remediation plan (reasoning only, no tools, single iteration). An execution harness then works through each step using tools, with the harness validating every action:
+Here's the part that took me the longest to get right. My first version of the harness wrapped a single function call — `harness.run(myAgentFn)`. Pre-guardrails, execute, post-guardrails. It worked, but it was middleware, not a harness. The agent could do whatever it wanted *inside* that function call. The harness was blind to it.
+
+The real design runs the loop itself. Each iteration follows the same cycle:
+
+1. **Check budgets** — has the agent exceeded its time, cost, or iteration limit?
+2. **Compact context** — is the conversation approaching the token ceiling? If so, compress it automatically.
+3. **Call the LLM** — send the accumulated conversation with tool definitions.
+4. **Inspect the response** — check the output against blocked patterns. If the LLM says `DROP TABLE`, the iteration is killed before anything executes.
+5. **Validate tool calls** — if the LLM requests a tool, check it against the allowlist. Blocked tools get a `[BLOCKED by harness]` message injected back into the conversation so the agent can adapt.
+6. **Execute approved tools** — run the tool, then check the *output* against blocked patterns too. A tool that returns secrets gets caught here.
+7. **Feed results back** — add the tool output to the conversation and loop back to step 1.
+
+When the LLM finally responds without requesting tools, the harness runs post-guardrails, compliance rules, and the review gate on the final output. The `result.iterations` array gives you full observability into every step — what tools were called, which were blocked, how many tokens each iteration consumed.
 
 ```typescript
-// Phase 1: Plan (1 iteration, no tools)
-const plan = await planHarness.runAgent({
-  systemPrompt: 'Create a 5-step security remediation plan.',
-  input: 'Fix auth issues in this Express app.',
-});
-
-// Phase 2: Execute (harness-controlled tool loop)
-const result = await execHarness.runAgent({
-  systemPrompt: 'Execute the plan using available tools.',
-  input: plan.output,
-  tools: [listFiles, readFile, applyFix, runTests],
-});
-// 9 iterations: read → fix → fix → fix → test → verify → done
+// After the run, inspect what actually happened:
+for (const iter of result.iterations) {
+  console.log(`Iteration ${iter.iteration}:`, iter.final ? 'FINAL' : 'CONTINUE');
+  for (const tc of iter.toolCalls) {
+    console.log(`  ${tc.allowed ? '✅' : '🛑'} ${tc.tool}`, tc.blockedReason ?? '');
+  }
+  console.log(`  Tokens: ${iter.tokens}`);
+}
 ```
 
-In my live test against a simulated codebase, the agent applied 5 fixes (JWT auth, parameterized queries, removed hardcoded credentials), ran tests to verify, and provided a summary — all within harness guardrails. When it tried to create a file outside the allowed set, the tool returned an error and the agent adapted its approach. That's the harness doing its job.
+In the security review example, the agent ran 4 iterations — listing files, reading source code, searching for secrets, then delivering a structured review. Each tool call was validated. The total cost, token count, and duration were tracked across the full loop, not just the final call. That's the difference between "I called an LLM" and "I controlled an agent."
 
 ### Multi-Provider With Zero-Config Credentials
 
