@@ -1,0 +1,112 @@
+---
+title: "Agent Harnesses: Why 2026 Isn't About More Agents — It's About Controlling Them"
+description: "Enterprises average 12 AI agents with only 27% connected. The real engineering challenge isn't building agents — it's the harness that governs them."
+pubDate: 2026-02-16
+tags: ["AI", "Software Architecture", "Multi-Agent Systems", "DevOps"]
+draft: false
+---
+
+## The Agent Sprawl Problem Nobody Talks About
+
+Here's a number that should concern every engineering leader: the average enterprise now deploys **12 AI agents**, and that number is projected to hit 20 by 2027. But according to [Salesforce's 2026 Connectivity Benchmark](https://www.ciodive.com/news/it-leaders-grapple-ai-agent-sprawl-integration/811411), only **27% of those agents are connected** to the rest of the stack. The other 73%? Shadow agents — unmonitored, ungoverned, and accumulating technical debt faster than anyone wants to admit.
+
+Microsoft's own telemetry tells a similar story: over 80% of Fortune 500 companies have active AI agents, many built with low-code tools by teams that never coordinated with platform engineering. [Gartner is already calling for AI Agent Management Platforms](https://www.parloa.com/guides-ebooks-and-reports/gartner-ai-agent-sprawl) to contain the sprawl.
+
+We solved "how to build agents" in 2025. The real engineering challenge of 2026 isn't building more agents — it's building the infrastructure that controls them. That infrastructure has a name: the **agent harness**.
+
+## What Is an Agent Harness?
+
+An agent harness is the control plane that wraps around an AI agent's execution. It doesn't replace your agent framework — it governs it. Think of it as the difference between writing a container and running Kubernetes. The container does the work; the orchestrator decides *if*, *when*, and *how* that work is allowed to happen.
+
+[Anthropic's engineering team describes it well](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents): the harness manages the agent's lifecycle, context window, tool access, and safety boundaries. It's the software that sits between the LLM and the outside world, making decisions the model itself can't make — like "should this tool call be allowed?" or "has this agent burned through its cost budget?"
+
+This is distinct from agent frameworks like LangChain or CrewAI, which help you *build* agents. As [Analytics Vidhya's taxonomy](https://www.analyticsvidhya.com/blog/2025/12/agent-frameworks-vs-runtimes-vs-harnesses) puts it: frameworks provide building blocks, runtimes execute workflows, but harnesses enforce control. If you've ever built a [god prompt that tried to do everything](/articles/your-god-prompt-is-the-new-monolith), you already know why that separation matters.
+
+## Agent Sprawl Is the New Technical Debt
+
+We've seen this movie before. A decade ago, every team spun up microservices without coordination, and we ended up with service meshes, API gateways, and platform teams to contain the sprawl. Agent sprawl follows the same pattern — except the blast radius is worse because agents make autonomous decisions.
+
+The parallel is precise: microservices sprawl → service mesh, agent sprawl → agent harness. Without centralized governance, you get inconsistent safety policies, duplicated LLM spend, unmonitored tool access, and compliance gaps that no audit can catch after the fact. If you're already thinking about [how agentic systems change your DevOps practice](/articles/agentic-devops-next-evolution-of-shift-left), the harness is where that thinking becomes code.
+
+## CNCF's Four Pillars of Platform Control
+
+The [CNCF's 2026 forecast](https://www.cncf.io/blog/2026/01/23/the-autonomous-enterprise-and-the-four-pillars-of-platform-control-2026-forecast) lays out a framework I keep coming back to: the **Four Pillars of Platform Control**. Originally written for autonomous infrastructure, they map perfectly to agent management:
+
+1. **Golden Paths** — curated, pre-approved configurations. For agents, this means blessed model/provider combos, approved tool sets, and standardized harness configs that teams inherit instead of inventing from scratch.
+2. **Guardrails** — hard policy enforcement that can't be overridden. Cost ceilings, duration limits, blocked output patterns, tool allowlists. The agent doesn't get to negotiate.
+3. **Safety Nets** — automated recovery when things go wrong. Retry with exponential backoff, fallback responses, circuit breakers. The system degrades gracefully instead of failing loudly.
+4. **Manual Review** — human-in-the-loop gates for high-stakes decisions. When the agent's confidence is low or the output touches sensitive systems, a human approves before it ships.
+
+The key insight is that these pillars work together. Golden paths reduce the surface area that guardrails need to cover. Safety nets catch what guardrails miss. Manual review handles the edge cases that automation can't.
+
+## Building It: `@htekdev/agent-harness`
+
+I didn't want to just write about agent harnesses — I wanted to build one. So I created [`@htekdev/agent-harness`](https://github.com/htekdev/agent-harness), a TypeScript library that implements all four CNCF pillars. Here's what I learned.
+
+### The Harness Must Own the Loop
+
+My first version wrapped a single function call with pre/post guardrails. It worked, but it wasn't a harness — it was middleware. A real agent harness **owns the agentic loop**: the agent thinks, proposes an action, and the harness decides whether that action executes. Every iteration gets checked against budgets, policies, and safety rules.
+
+```typescript
+const result = await harness.runAgent({
+  systemPrompt: 'You are a security engineer reviewing code.',
+  input: 'Review the /src directory for vulnerabilities.',
+  tools: [listFiles, readFile, searchCode, applyFix],
+});
+
+// The harness controlled 4 iterations:
+// 1. list_files → discovered project structure
+// 2. read_file ×3 → read auth, users, db source
+// 3. search_code → found hardcoded secrets
+// 4. final answer → security review with findings
+// result.iterations tracks every step for observability
+```
+
+The `allowedTools` guardrail blocks any tool not in the list — *before* execution. In my tests, when the LLM tried calling `execute_sql` (not in the allowlist), the harness intercepted it, sent a `[BLOCKED]` message back to the LLM, and the agent adapted. That's control at every iteration, not just at the boundary.
+
+### Plan-Then-Execute With Harness Control
+
+The most compelling pattern I found was **plan-then-execute** with two harnesses. A planning harness generates a remediation plan (reasoning only, no tools, single iteration). An execution harness then works through each step using tools, with the harness validating every action:
+
+```typescript
+// Phase 1: Plan (1 iteration, no tools)
+const plan = await planHarness.runAgent({
+  systemPrompt: 'Create a 5-step security remediation plan.',
+  input: 'Fix auth issues in this Express app.',
+});
+
+// Phase 2: Execute (harness-controlled tool loop)
+const result = await execHarness.runAgent({
+  systemPrompt: 'Execute the plan using available tools.',
+  input: plan.output,
+  tools: [listFiles, readFile, applyFix, runTests],
+});
+// 9 iterations: read → fix → fix → fix → test → verify → done
+```
+
+In my live test against a simulated codebase, the agent applied 5 fixes (JWT auth, parameterized queries, removed hardcoded credentials), ran tests to verify, and provided a summary — all within harness guardrails. When it tried to create a file outside the allowed set, the tool returned an error and the agent adapted its approach. That's the harness doing its job.
+
+### Multi-Provider With Zero-Config Credentials
+
+The library ships with providers for OpenAI, Anthropic, GitHub Models, and GitHub Copilot. The GitHub Models provider is model-agnostic — you can run `openai/gpt-4o` through it today, or swap to any model in the [GitHub Models catalog](https://models.github.ai/catalog/models). The credential resolver auto-discovers tokens from six sources (env vars, config files, `gh` CLI, OS keychain) so there's no manual setup on developer machines.
+
+### Testing Behavior, Not Execution
+
+The library has 220 tests across four tiers, but the **eval tests** taught me the most. Unit tests verify that code runs. Eval tests verify that guardrails *actually block dangerous output* and that escalation triggers on the right confidence thresholds. That distinction — testing behavior vs. testing execution — is exactly what separates a production harness from a weekend prototype. If you're building agents and only testing happy paths, you're missing the point. I've written about [common mistakes when building custom agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents) before, and inadequate testing is always near the top.
+
+## What This Means for Engineers
+
+If you're running agents in production — or about to — here's what I'd do:
+
+1. **Inventory your agents.** You probably have more than you think, especially if non-engineering teams have been building with low-code tools.
+2. **Define governance boundaries.** Which tools can agents call? What's the cost ceiling? Who gets paged when confidence is low?
+3. **Instrument observability at the iteration level.** Knowing an agent "succeeded" isn't enough. You need to see every tool call, every token spent, every guardrail check — per iteration.
+4. **Start with golden paths.** Give teams a blessed harness config and let them customize within those boundaries. It's faster than auditing freeform agent deployments after the fact.
+
+Some will argue this is over-engineering. The same was said about Kubernetes when people were happily running Docker on VMs. Your agent fleet needs the same discipline as your container fleet — the consequences of ungoverned autonomy are just harder to see until something goes wrong.
+
+## The Bottom Line
+
+Agents without harnesses are prototypes. The harness is what turns "cool demo" into "production system" — the same way a container runtime turns an application into something you can actually deploy, monitor, and trust. The companies winning with AI in 2027 won't be the ones with the most agents. They'll be the ones with the best harnesses.
+
+The full library is open source at [github.com/htekdev/agent-harness](https://github.com/htekdev/agent-harness). It's ~2,000 lines of TypeScript, zero external SDK dependencies, and built to be forked. If you're building agent infrastructure, I'd love to see what you do with it.
