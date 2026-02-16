@@ -7,6 +7,10 @@ import rehypeWrapTables from './src/plugins/rehype-wrap-tables.mjs';
 
 export default defineConfig({
   site: 'https://htek.dev',
+  trailingSlash: 'never',
+  build: {
+    format: 'file',
+  },
   markdown: {
     rehypePlugins: [rehypeWrapTables],
   },
