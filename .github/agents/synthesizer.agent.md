@@ -16,6 +16,9 @@ You will be given:
 2. **Vetted links** — URLs confirmed working with descriptive context (from link-vetter)
 3. **Article topic** — the subject and angle for the article
 4. **User notes/direction** — any specific guidance, audience, or emphasis from the user
+5. **User's thesis/opinion** — the specific stance or argument Hector wants to make (from topic discovery conversation)
+6. **Personal experiences** — hands-on stories, tools used, projects referenced that Hector wants woven in (from source discovery conversation)
+7. **Approved outline** — the section-by-section structure the user reviewed and approved before research began
 
 ## Before Writing
 
@@ -25,6 +28,16 @@ You will be given:
 ## Article Construction Requirements
 
 Follow every requirement from the style guide. Key non-negotiables:
+
+### Personal Perspective (CRITICAL)
+
+This is NOT a generic research summary. Hector's personal voice, experiences, and opinions must be woven throughout — not bolted on at the end. Follow these rules:
+
+- **Lead with opinion** — each section should start with Hector's take, then back it up with facts
+- **Weave experiences naturally** — when the user provided personal stories or hands-on experience, integrate them as first-person anecdotes within relevant sections (e.g., "When I migrated 500+ repos at scale, I learned...")
+- **Use the approved outline** — follow the section structure the user approved; don't reorganize
+- **Match the user's emphasis** — if they said "focus more on X, less on Y", respect that weighting
+- **Opinions are features, not bugs** — don't soften every stance with "it depends." Take the position the user stated in their thesis
 
 ### Frontmatter
 - Proper MDX frontmatter with `title`, `description`, `pubDate`, `tags`, and `draft` fields
