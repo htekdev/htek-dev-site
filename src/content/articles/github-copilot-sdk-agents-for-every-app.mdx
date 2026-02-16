@@ -1,0 +1,284 @@
+---
+title: "The GitHub Copilot SDK: Agents for Every App"
+description: "GitHub's Copilot SDK lets you embed production-grade AI agents in any app with a few lines of code. Here's how it works, with real examples."
+pubDate: 2026-02-16
+tags:
+  - GitHub Copilot
+  - AI
+  - Developer Experience
+  - Open Source
+draft: false
+---
+
+## Copilot Just Became a Library
+
+GitHub shipped something big on January 22, 2026, and it wasn't another chat feature. The [GitHub Copilot SDK](https://github.com/github/copilot-sdk) takes the exact same agentic engine powering [Copilot CLI](/articles/copilot-cli-biggest-week-yet) — the agent loop that plans, invokes tools, edits files, and manages context — and packages it as a programmable SDK for TypeScript, Python, Go, and .NET.
+
+That's 7,100+ stars in under a month. The repo is seeing multiple commits *per day* from GitHub engineers and community contributors. This isn't a research prototype — it's the production agent runtime, extracted and made embeddable.
+
+In this article, I'll walk through what the SDK actually does, show you code in multiple languages, highlight real apps people are already building, and cover the rapid development pace that makes this worth watching right now.
+
+## What the SDK Actually Does
+
+The Copilot SDK communicates with the Copilot CLI running in server mode via JSON-RPC. Your application talks to the SDK, the SDK talks to the CLI, and the CLI handles all the complex orchestration — model selection, tool invocation, context management, file operations, and more.
+
+```
+Your Application
+       ↓
+  SDK Client
+       ↓ JSON-RPC
+  Copilot CLI (server mode)
+```
+
+This architecture means you don't build your own agent loop. You don't manage context windows. You don't wire up tool execution pipelines. You just define what your agent should do, and Copilot handles the rest. If you've read [my breakdown of AI SDKs](/articles/choosing-the-right-ai-sdk), this is what makes the Copilot SDK distinct — it's not a thin wrapper around an LLM API. It's a full agent runtime with battle-tested orchestration.
+
+> The SDK exposes the same engine behind Copilot CLI: a production-tested agent runtime you can invoke programmatically.
+
+## Getting Started in 30 Seconds
+
+Installation is one command in any ecosystem:
+
+```bash
+npm install @github/copilot-sdk         # Node.js / TypeScript
+pip install github-copilot-sdk           # Python
+go get github.com/github/copilot-sdk/go  # Go
+dotnet add package GitHub.Copilot.SDK    # .NET
+```
+
+You need the [Copilot CLI](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli) installed and a GitHub Copilot subscription — though the SDK also supports **BYOK (Bring Your Own Key)** if you want to point it at OpenAI, Azure OpenAI, Anthropic, or even local models like Ollama.
+
+## Code Walkthrough: TypeScript
+
+Here's a complete working example that creates an agent session, sends a message, and streams the response:
+
+```typescript
+import { CopilotClient } from "@github/copilot-sdk";
+
+const client = new CopilotClient();
+await client.start();
+
+const session = await client.createSession({
+    model: "gpt-5",
+    streaming: true,
+});
+
+session.on("assistant.message_delta", (event) => {
+    process.stdout.write(event.data.deltaContent);
+});
+
+const response = await session.sendAndWait({
+    prompt: "Explain the builder pattern in TypeScript",
+});
+
+await session.destroy();
+await client.stop();
+```
+
+That's it. No prompt templates. No tool orchestration boilerplate. No context window management. The SDK handles session lifecycle, streaming, and cleanup.
+
+### Custom Tools
+
+Where it gets powerful is custom tools. You define what capabilities your agent has, and the SDK handles the invocation loop automatically:
+
+```typescript
+import { z } from "zod";
+import { CopilotClient, defineTool } from "@github/copilot-sdk";
+
+const session = await client.createSession({
+    model: "gpt-5",
+    tools: [
+        defineTool("lookup_issue", {
+            description: "Fetch issue details from our tracker",
+            parameters: z.object({
+                id: z.string().describe("Issue identifier"),
+            }),
+            handler: async ({ id }) => {
+                const issue = await fetchIssue(id);
+                return issue;
+            },
+        }),
+    ],
+});
+```
+
+When the model decides it needs issue data, it calls your handler, gets the result, and continues reasoning. You wrote a function. Copilot made it agentic.
+
+## Code Walkthrough: Python
+
+The Python SDK uses async/await natively and supports Pydantic for type-safe tool definitions:
+
+```python
+import asyncio
+from pydantic import BaseModel, Field
+from copilot import CopilotClient, define_tool
+
+class LookupParams(BaseModel):
+    id: str = Field(description="Issue identifier")
+
+@define_tool(description="Fetch issue details")
+async def lookup_issue(params: LookupParams) -> str:
+    issue = await fetch_issue(params.id)
+    return issue.summary
+
+async def main():
+    client = CopilotClient()
+    await client.start()
+
+    session = await client.create_session({
+        "model": "gpt-5",
+        "tools": [lookup_issue],
+    })
+
+    result = await session.send_and_wait({
+        "prompt": "Triage the latest open issues"
+    })
+
+    await session.destroy()
+    await client.stop()
+
+asyncio.run(main())
+```
+
+The `@define_tool` decorator with Pydantic models generates JSON schemas automatically — no manual schema writing required.
+
+## Code Walkthrough: .NET
+
+The .NET SDK integrates with `Microsoft.Extensions.AI` for tool definitions and follows idiomatic C# patterns:
+
+```csharp
+using GitHub.Copilot.SDK;
+using Microsoft.Extensions.AI;
+using System.ComponentModel;
+
+await using var client = new CopilotClient();
+await client.StartAsync();
+
+await using var session = await client.CreateSessionAsync(new SessionConfig
+{
+    Model = "gpt-5",
+    Tools = [
+        AIFunctionFactory.Create(
+            async ([Description("Issue ID")] string id) =>
+            {
+                return await FetchIssueAsync(id);
+            },
+            "lookup_issue",
+            "Fetch issue details from our tracker"),
+    ]
+});
+
+var done = new TaskCompletionSource();
+session.On(evt =>
+{
+    if (evt is AssistantMessageEvent msg)
+        Console.WriteLine(msg.Data.Content);
+    else if (evt is SessionIdleEvent)
+        done.SetResult();
+});
+
+await session.SendAsync(new MessageOptions
+{
+    Prompt = "Summarize the latest security alerts"
+});
+await done.Task;
+```
+
+## Real Apps People Are Already Building
+
+The community hasn't waited. Within weeks of the SDK's technical preview launch, real applications started appearing across official samples and community projects.
+
+### Official Samples and Cookbooks
+
+- **[microsoft/copilot-sdk-samples](https://github.com/microsoft/copilot-sdk-samples)** — Official sample gallery including issue triage agents, security alert prioritization, PagerDuty incident management, Datadog monitoring integration, and PCB design analysis. All samples work in mock mode without credentials.
+- **[awesome-copilot Cookbook](https://github.com/github/awesome-copilot/tree/main/cookbook/copilot-sdk)** — GitHub's official recipe collection with practical examples across all four SDK languages.
+- **[Terminal Agent](https://github.com/hoodini/copilot-sdk-terminal-agent)** — A webhook-based AI terminal that executes commands through natural language prompts, built with the TypeScript SDK.
+
+### The DEV.to GitHub Copilot CLI Challenge
+
+The timing of the SDK launch coincided with the [GitHub Copilot CLI Challenge](https://dev.to/challenges/github-2026-01-21) on DEV.to — a community challenge running January 22 through February 15, 2026, with $1,000 prizes and GitHub Universe tickets on the line. The submissions are a goldmine of creative SDK and CLI usage. Here are the standouts:
+
+**[Clasez](https://dev.to/jamesrhurtado/i-built-clasez-an-ai-study-copilot-that-changes-how-students-use-lecture-recordings-with-the-43id)** — A student built an AI study copilot that transforms lecture transcripts into structured summaries, key concepts, and timestamped Q&A — all powered by the Copilot SDK. Ask "when did the professor explain tries?" and it returns the exact minute mark. Built by a student using their GitHub Student Developer Pack access to Copilot Pro models.
+
+**[HN Reader](https://dev.to/tsadhoq/from-terminal-to-desktop-how-a-desktop-app-uses-copilot-cli-as-its-entire-ai-layer-bl9)** — A WinUI 3 desktop app that uses the Copilot SDK as its *entire* AI layer — no separate LLM API keys needed. It fetches Hacker News stories, runs them through a Copilot agent for personalized digests grouped by your interests, and generates structured story insights. This is the SDK's promise in action: any app can embed Copilot as a library.
+
+**[Copilot Quest](https://dev.to/depapp/i-built-a-game-where-github-copilot-cli-is-the-game-master-9b)** — A text-based adventure game where Copilot CLI *is* the game master. No pre-written stories — every playthrough is dynamically generated. Run `npx copilot-quest` and Copilot picks a random genre, generates ASCII art, tracks HP and inventory, and maintains narrative continuity across turns. The developer reported that an NPC introduced in turn 2 betrayed them in turn 14 — emergent storytelling from the agent runtime.
+
+**[Cognitive Guard](https://dev.to/mdsaalim/building-a-production-cli-tool-to-gamify-and-enforce-code-documentation-with-github-copilot-cli-1j4m)** — A Python CLI tool that analyzes cognitive complexity via AST parsing and blocks git commits when complex functions lack documentation. It adds gamification — achievements, progress tracking, XP — to make documentation less painful. The developer went from zero to published PyPI package in 9 days.
+
+**[DustOff](https://dev.to/lasse/dustoff-make-your-legacy-projects-llm-ready-3g9l)** — A tool that migrates legacy side projects into a modern Next.js + TypeScript stack, preparing them for AI-assisted development. The idea: your abandoned side projects deserve a second chance, and Copilot CLI handles the heavy lifting of analyzing and transforming the codebase.
+
+What's striking about these challenge submissions isn't just the creativity — it's the speed. Multiple developers reported going from idea to published tool in under two weeks, with the SDK and CLI handling the agentic complexity they would have spent weeks building from scratch.
+
+## Hooks: Controlling the Agent Loop
+
+One of the SDK's most powerful features is **session hooks** — lifecycle callbacks that let you intercept and modify agent behavior without forking anything:
+
+```typescript
+const session = await client.createSession({
+    model: "gpt-5",
+    hooks: {
+        onPreToolUse: async (input) => {
+            console.log(`Tool: ${input.toolName}`);
+            // Gate dangerous operations
+            if (input.toolName === "bash" && input.toolArgs.includes("rm")) {
+                return { permissionDecision: "deny" };
+            }
+            return { permissionDecision: "allow" };
+        },
+        onPostToolUse: async (input) => {
+            // Log every tool execution for audit
+            await auditLog(input.toolName, input.result);
+            return {};
+        },
+    },
+});
+```
+
+Available hooks include `onPreToolUse`, `onPostToolUse`, `onUserPromptSubmitted`, `onSessionStart`, `onSessionEnd`, and `onErrorOccurred`. This gives you production-grade control over what the agent can do — critical for enterprise deployments.
+
+## Development Velocity Is Remarkable
+
+The [github/copilot-sdk](https://github.com/github/copilot-sdk) repo was created on January 14, 2026. In the month since, the commit log tells a story of rapid, purposeful iteration. Here's a snapshot of changes just from the last two weeks:
+
+| Date | Change |
+|------|--------|
+| Feb 16 | Hide CLI console window on Windows across all SDKs |
+| Feb 16 | Add copy constructors and Clone methods for .NET config options |
+| Feb 16 | Fix portable RID detection for Linux distro compatibility |
+| Feb 13 | Expose session context, add filtering, and `context_changed` event |
+| Feb 12 | Go SDK: Support bundling and auto-installing the Copilot CLI |
+| Feb 10 | Fix executable permissions on CLI binary in Python wheels |
+| Feb 9 | Add setup guides for GitHub OAuth and local CLI usage |
+| Feb 7 | Clarify BYOK token usage and limitations |
+| Feb 6 | Rename `tool.execution_end` to `tool.execution_complete` |
+| Feb 6 | Go SDK: Use types to encode and decode JSON-RPC queries |
+
+Notable contributors include Steve Sanderson (of Blazor fame), Stephen Toub (a .NET runtime legend), and engineers from across GitHub and the community. The SDK is also [dogfooding itself](https://developer.microsoft.com/blog/bringing-work-context-to-your-code-in-github-copilot) — several commits were authored by Copilot itself, including the Windows console window fix.
+
+The pace here is significant. Community SDKs for Java, Rust, C++, and Clojure have already emerged, and the repo has 116 open issues — a healthy sign of active engagement rather than abandonment.
+
+## BYOK: Bring Your Own Model
+
+You don't have to use GitHub's models. The SDK supports pointing at any OpenAI-compatible endpoint, including local inference:
+
+```typescript
+const session = await client.createSession({
+    model: "deepseek-coder-v2:16b",
+    provider: {
+        type: "openai",
+        baseUrl: "http://localhost:11434/v1", // Ollama
+    },
+});
+```
+
+Azure OpenAI, Anthropic, and custom endpoints are all supported. This means you get Copilot's agent orchestration with whatever model backend fits your compliance and cost requirements.
+
+## The Bigger Picture
+
+The Copilot SDK sits at an interesting intersection. GitHub deprecated [App-based Copilot Extensions](https://github.blog/changelog/2025-09-24-deprecate-github-copilot-extensions-github-apps/) in favor of MCP servers, and the SDK itself uses MCP under the hood. Meanwhile, as I explored in [my comparison of AI SDKs](/articles/choosing-the-right-ai-sdk), the Copilot SDK differentiates itself by being an *agent runtime*, not just an API client.
+
+The concept of [context engineering](/articles/context-engineering-key-to-ai-development) is central to why this matters. The SDK manages context windows automatically through "infinite sessions" — background compaction that lets conversations run indefinitely without hitting token limits. That's a hard problem solved at the infrastructure level.
+
+With 7,100+ stars, four official language SDKs, community ports in four more languages, and daily commits from some of the most respected engineers in the ecosystem, the Copilot SDK is positioned to become the default way to embed AI agents into applications. It's in technical preview, so expect breaking changes — but the velocity and quality of what's shipping suggest this will stabilize fast.
+
+If you're building anything that needs agentic AI capabilities, stop wiring up your own orchestration. Install the SDK, define your tools, and let Copilot handle the rest.
