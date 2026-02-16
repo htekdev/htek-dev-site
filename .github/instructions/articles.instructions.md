@@ -49,31 +49,19 @@ draft: false
 
 ### Body
 - Break complex topics into clear, digestible sections
-- Use tables for comparisons (frameworks, tools, metrics)
 - Use code blocks with language identifiers for any code snippets
-- Use blockquotes (`>`) for notable quotes from studies, researchers, or Hector's own key insights
-- Use bullet lists for scannable information (max 7 items per list)
-- Include real data points, percentages, and metrics whenever available
+- Use blockquotes (`>`) for notable quotes or Hector's own key insights
+- Tables, bullet lists, and numbered lists are all good tools — use whichever fits the content naturally
 
 ### Closing
 - Summarize the key takeaway in 1-2 sentences
 - End with a forward-looking statement or call-to-action
 - Never end with generic "thanks for reading" — end with substance
 
-## SEO and Link Strategy (CRITICAL)
+## SEO and Link Strategy
 
-### Outbound Links — Include as Many as Possible
-Articles MUST be rich with hyperlinks for SEO indexing and credibility. Target **10-25+ links per article**.
-
-**Link types to include:**
-- **Source citations** — Link to every study, paper, report, or data source mentioned
-- **Tool/product links** — Link to official pages of every tool, SDK, framework, or platform mentioned
-- **GitHub repositories** — Link to any repo referenced (use full GitHub URL)
-- **Documentation links** — Link to official docs (Microsoft Learn, GitHub Docs, MDN, etc.)
-- **Related articles/posts** — Link to relevant blog posts, tutorials, or analyses by others
-- **Author/researcher profiles** — Link to notable people mentioned (LinkedIn, personal sites, Twitter/X)
-- **arXiv papers** — Link directly to papers cited (use `https://arxiv.org/abs/XXXX.XXXXX`)
-- **Conference talks/videos** — Link to YouTube or conference pages for referenced talks
+### Outbound Links
+Include relevant source links to back your claims — quality over quantity. If you reference a study, tool, or project, link to it. Don't force links where they don't add value.
 
 **Link formatting:**
 - Use descriptive anchor text, never "click here" or "this link"
@@ -102,11 +90,16 @@ Articles MUST be rich with hyperlinks for SEO indexing and credibility. Target *
 - Vary sentence length for rhythm
 
 ### Formatting Patterns
-- **Bold** key terms on first use
+- Consider bolding key terms on first use when it aids scanning
 - Use `inline code` for tool names, commands, file paths, and technical terms
-- Use tables for any comparison of 3+ items
 - Use numbered lists for sequential steps
 - Use unordered lists for non-sequential items
+
+### Readability
+- Articles should be easy to scan and follow — prioritize conversational flow over exhaustive coverage
+- Every section should have a clear point; if you can't state it in one sentence, restructure
+- Don't over-structure with too many sub-headings, tables, or lists — let prose breathe
+- Sources should support claims naturally, not be crammed in for SEO
 
 ### Things to Avoid
 - Corporate buzzword soup ("synergy", "leverage", "paradigm shift" without substance)
