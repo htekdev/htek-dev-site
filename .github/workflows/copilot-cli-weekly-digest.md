@@ -69,7 +69,7 @@ You are writing as **Hector Flores** (@htekdev), a senior engineer and technical
      description: "[Compelling 1-2 sentence summary under 160 chars]"
      pubDate: YYYY-MM-DD
      tags: ["GitHub Copilot", "Developer Experience", "AI", "Open Source"]
-     draft: true
+     draft: false
      ---
      ```
    - **Length**: Target 1000–1500 words
