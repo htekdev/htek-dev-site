@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
-import { join, dirname } from 'path';
+import { readFileSync, writeFileSync, readdirSync } from 'fs';
+import { join, dirname, relative } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -35,7 +35,8 @@ function processDirectory(dir) {
         
         if (isTopLevel || isSecondLevel) {
           writeFileSync(htmlFilePath, indexContent, 'utf8');
-          console.log(`Created: ${htmlFilePath.replace(distDir, '')}`);
+          const relativePath = relative(distDir, htmlFilePath);
+          console.log(`Created: /${relativePath}`);
         }
       } catch (err) {
         // Only expected error is ENOENT (no index.html in this directory)
