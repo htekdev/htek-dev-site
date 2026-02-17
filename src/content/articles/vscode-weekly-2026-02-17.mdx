@@ -1,0 +1,71 @@
+---
+title: "VS Code Weekly: Claude Agents Get Images, Message Queueing Ships"
+description: "February Insiders brings image analysis to Claude, message queueing for smoother workflows, and a wave of accessibility improvements."
+pubDate: 2026-02-17
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+## VS Code's Breakneck Post-Release Pace
+
+Two weeks after the [January 2026 release dropped](/articles/vscode-january-2026-copilot-update-roundup), the VS Code team is moving fast. The February Insiders build (v1.110) has shipped a steady stream of updates—updated as recently as [February 16](https://code.visualstudio.com/updates/v1_110)—with improvements to Claude Agent, message queueing, and accessibility that address the rough edges from January's multi-agent push.
+
+If you're still on stable, you're missing the evolution happening in real-time. Let's break down what landed this past week.
+
+## Message Queueing: The Feature You Didn't Know You Needed
+
+Here's a workflow problem I hit constantly: I ask Copilot to refactor something, realize I need to follow up with a second prompt, but I have to wait for the first response to finish before I can type the next one. Annoying when you're in flow state.
+
+[Message queueing](https://github.com/microsoft/vscode/issues/260330) fixes this. You can now submit a second prompt while the first is still running, and it'll automatically queue and execute once the current task completes. It's a small UX win that removes friction from multi-step agent workflows.
+
+The team also added a [chat tip](https://github.com/microsoft/vscode/issues/293536) that surfaces this feature contextually—hidden once you've used it. Smart discoverability without nagging.
+
+## Claude Agent Gets Multimodal
+
+The biggest Claude Agent update this week: [image attachment support](https://github.com/microsoft/vscode/issues/293474). You can now paste or attach images directly in chat prompts for Claude to analyze.
+
+This matters because it opens Claude Agent to the same multimodal workflows GitHub Copilot already handles—screenshot debugging, diagram analysis, visual context for design decisions. If you're using Claude for code review or documentation, being able to drop in a UI mockup or architecture diagram changes the game.
+
+Claude Agent also now [renders subagent invocations during streaming](https://github.com/microsoft/vscode/issues/290062), so you can see tool calls and progress from delegated tasks in real-time. Previously, subagent work was a black box until completion. This transparency helps you understand what's happening when Claude spawns helper agents.
+
+And if you're working across multiple projects, Claude Agent sessions are now [filtered by workspace](https://github.com/microsoft/vscode/issues/290242). Single-folder workspaces show only matching sessions, multi-root workspaces show sessions for any folder, and empty windows show all sessions. It's a small organizational win when you're juggling multiple agent contexts.
+
+## Context Window Management Gets Actionable
+
+VS Code's [context window usage indicator](https://github.com/microsoft/vscode/issues/291961) is now actionable. When you approach the token limit, it suggests options like manually triggering conversation compaction to summarize older history and free up space.
+
+This is a practical fix for long-running agent sessions where you hit the context ceiling mid-conversation. Instead of starting a new chat and losing continuity, you can compress the history and keep going.
+
+There's also a new setting to [hide the context indicator](https://github.com/microsoft/vscode/issues/293578) if you find it visually noisy. For developers who don't care about token budgets, reducing clutter is a win.
+
+## Accessibility Improvements Across the Board
+
+The VS Code team shipped a wave of accessibility updates this week:
+
+- [Chat tips are now screen-reader accessible](https://github.com/microsoft/vscode/issues/293505) with a new keybinding (`Ctrl+Shift+/` / `Cmd+Shift+/`) to toggle focus between the tip and chat input. Tips are also announced via ARIA status alerts.
+- [Chat tip dismissed state is per-profile](https://github.com/microsoft/vscode/issues/294682), so dismissing a tip in one workspace doesn't hide it globally.
+- [Improved accessibility for the question carousel](https://github.com/microsoft/vscode/issues/292917) with ARIA labels and keyboard focus management.
+
+These aren't flashy features, but they matter. Accessibility work often gets deprioritized because it's invisible to the majority of users, so it's good to see the team investing here.
+
+## Terminal Enhancements and OS Integration
+
+The integrated terminal got a few notable updates:
+
+- [OSC 99 desktop notification support](https://github.com/microsoft/vscode/issues/294247) with a setting to enable notifications. This lets terminal apps send system notifications from long-running tasks.
+- [Terminal performance improvements](https://github.com/microsoft/vscode/issues/292572) via xterm.js updates, including rendering and processing optimizations.
+- [Terminal shade and block characters now render correctly](https://github.com/microsoft/vscode/issues/293529) at all cell sizes, fixing visual misalignment where patterns didn't tile seamlessly.
+
+VS Code also now [respects metered network connections](https://github.com/microsoft/vscode/issues/103451). When you're on mobile data or tethering, VS Code postpones automatic updates for itself and extensions. A new proposed API lets extensions detect metered connections and adjust their network activity accordingly. This is a smart OS-level integration that respects user intent without configuration.
+
+## The Insiders Build Is Where the Action Is
+
+If you're serious about staying current with VS Code's agent ecosystem, you need to be on Insiders. The gap between Insiders and stable is widening as the team ships features daily—last week alone saw updates on Feb 10, 11, 12, 13, 14, and 16.
+
+The February Insiders build is shaping up to be a refinement release after January's big multi-agent push. Message queueing, Claude image support, and actionable context management are all quality-of-life improvements that make agent workflows smoother.
+
+## The Bottom Line
+
+VS Code's post-January velocity shows the team is iterating fast on agent UX. The features shipping this week—message queueing, Claude multimodal support, context management, accessibility fixes—are the kind of polish that turns a bold vision into a daily workflow tool.
+
+If you haven't tried the Insiders build, [download it](https://code.visualstudio.com/insiders) and run it alongside stable. The agent experience is evolving weekly, and waiting for stable means you're working with outdated assumptions.
