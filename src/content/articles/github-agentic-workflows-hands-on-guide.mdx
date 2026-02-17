@@ -119,17 +119,25 @@ Both concepts clicked for me in about 10 minutes. After that, writing workflows 
 
 This is a technical preview, and it shows in a few places:
 
+- **The `.lock.yml` compilation step feels temporary** — you write Markdown, then `gh aw compile` generates a massive `.lock.yml` file that's the actual GitHub Actions workflow. It works, but it's clearly scaffolding. I'd bet this entire compilation step gets absorbed into the GitHub platform itself — you'll push a `.md` file and GitHub will handle the rest natively, no CLI compilation required.
+- **PR handling needs a better model** — right now, agentic workflows that interact with PRs feel bolted on. GitHub might end up treating agent compute the way they treat Actions compute — a managed, metered resource that's seamlessly integrated. The pieces are there, but the seams are visible.
 - **Debugging is opaque** — when the AI makes an unexpected decision, you're reading GitHub Actions logs. I'd love structured reasoning traces showing *why* the agent classified an issue as "medium" priority.
 - **No cost visibility** — each run consumes AI tokens, but there's no real-time feedback on cost per workflow. You can check GitHub billing, but per-workflow estimates would help teams budget.
 - **Documentation is early** — the [official docs](https://github.github.com/gh-aw/) are functional but sparse. The examples in the [gh-aw repo](https://github.com/github/gh-aw) are currently the best reference.
 
-None of these are blockers. They're the rough edges you expect four days after a technical preview launch. The core functionality — write Markdown, compile, run AI in Actions — is solid.
+Here's my honest take: this is GitHub showing developers where they want to go. It's not the final product — it's a directional bet. They've built just enough to demonstrate the vision and get real feedback. The core ideas (Markdown-as-workflow, safe-outputs, agent orchestration) are strong. The packaging will evolve significantly before GA.
 
 ## What This Means for DevOps Teams
 
+The safe-outputs model is the real innovation here, and it's the part I think will survive into whatever the final product looks like. The ability to give an AI agent broad read access while constraining its write operations to an explicit contract — that's the pattern that makes agentic automation viable in production.
+
+I've been writing about [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left) for a while now, and this demo crystallized something for me: **we need to build DevOps for our agents, not just our people.** Today, when we set up CI/CD, we're designing workflows for human developers — review gates, approval chains, deployment windows. But AI agents need their own operational model: trust boundaries, output contracts, reasoning traces. Agentic Workflows is the first real attempt to formalize that.
+
 The impact isn't "CI/CD is easier to write." It's that teams can encode organizational knowledge in automation. Instead of hardcoded rules like "if the PR touches `src/auth/*`, request review from @security-team," you describe intent: "identify security-sensitive changes and route them appropriately." The AI understands context. It adapts.
 
-If you've been following the work on [agent harnesses](/articles/agent-harnesses-controlling-ai-agents-2026) and [self-healing software](/articles/ai-fixes-its-own-bugs), you'll recognize this pattern — static automation is giving way to adaptive systems that understand intent. Agentic Workflows is the first mainstream implementation of that vision I've actually used in a real repository.
+There's a less obvious but equally important angle here: **this empowers project managers, not just engineers.** Think about it — workflows are written in plain Markdown. A PM who's never touched YAML can define their team's triage process, review standards, or reporting cadence in clear English and have it enforced automatically. "Classify new issues by type and priority, flag anything security-related as urgent, and generate a weekly summary for the team." That's not a developer writing automation — that's a project manager codifying their practice. No other tool does this today. Jira workflows require admin configuration. GitHub Projects requires manual automation rules. But Markdown-as-workflow means anyone who can write a clear brief can build intelligent automation. That's a serious competitive advantage for GitHub — and for the teams that adopt it early.
+
+If you've been following the work on [agent harnesses](/articles/agent-harnesses-controlling-ai-agents-2026) and [self-healing software](/articles/ai-fixes-its-own-bugs), you'll recognize this pattern — static automation is giving way to adaptive systems that understand intent. Agentic Workflows is the first mainstream implementation of that vision I've actually used in a real repository. And the fact that GitHub is building it directly into Actions tells me this isn't a side project — it's the future of the platform.
 
 ## Try It Yourself
 
@@ -159,6 +167,6 @@ Clone [my demo repo](https://github.com/htekdev/github-agentic-workflows-demo) t
 
 GitHub Agentic Workflows proves you can write intelligent automation in natural language without sacrificing security or predictability. I set up four workflows in 30 minutes that would've taken days with traditional GitHub Actions — and they're smarter because they understand context instead of matching patterns.
 
-It's a technical preview, not GA. But if you're building DevOps tooling or managing CI/CD pipelines, this is worth exploring now. The teams that figure out AI-powered automation today will have a real advantage when this becomes the default in 12 months.
+Is this the final form? No. The `.lock.yml` files will disappear, the compilation step will become invisible, and the whole thing will feel native to GitHub. But the foundation — Markdown-defined intent, safe-outputs as trust boundaries, AI agents operating within explicit contracts — that's the blueprint for where DevOps is headed.
 
-The YAML era of CI/CD isn't dead yet, but I can see where this is going.
+We've spent years optimizing CI/CD for human workflows. Now we need to do the same for our agents. This is the first real step.
