@@ -1,0 +1,94 @@
+---
+title: "Visual Studio Weekly: AI-Powered Symbol Search and Testing Just Changed Development"
+description: "Visual Studio 18.3 brings language-aware symbol search to Copilot agents and GA for .NET test generation. Plus 25% more screen space."
+pubDate: 2026-02-17
+tags: ["Developer Experience", "AI", "Visual Studio", "Productivity"]
+draft: false
+---
+
+## Copilot Can Finally Navigate Like You Do
+
+February 10 brought Visual Studio 2026 version 18.3.0, and it shipped two features that fundamentally change how AI assists with large-scale refactoring: the **find_symbol** tool for Copilot Agent Mode and general availability of **GitHub Copilot Testing for .NET**.
+
+Let me explain why these matter more than yet another AI chat feature.
+
+For the past year, Copilot agents have been doing text search — basically glorified grep with reasoning. If you asked an agent to "find all usages of this API," it would search for string matches. No understanding of whether you meant the interface, the implementation, or the extension method with the same name. No concept of scope, inheritance, or overrides.
+
+That ends this week. The new `find_symbol` tool gives Copilot Agent Mode access to Visual Studio's language services — the same infrastructure that powers Go to Definition, Find All References, and Go to Implementation. Now when you ask Copilot to refactor an API, it can see actual symbol metadata: type information, declaration vs. implementation, scope boundaries, call hierarchies.
+
+This is the gap I've been waiting for someone to close. [Context engineering](/articles/context-engineering-key-to-ai-development) only gets you so far when the model can't distinguish between `Logger.Log()` the interface method and `Logger.Log()` the static helper.
+
+## What Symbol-Level Reasoning Unlocks
+
+The [find_symbol announcement](https://devblogs.microsoft.com/visualstudio/unlock-language-specific-rich-symbol-context-using-new-find_symbol-tool/) demonstrates this with C++ physics simulation code, but the real win is cross-file refactoring in enterprise codebases.
+
+Here's what it enables:
+
+- **API hardening**: Ask Copilot to add input validation to a public method. It can now find every call site, distinguish between internal trusted callers and external boundary calls, and apply validation only where needed.
+- **Logging injection**: "Add performance metrics to all database queries" becomes a symbol-aware search for methods that match your data access pattern, not a regex nightmare.
+- **Interface evolution**: Deprecating a method? The agent can propose compensating changes across all implementations, not just text matches.
+
+The tool supports C++, C#, Razor, TypeScript, and any language with an LSP extension installed. It's available in [Visual Studio 2026 Insiders 18.4](https://visualstudio.microsoft.com/insiders/) right now.
+
+One caveat: The blog post recommends using AI models that support tool calling. That's code for "use GPT-4 or Claude Sonnet, not the cheap models." Symbol reasoning adds context volume, and you need a model that can handle it. See [GitHub's model comparison](https://docs.github.com/copilot/reference/ai-models/model-comparison) for details.
+
+## .NET Test Generation Reaches GA
+
+The other major announcement is [GitHub Copilot Testing for .NET hitting general availability](https://devblogs.microsoft.com/dotnet/github-copilot-testing-for-dotnet-available-in-visual-studio/) in 18.3.
+
+This isn't "generate a test stub" — it's an end-to-end workflow:
+
+1. You prompt `@Test` with scope (a method, class, project, or your current Git diff)
+2. Copilot generates tests using your existing framework (xUnit, NUnit, MSTest)
+3. It builds and runs them automatically
+4. If tests fail, it debugs and fixes them
+5. It reruns until you have stable coverage
+
+The GA release adds natural language prompting. Instead of rigid syntax, you can say:
+
+- `@Test generate unit tests for my core business logic`
+- `@Test write tests for my current changes`
+- `@Test class Bar, targeting 80% code coverage`
+- `@Test fix my failing tests`
+
+It also surfaces new entry points: right-click → Copilot Actions → Generate Tests, plus icebreaker prompts when you open Chat. Microsoft is clearly pushing discoverability here — they want test generation to feel like an obvious step, not a power-user feature.
+
+The summary output shows before/after coverage, pass/fail signals, and links to generated tests. It's designed for the "write code, validate, iterate" loop that most teams already follow.
+
+One interesting note from the announcement: They're exploring a **planning phase** for complex test requests. Right now, if you ask for broad coverage, Copilot just starts generating. Future versions might let you review and refine a test plan before execution. That would address the "AI went off in the wrong direction" problem that anyone using [multi-agent systems](/articles/github-agentic-workflows-hands-on-guide) has hit.
+
+## Productivity Updates: 25% More Vertical Space
+
+Buried in the [18.3 release notes](https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-notes) are several highly requested editor improvements:
+
+**Insignificant line compression**: Lines without alphanumeric characters (braces, empty lines) compress by 25%, giving you more visible code without changing regular line height. This was a Productivity Power Tools feature, now built-in. Enable it in Tools → Options → Text Editor → Advanced.
+
+**Alt-scroll for fast navigation**: Hold Alt while scrolling to move through large files faster. Adjustable sensitivity in settings.
+
+**Middle-click scrolling**: Press your scroll wheel and move the mouse to navigate — the old AutoCAD-style pan. Off by default in 18.3, enable in Tools → Options → Text Editor → Advanced.
+
+**Slimmer left margin**: The Quick Actions lightbulb now appears inline with code instead of in the margin, saving horizontal space.
+
+These are all "quality of life" fixes that compound over time. Individually minor, collectively they reduce friction. The kind of thing that doesn't make headlines but improves your day-to-day.
+
+## Also Shipped: NuGet MCP Server, Markdown Preview, Copilot Memories
+
+A few other notable updates in 18.3:
+
+- **NuGet MCP Server**: Built-in Model Context Protocol server that lets Copilot analyze and fix package vulnerabilities or update dependencies via chat. Must be manually enabled in Copilot Chat settings.
+- **Markdown preview from Copilot Chat**: Click Preview on any markdown generated by Copilot to see it rendered in Visual Studio's Markdown editor. Previously only worked for Mermaid diagrams.
+- **Colorized code completions**: Copilot suggestions now show syntax highlighting instead of monochrome ghost text. Lower opacity + italics to differentiate from actual code.
+- **Click to accept completions**: Click anywhere in a Copilot suggestion to accept up to that point. Hover shows segment highlighting.
+- **Copilot memories updates**: Teach Copilot your coding standards and project conventions. It persists across sessions for consistency.
+
+The [AI roadmap for February](https://devblogs.microsoft.com/visualstudio/roadmap-for-ai-in-visual-studio-february/) signals a shift from feature velocity to reliability — better progress indicators, improved failure handling, diagnostics for agent debugging, and work on a dedicated Planning Agent for multi-step tasks.
+
+## What This Signals
+
+Microsoft is no longer bolting AI onto Visual Studio. They're rebuilding core workflows around the assumption that Copilot is your co-pilot, not a sidebar.
+
+Symbol-aware refactoring and automated test generation aren't demos — they're production-ready features for .NET and C++ teams working in large codebases. The move toward natural language prompting and discoverable entry points shows they're optimizing for adoption, not just capability.
+
+The focus on reliability (from the roadmap) is the right call. AI-driven workflows break in frustrating ways when they fail silently or lose context mid-task. Fixing that foundation is more valuable than shipping another chat command.
+
+If you're on Visual Studio 2026, the 18.3 update is worth installing. If you're still on 2022, the gap is widening fast.
