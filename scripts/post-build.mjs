@@ -11,7 +11,7 @@ const distDir = join(__dirname, '../dist');
  * This allows both /consulting and /consulting.html to work on GitHub Pages
  */
 
-function processDirectory(dir, depth = 0) {
+function processDirectory(dir) {
   const entries = readdirSync(dir, { withFileTypes: true });
   
   for (const entry of entries) {
@@ -45,7 +45,7 @@ function processDirectory(dir, depth = 0) {
       }
       
       // Recursively process subdirectories
-      processDirectory(fullPath, depth + 1);
+      processDirectory(fullPath);
     }
   }
 }
