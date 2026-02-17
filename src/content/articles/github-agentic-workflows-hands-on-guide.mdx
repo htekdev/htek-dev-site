@@ -19,9 +19,9 @@ hashnode_hash: c319034b51430cef
 
 I just built four production-ready GitHub Actions workflows in 30 minutes. Not YAML templates I copied from Stack Overflow — actual intelligent automation that triages issues, reviews pull requests, and keeps docs in sync. The twist? I wrote them in Markdown.
 
-[GitHub Agentic Workflows](https://github.blog/changelog/2026-02-13-github-agentic-workflows-are-now-in-technical-preview/) entered technical preview on February 13, 2026. The concept is simple: describe what you want your CI/CD to do in natural language, compile it with `gh aw compile`, and it generates GitHub Actions YAML. It's the same shift we saw from assembly to high-level languages, except this time it's for automation. And after spending an afternoon with it, I'm convinced this is where DevOps tooling is headed.
+Full transparency: I built this entire demo using [GitHub Copilot CLI](https://github.com/github/copilot-cli) in agent mode — from scaffolding the API to writing the workflows to debugging the authentication setup. This was a learning exercise for me, a way to explore what's possible with the latest tooling. The [demo repository](https://github.com/htekdev/github-agentic-workflows-demo) is a reference I'll keep building on, but the real value was the hands-on experience of seeing how these pieces fit together.
 
-If you want to see the code, I've published [a demo repository](https://github.com/htekdev/github-agentic-workflows-demo) with all four workflows running live.
+[GitHub Agentic Workflows](https://github.blog/changelog/2026-02-13-github-agentic-workflows-are-now-in-technical-preview/) entered technical preview on February 13, 2026. The concept is simple: describe what you want your CI/CD to do in natural language, compile it with `gh aw compile`, and it generates GitHub Actions YAML. It's the same shift we saw from assembly to high-level languages, except this time it's for automation. And after spending an afternoon with it, I'm convinced this is where DevOps tooling is headed.
 
 ## What Makes This Different
 
