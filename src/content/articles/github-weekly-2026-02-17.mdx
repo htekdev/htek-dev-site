@@ -1,0 +1,115 @@
+---
+title: "GitHub Weekly: Agentic Workflows Hit Technical Preview, Actions Gets Autoscaling"
+description: "GitHub's biggest week in months: Agentic Workflows go live, Actions gets custom autoscaling, and repository controls get a major upgrade."
+pubDate: 2026-02-17
+tags: ["GitHub Copilot", "DevOps", "Developer Experience", "AI"]
+draft: false
+---
+
+## The Week GitHub Went All-In on Agentic Automation
+
+If you blinked this week, you missed GitHub flipping the switch on the future of repository automation. On February 13, [GitHub Agentic Workflows moved into technical preview](https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/), bringing AI-driven repository automation to anyone willing to write a Markdown file. This isn't a side project anymore—it's a first-class feature running on GitHub Actions with security guardrails designed for production use.
+
+At the same time, GitHub Actions got a custom autoscaling solution that doesn't require Kubernetes, new Windows and macOS runner images, and security controls that are now available to every GitHub plan. Maintainers got new pull request controls and the ability to pin issue comments. And GitHub rolled out improvements across Copilot, from Agent Skills in JetBrains to Claude Opus 4.6 going GA.
+
+This is the kind of week that sets the direction for the next year.
+
+## Agentic Workflows: Repository Automation That Actually Ships
+
+I've been tracking GitHub Agentic Workflows since Universe 2025, where they were introduced as a GitHub Next experiment. Now they're real, and the implementation is smarter than I expected.
+
+Here's the pitch: you describe what you want in a Markdown file, drop it in `.github/workflows/`, and it runs as a standard GitHub Actions workflow powered by a coding agent. The workflow has read-only access by default, and write operations go through pre-approved "safe outputs"—think creating PRs, adding issue labels, or posting comments.
+
+### Why This Matters
+
+Traditional GitHub Actions workflows are deterministic—you write YAML, it runs exactly what you scripted. Agentic workflows are goal-oriented. You say "investigate CI failures and propose fixes," and the agent figures out how. You're delegating intent, not scripting steps.
+
+GitHub Next outlined six continuous automation patterns in their [announcement blog post](https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/):
+
+1. **Continuous triage**: Auto-label and route new issues
+2. **Continuous documentation**: Keep READMs in sync with code changes
+3. **Continuous code simplification**: Refactor and open PRs for improvements
+4. **Continuous test improvement**: Assess coverage and add high-value tests
+5. **Continuous quality hygiene**: Investigate CI failures with targeted fixes
+6. **Continuous reporting**: Generate repository health reports
+
+I've covered the setup in my [hands-on guide to GitHub Agentic Workflows](/articles/github-agentic-workflows-hands-on-guide), but the key insight is that these workflows augment CI/CD rather than replace it. They don't run your build, test, or release pipelines—they handle the tasks that require judgment, context, and repetition.
+
+### The Guardrails Are the Killer Feature
+
+The security architecture is what makes this production-ready. Every workflow runs sandboxed with:
+
+- **Read-only permissions by default**: No accidental writes
+- **Safe outputs for GitHub operations**: Pre-approved actions like creating PRs or commenting on issues
+- **Network isolation**: Controlled tool access with allowlisting
+- **SHA-pinned dependencies**: No supply chain surprises
+
+This is the opposite of running `gh copilot` or `claude` directly in a GitHub Actions YAML file, where you'd grant full repo write access and hope for the best.
+
+If you're exploring this space, check out my article on [common mistakes when creating custom Copilot agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents)—many of the lessons apply to agentic workflows.
+
+### What You Can Build
+
+The mental model: if repetitive work in a repository can be described in words, it's probably a fit for an agentic workflow.
+
+[Peli's Agent Factory](https://github.github.com/gh-aw/blog/2026-01-12-welcome-to-pelis-agent-factory/) has over 50 workflow examples, covering patterns like ChatOps, DailyOps, DataOps, IssueOps, ProjectOps, MultiRepoOps, and Orchestration. Start with low-risk outputs (comments, drafts, reports) before enabling PR creation. Focus on goal-oriented improvements (refactoring, test coverage) rather than feature work.
+
+## GitHub Actions Gets Kubernetes-Free Autoscaling
+
+The [GitHub Actions Runner Scale Set Client](https://github.com/actions/scaleset) went into public preview on February 5. This is a standalone Go module that lets you build custom autoscaling solutions for GitHub Actions runners without requiring Kubernetes.
+
+This is huge for teams running Actions on VMs, bare metal, or cloud services that aren't Kubernetes-based. The client interfaces with GitHub's scale set APIs—the same APIs that power [Actions Runner Controller (ARC)](https://github.com/actions/actions-runner-controller)—but leaves provisioning entirely in your hands.
+
+**Key capabilities:**
+
+- **Platform-agnostic**: Works with containers, VMs, bare metal (Windows, Linux, macOS)
+- **Full provisioning control**: You define how runners are created, scaled, and destroyed
+- **Native multi-label support**: Optimize resources across multiple build types
+- **Agentic scenario support**: Works with Copilot coding agent and other agentic workflows
+- **Real-time telemetry**: Built-in metrics for job execution and runner performance
+
+This isn't replacing ARC—ARC remains the recommended Kubernetes solution. But if you're running on infrastructure that doesn't fit the Kubernetes model, this is your escape hatch.
+
+I've written about the evolution from shift-left to [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left), and custom autoscaling is another example of the pattern: delegate infrastructure decisions to systems that can respond dynamically.
+
+## New Runner Images and Security Controls
+
+Also shipping in the February 5 Actions update:
+
+- **Windows Server 2025 with Visual Studio 2026**: Public preview runner image (`windows-2025-vs2026`) available now. VS 2026 migrates to the default `windows-2025` image on May 4, 2026.
+- **macOS 26 Intel image**: Public preview for larger runners (`macos-26-large`)
+- **Action allowlisting for all plans**: Security controls that were previously Enterprise-only are now available on Free, Team, and Enterprise plans. Define exactly which actions and reusable workflows can run in your repos.
+
+The allowlisting change is significant—it's a least-privilege control that protects against compromised actions and enforces policy consistency. If you're managing repositories at any scale, [configure this now](https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#allowing-select-actions-and-reusable-workflows-to-run).
+
+## Maintainer Controls: Disable PRs, Pin Comments
+
+On February 13, GitHub shipped [two new repository settings](https://github.blog/changelog/2026-02-13-new-repository-settings-for-configuring-pull-request-access) that give maintainers more control over contributions:
+
+1. **Disable pull requests entirely**: Turn off PRs just like wikis, issues, or discussions. Useful for mirror repos, read-only codebases, or public archives.
+2. **Restrict PR creation to collaborators**: Keep the PR tab visible for existing work, but only allow collaborators (write access) to open new PRs. Great for managing contribution quality during critical dev phases.
+
+Both settings are available now under **Settings > General > Features**.
+
+I've been following GitHub's broader efforts to address [the eternal September of open source](https://github.blog/open-source/maintainers/welcome-to-the-eternal-september-of-open-source-heres-what-we-plan-to-do-for-maintainers/), and this fits the theme: give maintainers the controls they need to protect their time and mental health.
+
+Also on February 5, GitHub added [pinned comments on issues](https://github.blog/changelog/2026-02-05-pinned-comments-on-github-issues/). Pin a comment from the `...` menu to surface key updates, decisions, or next steps at the top of an issue. This is paired with a nudge that encourages people to react and subscribe instead of leaving "+1" comments. Small change, big impact on noise reduction.
+
+## Claude Opus 4.6 Goes GA, Agent Skills Hit JetBrains
+
+On the Copilot side, [Claude Opus 4.6 is now generally available](https://github.blog/changelog/2026-02-05-claude-opus-4-6-is-now-generally-available-for-github-copilot) for Copilot Pro, Pro+, Business, and Enterprise users. Early testing shows it excels at agentic coding tasks that require planning and tool calling. Available in VS Code (chat, ask, edit, agent modes), Visual Studio, github.com, GitHub Mobile, GitHub CLI, and Copilot coding agent.
+
+JetBrains users got a [major update on February 13](https://github.blog/changelog/2026-02-13-new-features-and-improvements-in-github-copilot-in-jetbrains-ides-2/), including:
+
+- **Agent Skills in public preview**: Tailor Copilot for your workflows by creating custom skills or using community-shared skills from [github/awesome-copilot](https://github.com/github/awesome-copilot) or [anthropics/skills](https://github.com/anthropics/skills).
+- **UX improvements**: Inline chat and settings refinements, plus quality enhancements across the board.
+
+Skills are a big deal for teams building [context engineering strategies](/articles/context-engineering-key-to-ai-development)—they let you define project-specific context that loads on-demand.
+
+## The Bottom Line
+
+This week marks a shift in how GitHub thinks about automation. Agentic Workflows are no longer experimental—they're shipping with production-grade security, running on GitHub Actions infrastructure, and designed for scale. Actions is evolving to support custom autoscaling without Kubernetes lock-in. Maintainers are getting the controls they've been asking for.
+
+If you're still thinking of AI agents as experimental toys, this is your wake-up call. GitHub is building the infrastructure to run them continuously, safely, and at scale. The teams that figure out how to leverage these patterns early will have a measurable advantage in repository quality, velocity, and maintainability.
+
+Start small—create a daily repo report, auto-triage issues, or investigate CI failures. Learn the guardrails, understand the cost model (typically two premium Copilot requests per workflow run), and expand from there. The future of repository automation just shipped, and it's written in Markdown.
