@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname, relative } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -52,5 +52,11 @@ function processDirectory(dir) {
 }
 
 console.log('Post-build: Creating .html files for directory routes...');
+
+if (!existsSync(distDir)) {
+  console.error('Error: dist directory not found. Build may have failed.');
+  process.exit(1);
+}
+
 processDirectory(distDir);
 console.log('Post-build: Complete!');
