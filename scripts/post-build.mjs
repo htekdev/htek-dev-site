@@ -11,13 +11,13 @@ const distDir = join(__dirname, '../dist');
  * This allows both /consulting and /consulting.html to work on GitHub Pages
  */
 
-function processDirectory(dir) {
+function processDirectory(dir, depth = 0) {
   const entries = readdirSync(dir, { withFileTypes: true });
   
   for (const entry of entries) {
     const fullPath = join(dir, entry.name);
     
-    if (entry.isDirectory()) {
+    if (entry.isDirectory() && !entry.name.startsWith('_')) {
       // Check if this directory has an index.html
       const indexPath = join(fullPath, 'index.html');
       try {
@@ -28,21 +28,24 @@ function processDirectory(dir) {
         const htmlFileName = entry.name + '.html';
         const htmlFilePath = join(dir, htmlFileName);
         
-        // Don't create .html files for article slug directories (skip subdirectories in /articles)
-        // Only create them for top-level pages like /consulting, /articles
+        // Only create .html files for top-level directories and direct children
+        // This prevents deeply nested paths from cluttering the parent directories
         const isTopLevel = dir === distDir;
-        const isArticlesIndex = dir === join(distDir, 'articles');
+        const isSecondLevel = dirname(dir) === distDir;
         
-        if (isTopLevel || isArticlesIndex) {
+        if (isTopLevel || isSecondLevel) {
           writeFileSync(htmlFilePath, indexContent, 'utf8');
           console.log(`Created: ${htmlFilePath.replace(distDir, '')}`);
         }
       } catch (err) {
-        // No index.html in this directory, skip
+        // Only expected error is ENOENT (no index.html in this directory)
+        if (err.code !== 'ENOENT') {
+          console.warn(`Warning: Error processing ${fullPath}: ${err.message}`);
+        }
       }
       
       // Recursively process subdirectories
-      processDirectory(fullPath);
+      processDirectory(fullPath, depth + 1);
     }
   }
 }
