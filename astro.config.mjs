@@ -9,7 +9,7 @@ export default defineConfig({
   site: 'https://htek.dev',
   trailingSlash: 'never',
   build: {
-    format: 'file',
+    format: 'directory',
   },
   markdown: {
     rehypePlugins: [rehypeWrapTables],
