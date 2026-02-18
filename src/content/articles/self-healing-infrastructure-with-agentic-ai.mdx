@@ -1,0 +1,228 @@
+---
+title: 'Self-Healing Infrastructure with Agentic AI: From Monitoring to Autonomous Resolution'
+description: >-
+  How GitHub Copilot and Claude Code with Azure MCP server are enabling
+  self-healing DevOps environments that detect and fix issues autonomously.
+pubDate: 2026-02-18
+tags:
+  - AI
+  - DevOps
+  - Azure
+  - GitHub Copilot
+  - Automation
+draft: false
+---
+
+## The Night I Stopped Being On-Call
+
+I've been on-call for production systems more times than I can count. You know the pattern: alert fires at 2 AM, you wake up, SSH into a server, run diagnostics, apply a fix, document it, and go back to bed knowing you'll be useless tomorrow. The fix itself? Usually something you've done a dozen times before — restart a service, clear a cache, adjust a configuration value.
+
+Here's what clicked for me recently: **most production incidents aren't novel problems requiring human creativity. They're known failure modes that we've already solved, just manifesting in slightly different ways.** And if that's true, why are humans still the ones resolving them at 2 AM?
+
+Over the past few months, I've been experimenting with something different: agentic AI that monitors infrastructure, detects anomalies, and applies fixes autonomously. Not just alerting me to problems — actually fixing them. Using tools like [GitHub Copilot](https://github.com/features/copilot), [Claude Code](https://claude.ai/), and the [Azure MCP server](https://github.com/microsoft/azure-mcp-server), I've built feedback loops that handle 70% of the incidents that used to wake me up.
+
+This isn't theoretical. This is production infrastructure healing itself while I sleep. Here's how to build it.
+
+## What Self-Healing Actually Means
+
+Let's be clear about terms because there's a lot of AI hype and not enough specifics.
+
+**Traditional monitoring:** System throws an error → alert fires → human investigates → human fixes → human documents.
+
+**Self-healing with agentic AI:** System throws an error → agent detects anomaly → agent diagnoses root cause → agent applies known fix → agent validates resolution → agent documents what happened → human reviews in the morning.
+
+The difference isn't automation — we've had automation for years. It's **autonomous decision-making under uncertainty**. Traditional automation handles known inputs with deterministic outputs. Agentic AI handles ambiguous signals, retrieves context from documentation and runbooks, reasons about root causes, and applies solutions that might not be in a predefined playbook.
+
+[Gartner's research on AIOps](https://www.gartner.com/en/documents/5652799) shows that by 2025, 30% of organizations will use AI-enabled automation to reduce incident response time by up to 90%. What I'm describing isn't science fiction — it's already happening at scale.
+
+## The Azure MCP Server: Infrastructure as Context
+
+The breakthrough for me was understanding the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/). If you're not familiar, MCP is an open protocol that lets AI agents securely access external systems as part of their context. Think of it like a standardized API, but specifically designed for AI agents to interact with tools, databases, and services.
+
+The [Azure MCP server](https://github.com/microsoft/azure-mcp-server) exposes your Azure environment to AI agents through this protocol. An agent can query resource health, check logs, examine metrics, review configurations — all the things you'd do manually during an incident, but programmatically and at machine speed.
+
+Here's what that looks like in practice:
+
+1. **Agent receives alert** from Azure Monitor (via webhook or MCP subscription)
+2. **Agent queries context** through Azure MCP server: What service is affected? What changed recently? What does the health check say?
+3. **Agent retrieves runbooks** from your documentation (I keep mine in Markdown files that agents can read)
+4. **Agent formulates hypothesis** based on symptoms and past incidents
+5. **Agent applies fix** via Azure CLI or REST APIs exposed through MCP
+6. **Agent validates** that metrics return to normal
+7. **Agent logs the entire incident** for human review
+
+The key insight: with MCP, your infrastructure becomes part of the agent's context. It's not calling blind APIs — it's reasoning over live system state.
+
+## Philosophies That Make This Work
+
+I've learned some hard lessons building self-healing systems. Here are the principles that separate reliable autonomous agents from chaos generators:
+
+### 1. Never Grant Unlimited Scope
+
+The biggest mistake I see people make is giving an agent unrestricted access and hoping for the best. That's not self-healing; that's production roulette.
+
+**What I do instead:** Agents operate in graduated privilege tiers. Tier 1 agents can read metrics and logs, restart services, and adjust scaling parameters. Tier 2 agents can modify configurations within predefined bounds. Tier 3 agents can create new resources, but only after human approval.
+
+This maps directly to blast radius. If an agent misdiagnoses and restarts a service unnecessarily, that's annoying but recoverable. If it deletes your production database, you're done.
+
+> Start with read-only agents. Give them the ability to diagnose and recommend, but not execute. Build trust through observation before granting write permissions.
+
+### 2. Build Feedback Loops, Not Fire-and-Forget Scripts
+
+The difference between automation and agentic AI is the feedback loop. Traditional scripts run once and exit. Agents iterate: check state → take action → verify outcome → adjust if needed.
+
+I wrote about this in [my article on context engineering](/articles/context-engineering-key-to-ai-development) — the quality of an agent's decisions depends entirely on the quality of information it has access to. For self-healing infrastructure, that means:
+
+- Real-time metrics from Azure Monitor
+- Historical incident data (I log everything to a structured format agents can query)
+- Runbooks and documentation written for both humans and AI
+- Deployment history and change logs
+
+Without this context, an agent is guessing. With it, it's making informed decisions backed by your operational knowledge.
+
+### 3. Document for AI, Not Just Humans
+
+Here's a practice that changed everything: I now write runbooks in a format optimized for AI consumption.
+
+**Old runbook format:**
+```
+Issue: Service not responding
+Fix: Restart the service
+```
+
+**New format:**
+```markdown
+## Service Unresponsive Incident
+
+**Symptoms:**
+- Health check endpoint returns 503
+- No logs written in the last 5 minutes
+- CPU usage normal, memory usage normal
+
+**Root Cause:**
+- Usually a deadlock in the request handling thread pool
+
+**Resolution Steps:**
+1. Verify symptoms match (check health endpoint, verify no recent logs)
+2. Attempt graceful restart: `az webapp restart --name <service> --resource-group <rg>`
+3. Wait 60 seconds
+4. Verify health endpoint returns 200
+5. If still unhealthy, escalate to human
+
+**Validation:**
+- Health check returns 200
+- New logs appear with recent timestamps
+- Response time < 500ms
+
+**Related Incidents:** #INC-2045, #INC-2103
+```
+
+Notice the structure: symptoms are specific and measurable. Root cause is documented. Resolution steps are executable commands. Validation criteria are clear. This isn't just better for agents — it's better for humans too.
+
+### 4. Embrace the "Human in the Loop" Pattern
+
+Full autonomy is the goal, but gradual autonomy is the path. My agents don't fix everything silently. They fix things in categories I've explicitly approved, and they notify me about everything else.
+
+**Categories I've automated:**
+- Service restarts for known timeout issues
+- Cache clearing for stale data problems
+- Auto-scaling adjustments for load spikes
+- Certificate renewals and DNS propagation
+
+**Categories that still require approval:**
+- Anything involving data deletion
+- Changes to security configurations
+- Infrastructure provisioning beyond predefined templates
+- Incident patterns the agent hasn't seen before
+
+This is the [agentic DevOps philosophy](/articles/agentic-devops-next-evolution-of-shift-left) I wrote about: agents handle the high-frequency, low-risk operational tasks, freeing humans to focus on architecture, planning, and the truly complex problems that require creativity.
+
+## Real Implementation: GitHub Copilot + Azure MCP
+
+Here's a concrete example using GitHub Copilot with the Azure MCP server. I built this as a VS Code extension, but the same pattern works with Claude Code or any MCP-compatible client.
+
+**Scenario:** A web app's response time suddenly spikes above acceptable thresholds.
+
+**Agent workflow:**
+
+1. **Detection:** Azure Monitor alerts fire. The alert payload includes resource ID, metric name, and threshold violated.
+
+2. **Context gathering:**
+   ```typescript
+   // Agent queries Azure MCP server
+   const metrics = await mcp.queryMetrics({
+     resourceId: alert.resourceId,
+     timeRange: 'last 15 minutes',
+     metrics: ['ResponseTime', 'CPU', 'Memory', 'RequestRate']
+   });
+   
+   const recentDeploys = await mcp.queryDeploymentHistory({
+     resourceId: alert.resourceId,
+     timeRange: 'last 24 hours'
+   });
+   ```
+
+3. **Diagnosis:** Agent reasons over the data:
+   - Response time spiked
+   - CPU and memory are normal
+   - No recent deployments
+   - Request rate is within normal bounds
+   
+   **Hypothesis:** Not a code change. Not a load issue. Likely an external dependency slowdown.
+
+4. **Investigation:**
+   ```typescript
+   const dependencies = await mcp.queryApplicationInsights({
+     query: 'dependencies | where timestamp > ago(15m) | summarize avg(duration) by name'
+   });
+   ```
+   
+   **Finding:** Database query duration has tripled in the last 15 minutes.
+
+5. **Resolution:** Agent consults runbook for "slow database queries" and applies the fix:
+   ```typescript
+   await mcp.executeCommand({
+     command: 'az sql db show-connection-string --reset-pool',
+     resourceId: dbResourceId
+   });
+   ```
+
+6. **Validation:** Wait 2 minutes, re-query metrics, confirm response time returns to baseline.
+
+7. **Documentation:** Agent writes incident report to your tracking system (I use GitHub Issues via the GitHub MCP integration).
+
+**Total time:** 4 minutes from alert to resolution. Zero human intervention required.
+
+## The Tools That Make This Real
+
+This isn't vaporware. These tools exist today:
+
+- **[Azure MCP Server](https://github.com/microsoft/azure-mcp-server):** Exposes Azure resources via Model Context Protocol
+- **[GitHub Copilot Agents](https://github.com/features/copilot/agents):** Build custom agents that integrate with your development and operations workflow
+- **[Claude Code](https://claude.ai/):** MCP-native, designed for agentic workflows with strong reasoning capabilities
+- **[Azure Monitor](https://azure.microsoft.com/en-us/services/monitor/):** Alert orchestration and metrics collection
+- **[Application Insights](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview):** Deep application telemetry for root cause analysis
+
+The barrier isn't technology — it's methodology. You need to structure your operations knowledge in a way that agents can consume it.
+
+## What to Look Into Next
+
+If you're sold on this approach, here's where to start:
+
+1. **Audit your runbooks.** Do they contain step-by-step procedures with validation criteria? If not, rewrite them. Your future self (and your agents) will thank you.
+
+2. **Set up the Azure MCP server.** Follow the [quickstart guide](https://github.com/microsoft/azure-mcp-server) and connect it to a non-production Azure subscription first.
+
+3. **Build a read-only diagnostic agent.** Start with an agent that can query your infrastructure and generate incident reports. No fixing yet — just observing. This builds trust and exposes gaps in your documentation.
+
+4. **Define your automated fix categories.** What incidents are high-frequency and low-risk? Start there. Service restarts, cache clears, and scaling adjustments are good candidates.
+
+5. **Implement graduated rollout.** Fix one incident type autonomously. Monitor for a week. Add another. Build confidence incrementally, not recklessly.
+
+## The Bottom Line
+
+Self-healing infrastructure with agentic AI isn't about replacing DevOps engineers. It's about elevating what we spend our time on. I don't want to restart services at 2 AM — I want to design systems resilient enough that restarts are rare. I don't want to debug the same cache invalidation issue every month — I want to architect better caching strategies.
+
+Agents handle the toil. Humans handle the design. That's the vision of [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left) I've been building toward, and tools like the Azure MCP server are making it accessible to teams of any size.
+
+Start small. Document well. Trust gradually. The future where infrastructure heals itself isn't coming — it's already here for the teams willing to build it.
