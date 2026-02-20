@@ -1,0 +1,89 @@
+---
+title: "Copilot CLI Weekly: Cross-Session Memory and Remote Plugins Land"
+description: "GitHub shipped cross-session memory and remote plugin sources this week. The CLI now remembers past work and plugins can live anywhere."
+pubDate: 2026-02-20
+tags: ["GitHub Copilot", "Developer Experience", "AI", "Open Source"]
+draft: false
+---
+
+## The AI That Remembers
+
+GitHub shipped two Copilot CLI releases this week (Feb 18-20) with features that fundamentally change how the tool works. v0.0.412 added cross-session memory so the CLI remembers past work across sessions. v0.0.413-0 added remote plugin support so you can load plugins from any GitHub repo or git URL. Both are massive.
+
+This isn't incremental polish. These are architectural shifts that make the CLI behave less like a stateless chatbot and more like a persistent development partner. Let me break down what actually changed and why it matters.
+
+## Cross-Session Memory: Finally, an AI That Tracks Context
+
+The headline feature in [v0.0.412](https://github.com/github/copilot-cli/releases/tag/v0.0.412) (shipped Feb 19) is cross-session memory. The CLI can now answer questions about work from previous sessions—files you edited, PRs you opened, issues you triaged.
+
+This is marked experimental, but the implications are huge. Every AI coding assistant I've used suffers from the same problem: sessions are isolated. You work on a feature Monday, close the terminal, come back Tuesday, and the AI has no memory of what you did. You re-explain context every single time.
+
+Cross-session memory fixes that. The CLI builds a persistent context graph across your work. Ask "what files did I change in that PR last week?" and it knows. This is the same pattern I described in [my article on context engineering](/articles/context-engineering-key-to-ai-development)—the quality of AI output is directly proportional to the context it has access to.
+
+GitHub didn't publish implementation details yet, but I'd bet this hooks into the same memory system powering their [Copilot Workspace](https://githubnext.com/projects/copilot-workspace/) prototype. The agent needs durable state that persists across invocations. Embedding-based retrieval over past sessions is the obvious architecture.
+
+From a workflow perspective, this makes agentic automation way more viable. If you're running [GitHub Agentic Workflows](/articles/github-agentic-workflows-hands-on-guide) on a schedule—say, triaging issues nightly—the agent can now reference what it did yesterday. That's the difference between "label these issues" and "label these issues based on patterns from issues I've already triaged."
+
+## Remote Plugin Sources: Plugins Can Live Anywhere
+
+Version [v0.0.413-0](https://github.com/github/copilot-cli/releases/tag/v0.0.413-0) (shipped today, Feb 20) added support for remote plugin sources in marketplace.json. You can now reference a plugin hosted in any GitHub repo or git URL, not just plugins bundled in the same repository as the marketplace.
+
+This was tracked in [issue #1510](https://github.com/github/copilot-cli/issues/1510) and closed after 2 days. The workflow it enables: plugin authors can host their plugins on their own repos but still get discoverability by being listed in the official `github/copilot-plugins` marketplace.
+
+Before this change, every plugin had to live in the marketplace repo itself. That creates a centralization bottleneck—either you fork the marketplace repo and maintain your own, or you submit PRs to the official one and wait for approval. Now plugins are decentralized. You maintain your plugin wherever you want, and marketplaces link to it.
+
+From a developer ecosystem perspective, this is critical. The value of a plugin platform is proportional to how easy it is to publish. NPM won because you could `npm publish` from anywhere. VS Code extensions won because you could package and ship without Microsoft's approval. Copilot CLI plugins now have that same property.
+
+If you're building custom agents like I discussed in [my article on common mistakes](/articles/top-5-mistakes-creating-custom-github-copilot-agents), this matters. You can now ship a plugin as a standalone repo, add it to the `copilot-plugins` marketplace by reference, and users can install it with `copilot plugin install your-plugin@copilot-plugins`. Zero friction.
+
+## Plan Mode Exit Approval: Review Before Execution
+
+Also in v0.0.412: the new `exit_plan_mode` tool with a plan approval dialog. When an agent finishes building a plan, you now get a structured review UI before execution. You can inspect the plan, approve it, or reject it.
+
+This sounds minor but it's a huge UX improvement for agentic workflows. The problem with plan-then-execute agents has always been trust. You ask the AI to "refactor this module," it builds a 10-step plan, and immediately starts executing. You watch in horror as it deletes files you didn't mean to touch.
+
+Plan approval gives you a checkpoint. The agent still does the hard work—figuring out what needs to change—but you get a human-in-the-loop gate before it acts. This is exactly the pattern you want for high-stakes operations like schema migrations, production deploys, or any change that affects multiple files.
+
+I expect GitHub Agentic Workflows to default to plan approval mode for operations that modify state. Fully autonomous agents work great for read-only tasks (issue triage, PR summarization), but you need a review step for writes.
+
+## The `/update` Command: Built-In Upgrade Awareness
+
+Version 0.0.412 added a `/update` command that shows the changelog and update instructions directly in the CLI. No more manually checking GitHub releases or wondering what version you're on.
+
+This is one of those features that shouldn't need to exist—every CLI tool should tell you when updates are available—but most don't. The fact that Copilot CLI does now means users will actually stay current. Especially critical for a tool shipping multiple releases per week.
+
+The implementation shows up in the timeline with formatted release notes and platform-specific install commands. Run `/update`, see what's new, copy the command, paste it. Done.
+
+## UX Polish: Terminal Editor and Instructions
+
+Two quality-of-life improvements worth calling out:
+
+**Terminal editor support**: You can now edit prompts and plans in your terminal's preferred editor (Vim, Emacs, Nano, whatever) with `ctrl+x ctrl+e` or `ctrl+y`. This replaces the inline textarea with a proper editing environment for long-form input.
+
+If you've ever tried to compose a 500-character prompt in a terminal input field, you know why this matters. For workflows like building custom instructions or writing complex agent prompts, you need a real editor. Now you have one.
+
+**User-level instructions**: The CLI now supports `~/.copilot/instructions/*.instructions.md` files that apply across all repositories. Previously instructions were per-repo. This lets you define global preferences—coding style, testing conventions, whatever—and have them active in every session.
+
+This pairs well with the instructions I wrote about in the [Copilot CLI's biggest week](/articles/copilot-cli-biggest-week-yet) article. You can now codify your team's standards once and have the CLI enforce them everywhere.
+
+## The /fleet Parallel Dispatch Upgrade
+
+One more thing buried in the release notes: `/fleet` mode now dispatches more subagents in parallel for faster execution. This is a direct performance win for agentic workflows that split work across multiple agents.
+
+If you're not familiar with fleet mode, it's Copilot CLI's multi-agent orchestrator. You give it a goal like "update all outdated dependencies across this monorepo," and it spawns parallel agents—one per package—and coordinates the results. The more agents it can run concurrently, the faster the workflow completes.
+
+GitHub didn't specify how much faster, but if you've ever watched a fleet job process 20 packages sequentially when it could parallelize, you know this is a big deal.
+
+## What This Signals
+
+Cross-session memory and remote plugins are not polish features. They're foundational primitives that unlock new workflows.
+
+Memory makes the CLI viable for long-running projects where context accumulates over weeks. Remote plugins make it viable for third-party ecosystems to form without centralized gatekeeping. Plan approval makes it viable for high-stakes automation. Terminal editor support makes it viable for power users who live in Vim.
+
+GitHub is building Copilot CLI into infrastructure, not a toy. The fact that they're shipping these features now—right after [Agentic Workflows hit technical preview](https://github.blog/changelog/2026-02-13-github-agentic-workflows-are-now-in-technical-preview/)—tells you they're racing to production.
+
+## The Bottom Line
+
+If you tried Copilot CLI six months ago and dismissed it as "neat but not production-ready," check again. Cross-session memory means the AI actually tracks your work history. Remote plugins mean you can extend it without GitHub's permission. Plan approval means you can trust it with destructive operations. And the UX polish—terminal editors, `/update`, faster fleet dispatch—means it's built for daily use.
+
+The terminal is where developers go when they need control. Now it's also where they go when they need an AI that remembers.
