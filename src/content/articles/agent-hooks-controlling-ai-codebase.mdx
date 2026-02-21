@@ -1,0 +1,184 @@
+---
+title: "Agent Hooks: The Secret to Controlling AI Agents in Your Codebase"
+description: "Instructions alone aren't enforcement. Here's how I built a hook-based system to make AI agents respect layer boundaries, mock policies, and architecture rules—before code ever hits CI/CD."
+pubDate: 2026-02-21
+tags: ["AI", "DevOps", "GitHub Copilot", "Software Architecture", "Developer Experience"]
+draft: false
+---
+
+Instructions alone are NOT enforcement. That's the hard lesson I learned watching AI agents cheerfully ignore my carefully crafted guidelines and pollute my clean architecture with cross-layer imports.
+
+You can write the most detailed agent instructions in the world. You can create custom agents with specific knowledge. You can even build elaborate context engineering systems. But here's the truth: **what happens when the agent just... doesn't follow them?**
+
+I recently refactored one of my projects into a strict hierarchical layer system—L0 through L7, each with explicit import rules. Without enforcement, it lasted about three commits before an AI agent decided that directly importing infrastructure code into a pure type layer was perfectly reasonable.
+
+That's when I built agent hooks.
+
+## The Layer System That Needed Protection
+
+Before we talk about hooks, let me explain what I was trying to protect. I restructured my application into eight strict layers:
+
+- **L0: Pure Types** — No dependencies on anything. Just TypeScript interfaces and type definitions.
+- **L1: Infrastructure** — Configuration, logging, error handling primitives.
+- **L2: Clients** — External API clients, database drivers, third-party SDKs.
+- **L3: Services** — Business logic orchestration. Can use L0-L2, nothing higher.
+- **L4: Agents** — AI agent implementations. Can use L0-L3.
+- **L5: Assets** — Static resources, templates, prompts.
+- **L6: Pipeline** — Workflow orchestration. Can use L0-L5.
+- **L7: App** — Entry points. Can use everything.
+
+The rule is simple: **you can only import from lower layers**. L3 can import from L0-L2. L7 can import from anywhere. L0 can't import from anything.
+
+This isn't novel—it's basically [clean architecture](https://www.cubic.dev/blog/how-to-maintain-clean-architecture-with-dependency-rules-in-your-codebase) with explicit numbers. But here's what I discovered: **the numbering system makes it dramatically easier for AI agents to understand the codebase**. Instead of explaining "domain shouldn't depend on infrastructure," I can say "L0 can't import from L1-L7." The agent gets it immediately.
+
+Or at least, it should.
+
+## When Instructions Fail
+
+I documented the layer rules in my agent instructions. I added them to my [context engineering](/articles/context-engineering-key-to-ai-development) setup. I even created a custom agent specifically trained on this architecture pattern.
+
+Then I asked an agent to add a new feature.
+
+It confidently created a file in L0 (pure types) that imported from L3 (services). Not maliciously. Not because it was confused. It just... didn't check. Instructions are guidance, not enforcement.
+
+This is the core problem with [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left) in 2026: **we're building systems where AI agents have massive autonomy, but we're still relying on them to police themselves.**
+
+## Enter Agent Hooks
+
+If you've been doing DevOps for more than five years, you remember when git hooks *were* DevOps. Before cloud CI/CD was ubiquitous, [git hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) were how you enforced standards locally. Pre-commit hooks checked formatting, ran linters, validated commit messages—all before code ever left your machine.
+
+[Copilot agent hooks](https://docs.github.com/en/copilot/reference/hooks-configuration) are the evolution of that concept for AI-generated code. Instead of running at `git commit` time, they run at *tool-use* time—intercepting the agent before it writes a file, runs a command, or makes any change.
+
+I built a pre-tool-use hook with two jobs:
+
+1. **Enforce layer import policies** — Check every file's layer, validate all its imports are from allowed layers.
+2. **Enforce mock policies** — Ensure test files only mock what their test type allows.
+
+Here's what the layer enforcement looks like conceptually:
+
+```typescript
+function checkLayerPolicy(filePath: string, imports: string[]) {
+  const fileLayer = getLayerFromPath(filePath);
+  
+  for (const importPath of imports) {
+    const importLayer = getLayerFromPath(importPath);
+    
+    // Simple rule: can only import from lower layers
+    if (importLayer >= fileLayer) {
+      throw new PolicyViolation(
+        `Layer ${fileLayer} file cannot import from Layer ${importLayer}`
+      );
+    }
+  }
+}
+```
+
+It's a switch statement. Not fancy. But effective.
+
+When an agent tries to commit code that violates layer boundaries, the hook blocks it. The agent sees the error, understands what it did wrong, and fixes it. **The hook teaches the agent through immediate feedback.**
+
+## Mock Policies: The Other Half
+
+Layer policies protect architecture. Mock policies protect test quality.
+
+I have three types of integration tests:
+
+1. **Service-to-client tests** — Test L3 services integrating with real L2 clients. Mock external APIs, but not our client layer.
+2. **Pipeline/agents/assets-to-services tests** — Test L4-L6 components using real L3 services. Mock L2 clients.
+3. **End-to-end CLI tests** — Test the actual L7 app. Mock nothing except external network calls.
+
+Unit tests have their own rules: each layer has specific mocking requirements based on what it should and shouldn't depend on.
+
+Without enforcement, agents would mock whatever was convenient. With mock policy hooks, they can't. The hook checks the test type (detected from file path or test metadata) and validates that only allowed mocks are present.
+
+```typescript
+function checkMockPolicy(testType: string, mocks: string[]) {
+  const allowedMocks = MOCK_POLICIES[testType];
+  
+  for (const mock of mocks) {
+    if (!allowedMocks.includes(mock)) {
+      throw new PolicyViolation(
+        `${testType} tests cannot mock ${mock}`
+      );
+    }
+  }
+}
+```
+
+Again, simple. But it prevents agents from taking shortcuts that would make tests brittle or meaningless.
+
+## The Three Pillars of Agentic DevOps
+
+Here's my current mental model for [controlling AI agents in production codebases](/articles/agent-harnesses-controlling-ai-agents-2026):
+
+**1. Enablement** — Give agents the knowledge and tools they need.
+- Instructions and documentation
+- [Custom agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents) for specialized tasks
+- Skills and MCP servers for extended capabilities
+
+**2. Enforcement** — Make it impossible for agents to break the rules.
+- Specs (TypeScript, OpenAPI, JSON Schema)
+- **Agent hooks** (this article)
+- Orchestration layers that control agent workflows
+
+**3. Final Gate** — Traditional CI/CD as the last line of defense.
+- Automated tests
+- Static analysis
+- Security scanning
+- Build verification
+
+Most teams have pillar 3. Some have pillar 1. Almost nobody has pillar 2.
+
+That's a problem. Without enforcement, you're hoping agents behave. With enforcement, you're making them behave.
+
+## Technical Debt Is Process Gaps
+
+I used to think technical debt was about lazy coding or tight deadlines. It's not. **Technical debt is the gap between what your processes should enforce and what they actually enforce.**
+
+If your process says "don't mix layers" but doesn't prevent it, you have a process gap. That gap accumulates debt. With human developers, code reviews catch some of it. With AI agents generating code at 10x the volume, code reviews can't keep up.
+
+Agent hooks close the gap. They turn process documentation into process enforcement.
+
+Think about the [evolution of DevOps](https://docs.github.com/en/copilot/reference/hooks-configuration). We moved from "please follow the deployment checklist" to automated deployment pipelines. From "remember to run tests" to CI systems that block merges. From "check for vulnerabilities" to automated security scanning.
+
+Agentic DevOps needs the same shift. From "please follow architecture rules" to [agent hooks](https://code.visualstudio.com/docs/copilot/customization/hooks) that enforce them.
+
+## Building Your Own Agent Hooks
+
+You don't need a complex framework. Start simple:
+
+1. **Identify your non-negotiable rules** — What architecture or quality standards do you never want violated?
+2. **Write a pre-tool-use hook** — Use any language. Parse the tool input. Check the rules. Return a deny response if violations exist.
+3. **Make error messages actionable** — Tell the agent exactly what's wrong and how to fix it.
+4. **Test with an agent** — Ask your AI assistant to make a change that violates the rule. See if the hook catches it and if the agent can self-correct.
+
+For my layer system, the hook parses TypeScript import statements and checks layer numbers. For mock policies, it parses test files for mock/stub/spy patterns and validates against allowed lists.
+
+You can enforce:
+- Import restrictions (like my layers)
+- API usage patterns (don't call this deprecated function)
+- File organization rules (components must have co-located tests)
+- Naming conventions (event handlers start with `on`)
+- Security patterns (no hardcoded credentials)
+
+The beauty is that **hooks run before code review, before CI, before anything**. They intercept the agent at the tool-use level — the moment it tries to write a file.
+
+## The Investment Every Team Needs
+
+Every dev team using agentic AI needs to stop and invest in proper agentic DevOps. Not just better instructions. Not just more context. **Actual enforcement mechanisms.**
+
+Agent hooks are one piece. Specs are another. Orchestration layers are a third. Together, they create a system where AI agents can move fast without breaking things.
+
+I'm not saying abandon instructions or context engineering—those are still critical for enablement. But enablement without enforcement is hope without accountability.
+
+My layer violations went from constant to zero. My test quality improved because agents can't take shortcuts. My code reviews focus on logic and design instead of architecture violations.
+
+That's the promise of agent hooks: **make the rules impossible to ignore, so agents can focus on solving problems instead of creating them.**
+
+## The Bottom Line
+
+Instructions tell agents what to do. [Agent hooks](https://docs.github.com/en/copilot/reference/hooks-configuration) ensure they actually do it.
+
+If you're building systems with AI agents in 2026, you need both. The most elegant architecture documentation in the world won't save you when an agent decides efficiency matters more than layer boundaries. But a simple pre-tool-use hook that blocks the edit? That works every time.
+
+Build your enablement layer. Then build your enforcement layer. Your future self—and your codebase—will thank you.

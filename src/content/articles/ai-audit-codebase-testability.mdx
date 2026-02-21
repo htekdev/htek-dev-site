@@ -1,0 +1,144 @@
+---
+title: "I Made AI Audit My Entire Codebase for Testability"
+description: "GitHub Copilot discovered architectural violations I'd been blind to for months. Here's how an AI audit transformed fuzzy test boundaries into a crystal-clear layered architecture."
+pubDate: 2026-02-21
+tags: ["AI", "Software Architecture", "GitHub Copilot", "Developer Experience", "DevOps"]
+draft: false
+---
+
+I thought I knew my codebase. I'd written most of it, reviewed every PR, and could navigate the folder structure in my sleep. But I had a problem I couldn't solve: the line between unit tests, integration tests, and end-to-end tests had become hopelessly blurred.
+
+So I tried something I hadn't done before — I let GitHub Copilot CLI audit my entire codebase for testability. What came back wasn't just helpful. It was a complete X-ray of my architecture that exposed violations I'd been walking past for months.
+
+## The Problem: Fuzzy Test Boundaries
+
+If you've ever stared at a test suite wondering "is this a unit test or an integration test?", you know the feeling. You mock some things but not others. You're not entirely sure what "layer" you're testing. The tests work, but the strategy is fuzzy.
+
+That was me. My test suite had become a patchwork of inconsistent mocking decisions. Some tests mocked database clients. Others mocked entire service layers. A few brave souls mocked nothing and just spun up real infrastructure.
+
+The root cause? I didn't have clear architectural layers. I had folders like `services`, `clients`, and `agents`, but no rules about what could import what. [Layered architecture](https://betterengineers.substack.com/p/software-architecture-pattern-layered) only works when the layers are actually enforced — and mine weren't.
+
+## The AI Audit: Full Architectural X-Ray
+
+I fed my entire codebase to GitHub Copilot CLI with one request: "Audit this for testability. Show me where mockability starts and ends."
+
+What came back was fascinating. Copilot didn't just give me testing advice — it mapped the *actual* dependency hierarchy across my entire codebase. It showed me:
+
+- Which modules imported from which other modules
+- Where circular dependencies existed
+- Which "services" were actually just thin wrappers around clients
+- Where architectural layers were being violated
+
+It created what it called a **mockability assessment**: a matrix showing where mocking made sense versus where it would just create brittle tests.
+
+## The Proposal: Layers L0–L7
+
+Based on the audit, Copilot proposed restructuring my codebase into eight explicit layers, each with clear import rules:
+
+- **L0 (Pure):** Pure functions, types, schemas. Imports nothing.
+- **L1 (Infra):** Database clients, HTTP clients, file system access. Imports only L0.
+- **L2 (Clients):** External API wrappers. Imports L0–L1.
+- **L3 (Services):** Business logic, domain operations. Imports L0–L2.
+- **L4 (Agents):** AI agents, autonomous workflows. Imports L0–L3.
+- **L5 (Assets):** Static content, templates. Imports L0–L4.
+- **L6 (Pipelines):** Multi-step workflows, orchestrations. Imports L0–L5.
+- **L7 (Apps):** CLI tools, web servers, top-level entry points. Imports everything below.
+
+The rule: **each layer only imports from layers below it.** L3 can import L0, L1, L2 — but not L4, L5, L6, or L7.
+
+This is a variation of the [dependency inversion principle](https://stackify.com/dependency-inversion-principle/), but Copilot made it concrete by mapping it to actual folders in my project.
+
+## The Beautiful Matrix
+
+Copilot generated a visual matrix showing what each layer could and couldn't import. It looked like this:
+
+|       | L0 | L1 | L2 | L3 | L4 | L5 | L6 | L7 |
+|-------|----|----|----|----|----|----|----|----|
+| **L0** | ✓  | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **L1** | ✓  | ✓  | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **L2** | ✓  | ✓  | ✓  | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **L3** | ✓  | ✓  | ✓  | ✓  | ❌ | ❌ | ❌ | ❌ |
+| **L4** | ✓  | ✓  | ✓  | ✓  | ✓  | ❌ | ❌ | ❌ |
+| **L5** | ✓  | ✓  | ✓  | ✓  | ✓  | ✓  | ❌ | ❌ |
+| **L6** | ✓  | ✓  | ✓  | ✓  | ✓  | ✓  | ✓  | ❌ |
+| **L7** | ✓  | ✓  | ✓  | ✓  | ✓  | ✓  | ✓  | ✓  |
+
+This wasn't just documentation. This was a **contract**. And the AI had already found violations.
+
+## The Violations: Architectural Blind Spots
+
+Here's where it got uncomfortable. Copilot flagged dozens of architectural violations:
+
+**Skip-layer imports:** My L4 agent layer was directly importing L2 clients. That meant agents were bypassing the service layer entirely, talking straight to external APIs. Why did this matter? Because I couldn't test the agent without mocking the external API. There was no service layer to intercept.
+
+**Missing service layers:** Some of my "services" were just re-exports of client methods. Copilot called this out bluntly: "This isn't a service. This is a passthrough. Either delete it or add real business logic."
+
+**Circular dependencies:** A few modules in L3 and L4 were importing from each other, creating a cycle that made them impossible to test in isolation.
+
+The most eye-opening violation was this: **L5 should never reach directly into L2. If it does, there's a missing L3 service.**
+
+I'd been living with that violation for *months* without realizing it. The code worked. But it meant I couldn't write a unit test for L5 without spinning up an actual HTTP client.
+
+## The Fix: AI-Created Service Layers
+
+Copilot didn't just point out the problems — it proposed fixes. For every skip-layer import, it suggested creating a new service in L3 to bridge the gap.
+
+For example, I had an agent (L4) that directly called a GitHub API client (L2). Copilot created a `GitHubService` in L3 that wrapped the client with domain logic. Now the agent imported the service, and I could mock the service without touching the client.
+
+This is straight out of the [dependency injection playbook](https://carrion.dev/en/posts/dependency-injection-benefits/), but Copilot automated the scaffolding. It wrote the interface, the implementation, and even updated the imports.
+
+## The Testability Payoff
+
+With layers enforced, the test strategy became obvious:
+
+- **Unit tests:** Mock everything *except* the layer under test. Testing L3? Mock L2, L1, and L0 are real (pure functions need no mocks).
+- **Integration tests:** Allow real services (L3), mock infrastructure (L1) and clients (L2).
+- **End-to-end tests:** Minimal mocking. Only mock external APIs you don't control.
+
+This aligns with the [testing pyramid](https://www.jamesshore.com/v2/blog/2010/architecture-review-mock-driven-three-layer-architecture) advice that's been around forever, but I'd never had the architectural foundation to actually implement it.
+
+Now, when I write a test, I know *exactly* what I'm testing and what I'm mocking. There's no ambiguity.
+
+## The Bigger Insight: Domain Alignment
+
+Here's the key lesson Copilot surfaced: **for testability, you don't just need modular — you need domain-aligned.**
+
+It's not enough to have a `services/` folder and a `clients/` folder. You need a folder structure that reflects your actual domain boundaries. As I explored when writing about [context engineering](/articles/context-engineering-key-to-ai-development), the way you organize code shapes how AI agents (and humans) understand it.
+
+Copilot's layered proposal wasn't arbitrary — it followed [domain-driven design principles](https://dev.to/stevescruz/domain-driven-design-ddd-file-structure-4pja). Each layer represented a conceptual boundary: pure logic, infrastructure, external APIs, business rules, autonomous agents, and so on.
+
+When your folder structure matches your domain structure, you can write tools that enforce architectural rules. Want to prevent L4 from importing L2? Write a [Copilot pre-tool-use hook](https://docs.github.com/en/copilot/reference/hooks-configuration) that checks imports before the agent writes a file. Want to ensure new services follow the layer contract? Use a linter.
+
+This connects directly to what I've been building with [agent harnesses](/articles/agent-harnesses-controlling-ai-agents-2026) — systems that constrain and guide AI behavior. A domain-aligned architecture gives you natural constraint boundaries.
+
+## What This Means for Agentic DevOps
+
+This audit experience reinforced something I wrote about in [Agentic DevOps: The Next Evolution of Shift-Left](/articles/agentic-devops-next-evolution-of-shift-left): AI agents can see patterns we've gone blind to.
+
+I'd looked at my codebase hundreds of times. I knew there were testing problems. But I couldn't see the architectural violations because I was too close to the code.
+
+Copilot had no such blindness. It parsed every import, built a dependency graph, and surfaced violations in minutes.
+
+This is the real power of [AI-assisted development](https://stackoverflow.blog/2022/01/03/favor-real-dependencies-for-unit-testing/) — not writing code faster, but seeing structural issues that would take a human weeks of analysis to uncover.
+
+## How to Run Your Own Audit
+
+If you want to try this yourself, here's the approach:
+
+1. **Feed your entire codebase to GitHub Copilot CLI.** Use context engineering to include your folder structure, key files, and dependency manifests.
+2. **Ask for an architectural audit.** Phrase it like: "Map the dependency hierarchy in this codebase and show me where architectural layers are violated."
+3. **Request a mockability assessment.** Ask: "For each module, tell me what can be mocked in tests versus what needs to be real."
+4. **Get a restructure proposal.** If violations exist, ask: "Propose a layered architecture that fixes these violations."
+5. **Validate the AI's suggestions.** Don't blindly implement. Verify the proposed layers make sense for *your* domain.
+
+The entire process took me about an hour. The resulting architectural clarity has saved me days of debugging brittle tests.
+
+## The Bottom Line
+
+I thought I had a testing problem. Turns out I had an architecture problem.
+
+GitHub Copilot didn't just help me write tests — it gave me an architectural X-ray that exposed violations I'd been living with for months. The layered structure it proposed (L0–L7) wasn't just theoretical. It was a concrete, enforceable contract that made testability obvious.
+
+For testability, you don't just need modularity. You need **domain-aligned layers** with clear import rules. When you have that, the test strategy writes itself.
+
+AI can see your architecture better than you can. Use it.

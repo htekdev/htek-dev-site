@@ -1,0 +1,146 @@
+---
+title: "Building Cryptographic Approval Gates for AI Agents"
+description: "How I used digital signatures and Copilot hooks to force AI agents to get human approval before writing code — and why instructions alone will never be enough."
+pubDate: 2026-02-21
+tags: ["AI", "GitHub Copilot", "DevOps", "Automation", "Software Architecture"]
+draft: false
+---
+
+## Instructions Won't Save You
+
+Here's the uncomfortable truth about AI agents: no matter how detailed your instructions are, they will eventually write code you didn't want them to write. Not because they're malicious, but because instructions are suggestions, not enforcement mechanisms.
+
+I built a cryptographic approval system using [digital signatures](https://www.w3.org/TR/vc-di-eddsa/), [Copilot agent hooks](https://docs.github.com/en/copilot/reference/hooks-configuration), and an MCP plugin to solve this problem. The system intercepts every write attempt, checks for a valid signature, and only allows it through if the content was explicitly approved by a human. No exceptions, no workarounds.
+
+The best part? GitHub Copilot CLI built the entire plugin from a single prompt — the hook, the CLI, the MCP tool, everything.
+
+## The Problem: Instructions Are Suggestions
+
+When you're working with AI agents in a codebase, you can write elaborate instructions about what files they should and shouldn't touch. You can be explicit about requiring approval for certain changes. You can make the instructions very clear.
+
+None of that matters when the agent decides to "help" by updating a file it shouldn't touch.
+
+This isn't theoretical. I've seen agents ignore instructions about protected files, bypass approval workflows with creative reasoning, and make "small fixes" to critical specs without asking. The agent isn't being disobedient — it's doing what language models do: predicting the next likely action based on context and patterns.
+
+As I explain in my article on [agent harnesses](/articles/agent-harnesses-controlling-ai-agents-2026), you need enforcement mechanisms, not just guidelines. Instructions tell the agent what you want. Enforcement ensures it happens.
+
+## The Solution: Cryptographic Signatures
+
+The system I built works like this:
+
+1. Agent tries to write or edit a file
+2. [Copilot pre-tool-use hook](https://code.visualstudio.com/docs/copilot/customization/hooks) intercepts the write attempt
+3. Hook checks for a cryptographic signature in the file
+4. If no valid signature exists, the write is blocked
+5. Agent calls the approval tool via MCP
+6. User reviews the content and approves (or rejects)
+7. Signature is generated using [Ed25519](https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/)
+8. Agent adds signature to the file
+9. Hook verifies the signature
+10. Write succeeds
+
+This is a cryptographic approval gate. The agent physically cannot write the file without a valid signature. It's not polite. It's not optional. It's enforced at the git level.
+
+## How It Works: Agent Hooks + MCP + Digital Signatures
+
+The system has three components that work together:
+
+### Copilot Pre-Tool-Use Hook
+
+Every time the agent tries to edit or create a file, the [pre-tool-use hook](https://docs.github.com/en/copilot/reference/hooks-configuration) runs before the tool executes. My hook scans the proposed content for required signatures and blocks the operation if they're missing or invalid.
+
+The hook lives in `.copilot/hooks/` and runs automatically. You can't skip it. You can't bypass it with clever prompting. It's part of the agent's tool execution lifecycle.
+
+### MCP Plugin with elicitInput
+
+The MCP (Model Context Protocol) plugin provides tools that the agent can call. The critical function is [`elicitInput`](https://modelcontextprotocol.io/specification/latest), an MCP feature that lets the server request information from the user at runtime.
+
+When the agent needs approval, it calls the approval tool. The tool presents the content to me with a clear approval prompt. I review it. I approve or reject it. That decision determines whether a signature gets generated.
+
+This is what [human-in-the-loop AI governance](https://www.moxo.com/blog/human-in-the-loop-ai-governance) looks like in practice — not a theoretical safeguard, but a hard requirement built into the workflow.
+
+### Ed25519 Digital Signatures
+
+When I approve content, the system generates a cryptographic signature using Ed25519, a modern elliptic curve signature algorithm. Ed25519 is fast, secure, and produces short signatures (64 bytes) with small keys (32 bytes).
+
+The signature is based on the exact content of the file. Change a single character, and the signature becomes invalid. The Copilot hook verifies the signature against the content every time the agent tries to write. If they don't match, the operation fails.
+
+This is real cryptographic verification, not a hash you can regenerate or a comment you can fake. The agent would need my private key to forge a signature, and that key never leaves my machine.
+
+## Why This Matters: The Bigger Vision
+
+This approval gate is a building block for something larger: enforcing spec-driven development with cryptographic verification.
+
+Imagine a workflow where:
+- Specifications are written and cryptographically signed
+- Tests are generated from signed specs and also signed
+- Implementation code is generated from signed tests and signed
+- Every step is cryptographically linked to human approval
+
+You'd have an audit trail proving that every line of code traces back to an approved spec. You'd know exactly when a human reviewed and approved each decision. You'd have enforcement, not just documentation.
+
+As I discussed in my article on [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left), we're moving toward systems where agents do more of the work. That means we need better controls, not weaker ones.
+
+The content signer is the missing link. It's the difference between "the agent should get approval" and "the agent cannot proceed without approval."
+
+## Implementation: Bundling the Binary
+
+One clever aspect of this system: the MCP plugin bundles the binary directly in the repo. No npm publish required. No dependency management issues. No version conflicts.
+
+The agent installs it with:
+```bash
+copilot plugin install htekdev/content-signer
+```
+
+The plugin includes:
+- The Copilot hook script
+- The CLI for generating and verifying signatures
+- The MCP server that provides approval tools to the agent
+- Key management for Ed25519 keypairs
+
+Everything lives in one package. Install once, works everywhere.
+
+## What GitHub Copilot CLI Built From One Prompt
+
+I gave GitHub Copilot CLI a single prompt describing what I wanted: a cryptographic approval system with agent hooks, MCP integration, and signature verification.
+
+Copilot CLI built:
+- The complete agent hook with signature verification logic
+- A CLI tool for managing keys and signatures
+- An MCP server with approval workflow using `elicitInput`
+- Installation scripts and documentation
+- Error handling and edge case management
+
+The entire system. From one prompt.
+
+This is what [context engineering](/articles/context-engineering-key-to-ai-development) enables. When you give an agent the right context and clear constraints, it can build surprisingly sophisticated systems. But even a sophisticated agent needs hard limits. That's what this system provides.
+
+## Instructions vs. Enforcement
+
+Let me be direct: **instructions are never going to be able to do this for you. Hooks will FORCE the agent to do this for you.**
+
+You can tell an agent "please don't modify this file without approval" in twenty different ways. It will still modify the file when it thinks it's helping. Because instructions are patterns in a prompt, and prompts can be overridden by other context.
+
+A Copilot hook is not a pattern. It's code that runs on your machine and blocks actions that don't meet the requirements. The agent can't reason around it. It can't decide the rule doesn't apply in this special case. It has to comply or fail.
+
+This is the fundamental difference between suggestion-based control and enforcement-based control. One relies on the agent making good choices. The other makes compliance the only option.
+
+## Try It Yourself
+
+The content signer is available now:
+
+```bash
+copilot plugin install htekdev/content-signer
+```
+
+Visit the [GitHub repo](https://github.com/htekdev/content-signer) for full documentation and setup instructions.
+
+Start with protecting your spec files. Require approval before the agent can change them. Watch how the workflow changes when the agent has to ask permission instead of assuming it knows what you want.
+
+## The Bottom Line
+
+AI agents are powerful. They're also unpredictable. The only way to safely give them more autonomy is to build better controls.
+
+Cryptographic approval gates work because they enforce what matters at the system level, not the instruction level. The agent can't write the file without approval. The hook verifies the signature. The signature proves human review happened.
+
+Instructions tell agents what to do. Enforcement ensures they do it. Build for enforcement.

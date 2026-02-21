@@ -1,0 +1,81 @@
+---
+title: "GitHub Copilot Plan Mode vs Custom AI Agents: A Surprising Discovery"
+description: "I built a custom article-writing agent, then discovered GitHub Copilot's plan mode was already better. Sometimes the best engineering decision is knowing what NOT to build."
+pubDate: 2026-02-21
+tags: ["AI", "GitHub Copilot", "Multi-Agent Systems", "Developer Experience", "Productivity"]
+draft: false
+---
+
+I set out to write an article about recent VS Code updates using my custom article-writing agent. What happened next caught me completely off guard — and taught me an important lesson about when to build custom AI solutions and when to just get out of the way.
+
+The custom agent I'd built was supposed to ask clarifying questions before writing. It had explicit instructions: gather context, understand the audience, clarify the angle. But it only asked me one or two questions before diving into writing. Meanwhile, GitHub Copilot's out-of-the-box plan mode was probing deeper, asking more thoughtful questions, and generally performing *better* than my supposedly specialized tool.
+
+That moment crystallized something I'd been circling around for months: sometimes the best engineering decision is knowing what *not* to build.
+
+## The Constraint Paradox
+
+Here's what was happening. My custom article-writing agent had specific instructions about which questions to ask. It was constrained, focused, *engineered* to follow a particular workflow. On paper, this sounds good. In practice, it meant the agent stopped exploring when it hit the boundaries I'd set.
+
+Plan mode, on the other hand, had no such constraints. It was just a capable language model doing what capable language models do: seeking context to produce better output. Without my well-intentioned instructions boxing it in, it naturally asked more questions, explored more angles, and built a better mental model of what I was trying to accomplish.
+
+This mirrors what [Faisal Feroz observed about over-engineering AI solutions](https://ai.plainenglish.io/ai-agents-vs-llms-stop-over-engineering-your-ai-solutions-dd2c94215cc4) — teams spend sprints building elaborate multi-agent systems when simpler LLM solutions would work better. I'd done the same thing. I built custom guardrails around behavior that the model already exhibited naturally.
+
+The irony is that I've [written about this exact problem](/articles/your-god-prompt-is-the-new-monolith) — the tendency to constrain AI systems with rigid instructions. Now I was seeing it play out in my own tools.
+
+## When Defaults Beat Customization
+
+There's a broader principle here that goes beyond AI tooling: mature platforms often have remarkably good defaults. GitHub Copilot's plan mode isn't some narrow chatbot — it's a well-tuned orchestration layer backed by sophisticated models. When I added custom instructions on top, I wasn't adding value. I was adding friction.
+
+This doesn't mean custom agents are never the answer. Microsoft's [multi-agent orchestration documentation](https://github.blog/ai-and-ml/github-copilot/how-to-orchestrate-agents-using-mission-control/) shows compelling use cases for specialized agents handling distinct tasks in parallel. But the key insight is that orchestration should coordinate *specialized* agents for *specialized* tasks, not wrap general-purpose capabilities in unnecessary constraints.
+
+My article-writing agent wasn't specialized. It was just plan mode with handcuffs.
+
+## Where Multi-Agent Workflows Actually Shine
+
+Here's the twist: while my custom conversation agent was underperforming, the broader multi-agent workflow was still incredibly valuable. The difference was in *how* I was using it.
+
+Instead of one constrained agent doing everything, I had:
+- Plan mode handling the conversation and planning (what it does best)
+- A specialized link-vetting agent verifying sources and checking URLs
+- A research agent pulling in external context
+- A synthesis agent turning all that into a coherent article
+
+Each agent had a specific job that actually required specialization. Link vetting isn't something plan mode should do conversationally — it's a validation task with clear success criteria. Research isn't a conversation — it's a retrieval and synthesis problem. These are tasks where custom agents add genuine value.
+
+This aligns with what [IBM notes about AI agents vs. LLMs](https://www.youtube.com/watch?v=I9z-nrk9cw0) — agents make sense when you need multi-step reasoning, tool integration, and workflow automation. Simple prompting works when you just need text generation or conversation.
+
+The article I was writing that day actually ended up being about [VS Code's January 2026 updates](/articles/vscode-january-2026-copilot-update-roundup), including the newly public Cloud Integration feature. The final output was high quality. But the quality didn't come from my custom conversation agent — it came from letting plan mode be plan mode, and only deploying specialized agents where specialization mattered.
+
+## The Architectural Insight
+
+This experience forced me to rethink my entire agent architecture. Instead of building a monolithic article-writing agent that tries to own the whole process, the right design is:
+
+1. **Let plan mode orchestrate** — It's already good at conversation, clarification, and high-level planning
+2. **Delegate specialized tasks** — Link vetting, fact extraction, deep research, these get their own agents
+3. **Keep agents focused** — Each agent should do *one thing* that genuinely benefits from custom logic
+
+This is essentially what [Microsoft's Agent HQ mission control](https://docs.github.com/copilot/concepts/about-copilot-coding-agent) enables — a mental model shift from sequential single-agent work to parallel multi-agent orchestration. But the orchestrator doesn't need to be custom. Plan mode already does this well.
+
+I've written before about [common mistakes building custom GitHub Copilot agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents), and this experience validated those lessons in a visceral way. Overspecifying behavior, constraining natural capabilities, building agents that duplicate existing functionality — I'd committed all these sins in pursuit of a "better" article-writing experience.
+
+## What This Means for AI Tool Development
+
+The AI tooling landscape has matured faster than many of us realize. Two years ago, you needed heavy customization to get decent results from language models. Today, [default behaviors are remarkably good](https://ramtinlahooti.com/blog/custom-ai-agents-vs-wrappers), and layering custom logic on top often degrades performance.
+
+This creates a strange new discipline: knowing when to trust the defaults. It's counterintuitive for engineers who built careers on customization, optimization, and control. But in the age of increasingly capable foundation models, the skill is knowing when to step back.
+
+This doesn't mean abandoning [context engineering](/articles/context-engineering-key-to-ai-development) — context still matters enormously. But there's a difference between providing rich context and overriding model behavior with rigid instructions.
+
+Plan mode works because it has access to your full repository context, your conversation history, and powerful reasoning capabilities. When I built a custom agent, I was essentially saying "ignore your training, follow these specific steps instead." That's rarely a winning strategy.
+
+## The Bottom Line
+
+I started building a custom article-writing agent to get better results. I ended up discovering that the out-of-the-box experience was already better, and my customization was the problem.
+
+The lesson isn't that custom agents are bad. It's that they should be *narrowly specialized*. Link vetting? Build an agent. Fact extraction? Build an agent. Having a conversation about what to write? Just use plan mode.
+
+Sometimes the best engineering decision is knowing what not to build. The AI models we have access to today are remarkably capable. Before you wrap them in custom instructions, ask yourself: am I adding genuine specialization, or am I just adding constraints?
+
+In my case, removing the custom conversation agent and letting plan mode do its thing produced better articles, faster. The multi-agent workflow still provides value — but only where each agent brings specialized capabilities that genuinely improve on the default experience.
+
+That's a humbling realization for someone who loves building tools. But it's also liberating. Instead of fighting the platform, I can focus on the narrow problems where custom solutions actually matter. Everything else? Let the defaults handle it.

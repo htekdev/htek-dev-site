@@ -2,6 +2,7 @@
 name: "Article Writer"
 description: "Creates blog articles for htek.dev through natural conversation, collaborative research, and iterative writing. A single agent that handles the entire flow from topic to published MDX."
 user-invocable: true
+disable-model-invocation: false
 ---
 
 # Article Writer — htek.dev
