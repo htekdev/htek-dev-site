@@ -1,0 +1,94 @@
+---
+title: "Visual Studio Weekly: Copilot Memories, AI-Powered Testing, and Custom Agents"
+description: "Visual Studio 2026 18.3 ships Copilot memories, GitHub Copilot Testing for .NET going GA, custom agents, and productivity wins across the board."
+pubDate: 2026-02-23
+tags: ["Developer Experience", "AI", "Visual Studio", "Productivity"]
+draft: false
+---
+
+## The Headline
+
+Visual Studio 2026 version 18.3 shipped this past week (February 10), and it's the kind of release that makes me believe Microsoft is actually listening to developers. Between Copilot memories that persist your coding standards across sessions, GA of AI-powered unit test generation for .NET, and a framework for building custom Copilot agents, this update isn't padding the changelog with fluff — it's shipping features that change how you work.
+
+The secondary story is productivity: syntactic line compression that gives you 25% more vertical screen space, fast scrolling with Alt+scroll wheel, and middle-click scrolling are all quality-of-life wins that compound over the hours you spend in the IDE. Let's break down what matters.
+
+## Copilot Memories: Teaching the AI Your Coding Standards
+
+Here's the problem with most AI coding assistants: they forget. You correct them once, and ten minutes later they're back to violating your team's conventions. Visual Studio 18.3 introduces [Copilot memories](https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-notes#copilot-memories-updates-) that fix this.
+
+When you interact with Copilot and specify a preference — "always use Dapper instead of Entity Framework for data access," "follow our team's async/await conventions," or "use FluentAssertions for test assertions" — Visual Studio detects the pattern and prompts you to save it. You can store these preferences at two levels:
+
+- **User-level instructions** (`%USERPROFILE%/copilot-instructions.md`) — personal preferences that follow you across all projects
+- **Repo-level instructions** (`.github/copilot-instructions.md`) — team conventions that everyone on the project inherits
+
+This is context engineering baked into the IDE. Every interaction teaches Copilot how your team codes, and those lessons persist. Over time, you're building institutional knowledge that even new team members benefit from. If you've read my piece on [context engineering as the key to AI development](/articles/context-engineering-key-to-ai-development), you know I think this is the right direction. The tooling is finally catching up to the technique.
+
+One detail I appreciate: you can use the new `/generateInstructions` slash command to bootstrap a `copilot-instructions.md` file from your existing codebase. No blank-page syndrome — Copilot analyzes your project and generates a starter file based on patterns it detects.
+
+## GitHub Copilot Testing for .NET Goes GA
+
+GitHub Copilot Testing for .NET [shipped to general availability](https://devblogs.microsoft.com/dotnet/github-copilot-testing-for-dotnet-available-in-visual-studio/) in Visual Studio 2026 v18.3. This isn't just "generate some xUnit tests" — it's a purpose-built agent workflow that generates tests, builds them, runs them, detects failures, and attempts fixes until you have a stable baseline.
+
+You invoke the agent with `@Test` in Copilot Chat, and the prompting is now free-form. You can say things like:
+
+- `@Test generate unit tests for my core business logic`
+- `@Test my current git changes, targeting 80% coverage`
+- `@Test fix my failing tests`
+
+The agent understands scopes: a single method, a class, a file, a project, your entire solution, or just your Git diff. It knows your test framework (xUnit, NUnit, MSTest) and integrates with Test Explorer. When it's done, you get a structured summary: what files were created or modified, before-and-after coverage numbers, pass/fail signals, and direct links to the generated tests.
+
+What makes this different from just asking Copilot to write a test is the **iterative build-run-fix loop**. The agent doesn't stop at code generation. It compiles, executes, catches failures, and retries until the tests stabilize. That's closer to how a human developer would approach test-driven development.
+
+The team is already exploring a planning phase for more complex testing scenarios — letting you review and confirm assumptions before Copilot generates anything. Smart. I'd rather validate the plan than refactor generated tests that missed the point.
+
+## Custom Agents: Bring Your Own Workflow
+
+This week also brought [custom agents to Visual Studio](https://devblogs.microsoft.com/visualstudio/custom-agents-in-visual-studio-built-in-and-build-your-own-agents/). The IDE now ships with four preset agents — Debugger, Profiler, Test, and Modernize — each tuned for a specific workflow and wired into Visual Studio's native tooling. But the bigger deal is the **custom agent framework**.
+
+You can define your own agents as `.agent.md` files in `.github/agents/` in your repository. These agents can use the same foundation as the built-in ones: workspace awareness, code understanding, tool access, and your preferred model. The kicker is Model Context Protocol (MCP) support — you can connect agents to external knowledge sources like internal documentation, design systems, APIs, or databases.
+
+Here are patterns teams are building:
+
+- **Code review agents** that check PRs against your actual conventions, connected via MCP to your ADR repository or style guide
+- **Design system enforcement agents** connected to Figma or component libraries to catch UI drift before it ships
+- **Planning agents** that gather requirements and build out task plans before you write code
+
+The GitHub [awesome-copilot repo](https://github.com/github/awesome-copilot) is collecting community agent configurations. This feels like the SDK moment for Copilot — moving beyond a monolithic assistant to a platform where you can compose specialized agents for your workflow. If you're familiar with my writing on [choosing the right AI SDK](/articles/choosing-the-right-ai-sdk), you'll see echoes of that composability philosophy here.
+
+## NuGet MCP Server: AI-Powered Dependency Management
+
+Buried in the 18.3 release is a feature that shouldn't be buried: the [NuGet MCP server](https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-notes#nuget-mcp-server). It's a built-in MCP server that gives Copilot the ability to fix package vulnerabilities and update dependencies using natural language prompts.
+
+You enable it once from the Copilot Chat tools menu, then you can prompt things like:
+
+- `Fix my package vulnerabilities`
+- `Update all my packages to the latest compatible versions`
+- `Update the package Newtonsoft.Json to version 13.0.3`
+
+Copilot analyzes your project's target frameworks, checks for known vulnerabilities, and suggests updates that won't break compatibility. This is what I mean when I say the tooling is maturing. We're past the "autocomplete on steroids" phase. These are higher-order workflows — security hygiene, dependency management, test coverage — that Copilot is handling end-to-end.
+
+## Productivity Wins: Screen Real Estate and Navigation
+
+A few smaller features that add up over a workday:
+
+- **Syntactic line compression**: Lines without alphanumeric characters compress by 25%, giving you more vertical space without hurting readability. Enable it in `Tools → Options → Text Editor → Advanced`. This was a Productivity Power Tools favorite — it's now built in.
+- **Fast scrolling**: Hold Alt while scrolling to move through large files faster. Adjustable sensitivity in settings. Simple, effective.
+- **Middle-click scroll**: Press your scroll wheel and move the mouse to navigate. Off by default in 18.3; enable in `Tools → Options → Text Editor → Advanced`.
+- **Slimmer left margin**: The Quick Actions lightbulb now appears inline with code instead of in the margin, freeing horizontal space.
+- **Compact spacing in Solution Explorer**: Revert the extra spacing introduced in earlier 2026 builds if you prefer a denser view.
+
+None of these are transformative on their own. Together, they're hours of scrolling and clicking saved every week.
+
+## What This Signals for Visual Studio's Direction
+
+The 18.3 update is part of a larger shift. Microsoft is treating AI integration as infrastructure, not a feature. Memories, custom agents, MCP servers — these are foundational primitives that other capabilities build on. The [February roadmap for AI in Visual Studio](https://devdigest.today/goto/5315) lays it out clearly: the focus is reliability, agent stability, and MCP governance for enterprise scenarios.
+
+This is the right move. The industry went through a hype phase where every tool bolted on an LLM and called it AI. The winners are the ones building coherent platforms where AI capabilities compose, persist context, and integrate with existing workflows. Visual Studio is in that second phase now.
+
+If you're on the fence about enabling Copilot features or upgrading to 2026, this release makes the case. The tooling is reaching the point where the productivity gains are measurable, not anecdotal. And if you're building .NET applications, the testing agent alone is worth the upgrade.
+
+## The Bottom Line
+
+Visual Studio 2026 18.3 shipped features that last beyond a single session: memories that persist coding standards, agents that iterate on tests until they pass, and a framework for building your own specialized assistants. Add in quality-of-life improvements like line compression and fast scrolling, and you have a release that respects your time.
+
+The AI features are moving from novelty to necessity. If you're still coding without them, you're working harder than you need to. Update to 18.3, enable Copilot memories, try the testing agent on your next feature, and see how much friction disappears.
