@@ -1,0 +1,169 @@
+---
+title: "Agentic-Ops: A Workflow Framework That Brings DevOps to Your AI Agent"
+description: "Stop blaming AI for messy code. The problem isn't agent velocity — it's that you haven't built the guardrails to match it."
+pubDate: 2026-02-26
+tags: ["AI", "DevOps", "GitHub Copilot", "Automation", "Open Source"]
+draft: false
+---
+
+## Stop Blaming AI for Your Missing Guardrails
+
+I watched an AI agent refactor an entire module last week. Seventeen files. Four hundred lines changed. It took about ninety seconds.
+
+The code compiled. The types checked. And it was *completely wrong* — it had imported infrastructure code directly into the domain layer, violating every architectural boundary I'd spent months establishing.
+
+My first instinct was to blame the agent. "AI doesn't understand architecture." "You can't trust it with real codebases." I've heard these complaints a thousand times. I've made them myself.
+
+But here's the uncomfortable truth: **the agent did exactly what I asked**. I said refactor. It refactored. Fast. The problem wasn't the agent's velocity. The problem was that I had zero guardrails to match that velocity.
+
+When a human developer moves fast and creates technical debt, we don't blame the developer — we blame the missing process. No tests? Process gap. No code review? Process gap. No linting? Process gap. We solve it with automation, not finger-wagging.
+
+So why do we blame agents for the exact same thing?
+
+## DevOps Exists to Protect Velocity
+
+Let me reframe what DevOps actually is.
+
+There was a time when teams faced enormous pressure to ship faster. Business demanded velocity. But velocity came with risk — bugs in production, failed deployments, broken releases. The faster teams moved, the more things broke.
+
+So we invented **shift left** — moving testing and validation earlier in the lifecycle. Instead of testing in production, we tested in CI/CD. Instead of deploying monthly, we deployed weekly, then daily. The [2025 DORA report](https://cloud.google.com/devops/state-of-devops) confirms this formula still works.
+
+The keyword was always **velocity**. DevOps didn't slow teams down. It protected them so they *could* move fast.
+
+Now look at AI agents. They represent the biggest velocity jump in software history. My [custom agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents) don't move at human speed — they move at machine speed. Ten files while you're reading the diff. A hundred changes while you're reviewing the first one.
+
+That velocity isn't the problem. **The missing guardrails are the problem.**
+
+## The Shift-Left Progression
+
+Here's the evolution I've lived through:
+
+| Era | Testing Happens | Feedback Delay |
+|-----|-----------------|----------------|
+| **Pre-DevOps** | In production | Days to weeks |
+| **CI/CD** | In pipeline after push | Minutes to hours |
+| **Pre-commit hooks** | Before commit (human) | Seconds |
+| **Agentic DevOps** | Before commit (agent) | Milliseconds |
+
+Each shift moved testing earlier. Each shift reduced the feedback loop. Each shift let teams move faster without increasing risk.
+
+The pattern is clear: **DevOps protects velocity**. When velocity increases, DevOps must shift further left to keep up.
+
+AI agents represent the biggest velocity jump in software history. The DevOps response? Shift left one more time — all the way into the development environment, at the exact moment code is being written.
+
+I wrote about this concept in [Agentic DevOps: The Next Evolution of Shift Left](/articles/agentic-devops-next-evolution-of-shift-left). I built [agent hooks](/articles/agent-hooks-controlling-ai-codebase) to enforce architecture boundaries. I created [test enforcement systems](/articles/test-enforcement-architecture-ai-agents) that block untested code.
+
+But every time, I was writing custom scripts from scratch. That's fine for one project. It's unsustainable for ten.
+
+## What If DevOps Had a Framework for Agents?
+
+GitHub Actions revolutionized CI/CD because it gave teams a **standard way to define workflows**. YAML files. Triggers. Steps. A syntax everyone could learn once and use everywhere.
+
+What if the same thing existed for agent governance?
+
+What if you could define local workflows that trigger on agent actions — file edits, tool calls, commits — using the same YAML syntax you already know?
+
+That's what I built. It's called [agentic-ops](https://github.com/htekdev/agentic-ops).
+
+## Getting Started
+
+Install it as a Copilot CLI plugin:
+
+```bash
+copilot plugin install htekdev/agentic-ops
+```
+
+Then just ask your agent:
+
+> "Create an agent workflow to run tests before commit"
+
+The skill generates a workflow in `.github/agent-workflows/`:
+
+```yaml
+name: Run Tests Before Commit
+blocking: true
+
+on:
+  commit:
+    paths: ['src/**']
+
+steps:
+  - name: Run test suite
+    run: npm test
+```
+
+The `blocking: true` directive is the key. When tests fail, the commit is denied. The agent sees the failure, self-corrects, and tries again — all before code touches version control.
+
+## Patterns That Actually Matter
+
+Here are three workflows I use daily:
+
+### Lint on Every Edit
+
+```yaml
+name: Lint TypeScript
+on:
+  file:
+    types: [edit]
+    paths: ['**/*.ts']
+
+steps:
+  - run: npx eslint "${{ event.file.path }}" --fix
+    continue-on-error: true
+```
+
+### Block Credential File Edits
+
+```yaml
+name: Protect Secrets
+blocking: true
+
+on:
+  tool:
+    name: edit
+    args:
+      path: '**/*.env*'
+
+steps:
+  - run: |
+      echo "Cannot edit environment files"
+      exit 1
+```
+
+### Security Scan on New Files
+
+```yaml
+name: Secret Detection
+on:
+  file:
+    types: [create]
+    paths: ['**/*.ts', '**/*.js']
+
+steps:
+  - run: |
+      if grep -E "(password|secret|api_key)\s*=" "${{ event.file.path }}"; then
+        exit 1
+      fi
+```
+
+The syntax mirrors GitHub Actions intentionally. If you can write a workflow for CI/CD, you can write one for agent governance.
+
+## The Bottom Line
+
+DevOps was invented to protect teams from velocity. That worked when velocity meant "shipping weekly instead of monthly."
+
+AI agents ship code at machine speed. The old DevOps patterns — testing in CI/CD, reviewing in PRs — can't keep up. By the time your pipeline catches a bug, the agent has already moved on to the next ten files.
+
+The answer isn't to slow down the agents. It's to shift DevOps even further left — into the development environment, at the moment of creation.
+
+That's what [agentic-ops](https://github.com/htekdev/agentic-ops) does. One command to install. YAML workflows you already know how to write. Immediate feedback before code ever leaves your machine.
+
+```bash
+copilot plugin install htekdev/agentic-ops
+```
+
+Then tell the agent what you need:
+
+> "Create an agent workflow to run tests before commit"
+
+Your agents are already fast. Now make them safe.
