@@ -74,21 +74,27 @@ What if the same thing existed for agent governance?
 
 What if you could define local workflows that trigger on agent actions — file edits, tool calls, commits — using the same YAML syntax you already know?
 
-That's what I built. It's called [agentic-ops](https://github.com/htekdev/agentic-ops).
+That's what [Agentic-Ops](https://github.com/htekdev/agentic-ops) is about — a framework and set of patterns for bringing DevOps to AI agents. The recommended tool for implementing it is [gh-hookflow](https://github.com/htekdev/gh-hookflow).
 
-## Getting Started
+## Getting Started with gh-hookflow
 
-Install it as a Copilot CLI plugin:
+Install it as a GitHub CLI extension:
 
 ```bash
-copilot plugin install htekdev/agentic-ops
+gh extension install htekdev/gh-hookflow
 ```
 
-Then just ask your agent:
+Initialize it in your repository:
 
-> "Create an agent workflow to run tests before commit"
+```bash
+gh hookflow init
+```
 
-The skill generates a workflow in `.github/agent-workflows/`:
+Then create a workflow — either manually or by asking your agent:
+
+> "Create a hookflow workflow to run tests before commit"
+
+The workflow goes in `.github/hookflows/`:
 
 ```yaml
 name: Run Tests Before Commit
@@ -105,6 +111,36 @@ steps:
 
 The `blocking: true` directive is the key. When tests fail, the commit is denied. The agent sees the failure, self-corrects, and tries again — all before code touches version control.
 
+## How It Works
+
+gh-hookflow integrates with [GitHub Copilot CLI hooks](https://docs.github.com/en/copilot/customizing-copilot/extending-copilot-in-vs-code/copilot-cli-hooks). When you run `gh hookflow init`, it creates a `hooks.json` that tells Copilot to run your workflows at key moments:
+
+- **preToolUse**: Before the agent edits a file, runs a command, or makes a commit
+- **postToolUse**: After an action completes, for validation and linting
+
+```
+Agent: "Edit src/auth.ts"
+         │
+         ▼
+   preToolUse hook
+         │
+         ▼
+   gh-hookflow matches .github/hookflows/*.yml
+         │
+    ┌────┴────┐
+    │         │
+  DENY     ALLOW
+    │         │
+  Agent    File is
+  stops    edited
+             │
+             ▼
+      postToolUse hook
+             │
+             ▼
+      Run linting/validation
+```
+
 ## Patterns That Actually Matter
 
 Here are three workflows I use daily:
@@ -115,12 +151,12 @@ Here are three workflows I use daily:
 name: Lint TypeScript
 on:
   file:
+    lifecycle: post
     types: [edit]
     paths: ['**/*.ts']
 
 steps:
   - run: npx eslint "${{ event.file.path }}" --fix
-    continue-on-error: true
 ```
 
 ### Block Credential File Edits
@@ -130,14 +166,13 @@ name: Protect Secrets
 blocking: true
 
 on:
-  tool:
-    name: edit
-    args:
-      path: '**/*.env*'
+  file:
+    paths: ['**/*.env*', '**/secrets/**']
+    types: [edit, create]
 
 steps:
   - run: |
-      echo "Cannot edit environment files"
+      echo "❌ Cannot edit environment files"
       exit 1
 ```
 
@@ -145,6 +180,8 @@ steps:
 
 ```yaml
 name: Secret Detection
+blocking: true
+
 on:
   file:
     types: [create]
@@ -153,11 +190,12 @@ on:
 steps:
   - run: |
       if grep -E "(password|secret|api_key)\s*=" "${{ event.file.path }}"; then
+        echo "❌ Hardcoded credentials detected"
         exit 1
       fi
 ```
 
-The syntax mirrors GitHub Actions intentionally. If you can write a workflow for CI/CD, you can write one for agent governance.
+The syntax mirrors GitHub Actions intentionally. If you can write a workflow for CI/CD, you can write one for agent governance. Check out the [Agentic-Ops patterns documentation](https://github.com/htekdev/agentic-ops/blob/main/docs/patterns.md) for more examples.
 
 ## The Bottom Line
 
@@ -167,14 +205,15 @@ AI agents ship code at machine speed. The old DevOps patterns — testing in CI/
 
 The answer isn't to slow down the agents. It's to shift DevOps even further left — into the development environment, at the moment of creation.
 
-That's what [agentic-ops](https://github.com/htekdev/agentic-ops) does. One command to install. YAML workflows you already know how to write. Immediate feedback before code ever leaves your machine.
+That's what [Agentic-Ops](https://github.com/htekdev/agentic-ops) is all about — the philosophy and patterns for agent governance. And [gh-hookflow](https://github.com/htekdev/gh-hookflow) is the tool that makes it real.
 
 ```bash
-copilot plugin install htekdev/agentic-ops
+gh extension install htekdev/gh-hookflow
+gh hookflow init
 ```
 
-Then tell the agent what you need:
+Then create workflows in `.github/hookflows/` or ask your agent:
 
-> "Create an agent workflow to run tests before commit"
+> "Create a hookflow workflow to block edits to .env files"
 
 Your agents are already fast. Now make them safe.
