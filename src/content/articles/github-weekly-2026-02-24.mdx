@@ -1,0 +1,71 @@
+---
+title: "GitHub Weekly: Agentic Workflows Hit Tech Preview, Gemini 3.1 Pro Arrives"
+description: "GitHub ships Agentic Workflows, Gemini 3.1 Pro for Copilot, and major platform updates. Here's what matters for developers."
+pubDate: 2026-02-24
+tags: ["GitHub Copilot", "DevOps", "Developer Experience", "AI"]
+draft: false
+---
+
+## The Big Story: Agentic Workflows Go Public
+
+This week, GitHub [launched Agentic Workflows in technical preview](https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/)—the most significant platform update since GitHub Actions itself. This isn't just another AI feature. It's a fundamental shift in how we think about repository automation.
+
+GitHub Agentic Workflows let you write automations in plain Markdown instead of YAML. You describe the outcome you want, drop the file in `.github/workflows/`, and a coding agent handles it—triaging issues, updating docs, fixing CI failures, improving test coverage. All running in GitHub Actions with actual guardrails: read-only by default, sandboxed execution, safe outputs for write operations.
+
+I've been waiting for something like this. Traditional CI/CD handles deterministic tasks brilliantly—build, test, deploy. But the maintenance work that eats time? Triaging issues that need context. Keeping docs aligned with code changes. Investigating flaky tests. These tasks require judgment, not just automation. That's where agentic workflows shine.
+
+Early adopters are already seeing results. Franck Nijhof from Home Assistant (one of GitHub's top projects by contributor count) put it bluntly: "Home Assistant has thousands of open issues. No human can track what's trending or which problems affect the most users. I've built GitHub Agentic Workflows that analyze issues and surface what matters."
+
+This is the [Continuous AI](https://githubnext.com/projects/continuous-ai/) concept I covered in my article on [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left)—AI integrated into the SDLC, not as a replacement for CI/CD but as an augmentation for tasks that need intelligence over determinism.
+
+## Gemini 3.1 Pro: Google's Agentic Coding Model Lands
+
+On February 19, GitHub [rolled out Gemini 3.1 Pro](https://github.blog/changelog/2026-02-19-gemini-3-1-pro-is-now-in-public-preview-in-github-copilot/) to Copilot Pro, Pro+, Business, and Enterprise users. This is Google's latest agentic coding model, and the early benchmarks are compelling: strong resolution success with fewer tool calls than competing models.
+
+What stands out is the focus on *efficient* edit-then-test loops. High tool precision means less thrashing, fewer wasted iterations. You can select it in VS Code (chat, ask, edit, agent modes), Visual Studio, GitHub.com, and GitHub Mobile.
+
+Admins on Business and Enterprise plans need to enable it via Copilot settings. Rollout is gradual, so check back if you don't see it yet.
+
+This joins Claude Opus 4.6, which [went generally available earlier this month](https://github.blog/changelog/2026-02-05-claude-opus-4-6-is-now-generally-available-for-github-copilot). We now have real model choice in Copilot—Anthropic for planning and complex agentic tasks, Google for efficient iteration. Competition drives quality.
+
+## GitHub Actions: Custom Runner Autoscaling Without Kubernetes
+
+GitHub Actions got a [major update on February 5](https://github.blog/changelog/2026-02-05-github-actions-early-february-2026-updates/): the runner scale set client is now in public preview. This is a standalone Go module that lets you build custom autoscaling for Actions runners on *any* infrastructure—containers, VMs, bare metal—without requiring Kubernetes.
+
+If you've used Actions Runner Controller (ARC) for Kubernetes, this is the platform-agnostic version. You get full control over runner lifecycle while GitHub handles orchestration. Key capabilities include real-time telemetry, multi-label support, and crucially, support for agentic workflows like Copilot coding agent.
+
+This matters because it removes the Kubernetes dependency for teams running self-hosted runners. You can now autoscale on cloud VMs, on-prem hardware, or hybrid setups using your existing infrastructure automation.
+
+The [runner scale set client is open source](https://github.com/actions/scaleset), so you can inspect the code and adapt it to your needs. ARC users aren't left behind—multi-label support is coming to ARC 0.14.0 in March 2026.
+
+Also in this update: Windows Server 2025 with Visual Studio 2026 runner images and macOS 26 Intel images are now available for GitHub-hosted runners. Plus, allowed actions settings (security controls for which actions can run) are now available for *all* GitHub plan types, not just Enterprise.
+
+## Security and Collaboration Updates
+
+GitHub shipped several smaller but meaningful updates:
+
+**Secret scanning now includes extended metadata checks** ([Feb 18](https://github.blog/changelog/2026-02-18-secret-scanning-improvements-to-extended-metadata-checks/)). When you leak an API key, GitHub now shows you the secret owner's name, email, creation date, expiry date, and organization context where available. Repositories with validity checks enabled automatically get this feature. This is about triage efficiency—knowing *which* leaked secret matters most.
+
+**Required reviewer rule is now GA** ([Feb 17](https://github.blog/changelog/2026-02-17-required-reviewer-rule-is-now-generally-available)). You can now enforce granular approval policies via repository rulesets—require specific teams to approve changes to specific files or folders, with `.gitignore`-style negation patterns. Example: require data platform team approval for `*.sql` changes, except files in `test/`. This scales across organizations and enterprises. It complements CODEOWNERS but focuses on *enforcement* rather than ownership.
+
+**Pull request access controls** ([Feb 13](https://github.blog/changelog/2026-02-13-new-repository-settings-for-configuring-pull-request-access)). You can now disable pull requests entirely (useful for mirror repos and read-only codebases) or restrict PR creation to collaborators only. Simple settings, but they give maintainers more control over contribution workflows.
+
+**Workflow dispatch API now returns run IDs** ([Feb 19](https://github.blog/changelog/2026-02-19-workflow-dispatch-api-now-returns-run-ids)). When you trigger a workflow via the API, you can now get back the workflow run ID, API URL, and web URL immediately. No more polling to find which run corresponds to your request. GitHub CLI v2.87.0 supports this natively.
+
+## Copilot Coding Agent Expands
+
+The [Copilot coding agent](https://docs.github.com/copilot/how-tos/use-copilot-agents/coding-agent/)—the async, autonomous background agent that opens draft PRs for you—got several updates:
+
+- **Visual Studio support** ([Feb 17](https://github.blog/changelog/2026-02-17-delegate-tasks-to-copilot-coding-agent-from-visual-studio)): You can now delegate tasks to coding agent directly from Visual Studio via the new "Send to Copilot Coding Agent" button in Copilot Chat.
+- **Code referencing** ([Feb 18](https://github.blog/changelog/2026-02-18-copilot-coding-agent-supports-code-referencing)): If the agent generates code matching public GitHub repositories, it highlights the match in session logs with a link to the original source and license info.
+- **Network config changes** ([Feb 13](https://github.blog/changelog/2026-02-13-network-configuration-changes-for-copilot-coding-agent/)): Teams using self-hosted or Azure private networking runners for coding agent sessions need to review network configuration changes effective February 27, 2026.
+
+## The Bottom Line
+
+This week signals GitHub's commitment to agentic automation at the platform level. Agentic Workflows aren't a side experiment—they're built into the core of GitHub Actions with real security architecture. The addition of Gemini 3.1 Pro gives developers meaningful model choice. And the runner scale set client removes infrastructure barriers for teams that need control.
+
+The pattern is clear: GitHub is betting that the future of developer productivity isn't just AI-assisted coding—it's AI-integrated workflows that handle the repetitive, context-heavy tasks humans shouldn't be doing manually.
+
+If you're running a repo with thousands of issues, inconsistent docs, or flaky tests, Agentic Workflows are worth exploring. If you're building custom CI infrastructure, the runner scale set client just removed your Kubernetes dependency. And if you're still manually triaging secret leaks, the extended metadata checks will save you time.
+
+GitHub's not waiting for the future of DevOps—they're shipping it incrementally, with guardrails, in public preview. That's how platform evolution should work.
