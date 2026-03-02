@@ -1,0 +1,77 @@
+---
+title: "VS Code Weekly: The Browser Just Joined Your Agent Team"
+description: "February Insiders brings native browser integration, Claude MCP support, and a wave of multi-agent UX improvements that signal where VS Code is heading."
+pubDate: 2026-02-25
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+## Native Browsers, Now With Agent Supervision
+
+Microsoft dropped the [February 2026 Insiders build (v1.110)](https://code.visualstudio.com/updates/v1_110) with daily updates throughout the month, and one feature stands out: **native browser integration for agents**. VS Code now ships with an integrated browser that AI agents can interact with directly — capturing screenshots, reading console logs, and interacting with page elements, all without you leaving the editor.
+
+This isn't just "open a preview pane." Agents can now see what you see in the browser, debug visual issues with screenshots, and access real-time console output as context. If you've ever alt-tabbed between VS Code and Chrome DevTools while debugging, you know why this matters.
+
+The last meaningful VS Code recovery was [v1.109.5 on Feb 20](https://github.com/microsoft/vscode/releases/tag/1.109.5), which addressed bug fixes. The real action this week is in the Insiders build, where Microsoft is iterating daily on multi-agent workflows ahead of the March stable release.
+
+## Claude Gets MCP Servers
+
+The [January 2026 release introduced Claude Agent support](/articles/vscode-january-2026-copilot-update-roundup), letting you run Anthropic's Claude alongside GitHub Copilot. This week's Insiders build takes it further: **Claude Agent now supports MCP (Model Context Protocol) servers**.
+
+MCP servers installed via VS Code or the Claude CLI are automatically picked up by Claude Agent sessions. This means your Claude agent gets the same extended tool capabilities you've configured elsewhere — unified tooling across agents without duplicating configuration.
+
+For teams already using MCP for custom tooling, this is a big deal. You're not managing separate tool chains for Copilot vs. Claude anymore.
+
+## Multi-Agent UX Gets Serious
+
+Microsoft is clearly stress-testing the multi-agent experience. Here's what shipped in the past two weeks:
+
+**Chat fork command (`/fork`)**: You can now fork a conversation mid-stream to explore alternative approaches while preserving the original thread. This is the branching workflow developers have wanted since agents started making decisions for us.
+
+**Slash commands for background agents**: Background agents — the ones running async tasks in isolated workspaces — now support slash commands. You can invoke skills, hooks, and prompt files from background sessions, which previously only worked in local agent contexts.
+
+**Message queueing**: You can send a second prompt while the first is still running. It'll queue and execute once the current task finishes. Small feature, but it removes a friction point when you're waiting on a long-running agent task and want to stage the next step.
+
+**Subagents can ask questions**: The `askQuestions` tool now works in subagent contexts. When you delegate a task to a subagent, it can now interrupt you with interactive questions instead of assuming answers. This addresses one of the bigger gripes with autonomous agents — they'll finally ask before guessing.
+
+## Developer Hygiene Gets Baked In
+
+VS Code added a setting to **automatically include a `Co-authored-by` commit trailer when AI-generated code is committed**. This is a nod to transparency and attribution in AI-assisted development.
+
+If you're shipping AI-generated code to production, this setting helps you maintain an audit trail. It's the kind of feature that seems optional now but will likely become standard practice as orgs formalize their AI usage policies.
+
+The editor also now **respects metered network connections**. If you're on mobile data or tethering, VS Code postpones automatic updates for itself and extensions. A new proposed API lets extensions detect metered connections and adjust behavior — think language servers throttling background indexing or extensions deferring non-critical downloads.
+
+## Terminal Features: Graphics and Desktop Notifications
+
+The integrated terminal added two notable improvements:
+
+- **Kitty graphics protocol support**: Applications can now display inline images directly in the terminal. If you're using tools like `imgcat` or TUI apps that render graphics, they'll now work natively in VS Code's terminal.
+- **OSC 99 desktop notifications**: Terminal apps can now trigger OS-level notifications. Long-running scripts can alert you when they complete, even if VS Code is backgrounded.
+
+These aren't flashy, but they're the kind of terminal parity improvements that remove reasons to reach for iTerm2 or Alacritty for specific workflows.
+
+## Accessibility Improvements Are Everywhere
+
+The February Insiders build includes a dozen accessibility fixes, mostly around screen reader support for agent workflows:
+
+- Screen readers now announce chat steering (when you send a new prompt mid-response)
+- Chat tips are accessible with a dedicated keybinding (`Ctrl+Shift+/` / `Cmd+Shift+/`)
+- Find/replace dialogs got comprehensive accessibility help via `Alt+F1`
+- Accessible view now remembers cursor position when streaming content
+
+If you're a screen reader user working with agents, this release is worth testing. Microsoft is clearly investing in making multi-agent development accessible, not just functional.
+
+## What This Signals
+
+The browser integration is the headline, but the real story is the pace. Microsoft shipped **daily Insiders updates for 20+ days straight** in February, all focused on multi-agent workflows. They're not waiting for monthly releases anymore — they're iterating in public.
+
+The January release positioned VS Code as ["your home for multi-agent development"](https://code.visualstudio.com/blogs/2026/02/05/multi-agent-development). February is proving they mean it. Claude gets MCP support. Background agents get slash commands. Subagents get question prompts. The browser becomes a first-class agent tool.
+
+This isn't Microsoft adding Copilot features. This is Microsoft building infrastructure for a world where developers manage multiple agents across different providers, each specialized for different tasks. The fact that they're treating agent UX and accessibility with the same rigor as core editor features tells you where they think the puck is going.
+
+## The Bottom Line
+
+If you're using VS Code with Copilot, Claude, or custom agents, the February Insiders build is worth trying. The browser integration alone changes how you debug web apps with AI assistance. The Claude MCP support means you can consolidate tooling. And the UX improvements — forking chats, queueing messages, subagent questions — make multi-agent workflows feel less like juggling and more like delegating.
+
+Microsoft's betting that developers won't just use one agent. They'll use the right agent for each task, manage sessions across local/cloud/background contexts, and expect the editor to handle the orchestration. Based on this month's pace, they're not waiting to see if that bet pays off — they're building like it already has.
