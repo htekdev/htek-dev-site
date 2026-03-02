@@ -8,6 +8,29 @@ import { getCollection } from 'astro:content';
 const articles = (await getCollection('articles'))
   .filter(a => !a.data.draft)
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// Collect all unique tags
+const allTags = [...new Set(articles.flatMap(a => a.data.tags))].sort();
+
+// Group articles by recency (relative to build time)
+const now = new Date();
+function getTimePeriod(date: Date): string {
+  const diffMs = now.valueOf() - date.valueOf();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays <= 7)  return 'This Week';
+  if (diffDays <= 14) return 'Last Week';
+  if (diffDays <= 30) return 'This Month';
+  return 'Older';
+}
+
+const periodOrder = ['This Week', 'Last Week', 'This Month', 'Older'];
+const grouped: Record<string, typeof articles> = {};
+for (const article of articles) {
+  const period = getTimePeriod(article.data.pubDate);
+  if (!grouped[period]) grouped[period] = [];
+  grouped[period].push(article);
+}
+const periods = periodOrder.filter(p => grouped[p]?.length > 0);
 ---
 
 <BaseLayout title="Articles — htek.dev" description="Thoughts on AI, development, and the future of software by Hector Flores.">
@@ -15,22 +38,95 @@ const articles = (await getCollection('articles'))
   <main class="max-w-5xl mx-auto px-6 pt-32 pb-16">
     <h1 class="text-4xl md:text-5xl font-heading font-bold gradient-text">Articles</h1>
     <p class="text-text-muted mt-2">Thoughts on AI, development, and the future of software.</p>
-    
-    <div class="space-y-6 mt-12">
-      {articles.map((article) => (
-        <ArticleCard
-          title={article.data.title}
-          description={article.data.description}
-          pubDate={article.data.pubDate}
-          slug={article.id}
-          tags={article.data.tags}
-        />
+
+    <!-- Tag filter bar -->
+    {allTags.length > 0 && (
+      <div class="flex items-center gap-2 flex-wrap mt-8" id="tag-filters" aria-label="Filter by tag">
+        <button
+          data-tag="all"
+          class="tag-btn text-xs px-3 py-1 rounded-full border border-accent-cyan bg-accent-cyan/10 text-accent-cyan transition-colors"
+          aria-pressed="true"
+        >All</button>
+        {allTags.map(tag => (
+          <button
+            data-tag={tag}
+            class="tag-btn text-xs px-3 py-1 rounded-full border border-border-muted text-text-muted hover:border-accent-cyan/50 hover:text-accent-cyan transition-colors"
+            aria-pressed="false"
+          >{tag}</button>
+        ))}
+      </div>
+    )}
+
+    <!-- Grouped article lists -->
+    <div id="articles-root" class="mt-10 space-y-12">
+      {periods.map(period => (
+        <section data-period={period} class="period-section">
+          <h2 class="text-lg font-heading font-semibold text-text-muted uppercase tracking-widest mb-6">
+            {period}
+          </h2>
+          <div class="space-y-6">
+            {grouped[period].map(article => (
+              <div
+                class="article-item"
+                data-tags={article.data.tags.join(',')}
+              >
+                <ArticleCard
+                  title={article.data.title}
+                  description={article.data.description}
+                  pubDate={article.data.pubDate}
+                  slug={article.id}
+                  tags={article.data.tags}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
       ))}
     </div>
-    
+
     {articles.length === 0 && (
       <p class="text-text-muted italic mt-12">No articles published yet. Check back soon.</p>
     )}
   </main>
   <Footer />
 </BaseLayout>
+
+<script>
+  const filterBar = document.getElementById('tag-filters');
+  if (filterBar) {
+    let activeTag = 'all';
+
+    filterBar.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-tag]');
+      if (!btn) return;
+
+      activeTag = btn.dataset.tag ?? 'all';
+
+      // Update button styles
+      filterBar.querySelectorAll<HTMLButtonElement>('.tag-btn').forEach(b => {
+        const selected = b.dataset.tag === activeTag;
+        b.classList.toggle('border-accent-cyan', selected);
+        b.classList.toggle('bg-accent-cyan/10', selected);
+        b.classList.toggle('text-accent-cyan', selected);
+        b.classList.toggle('border-border-muted', !selected);
+        b.classList.toggle('text-text-muted', !selected);
+        b.setAttribute('aria-pressed', String(selected));
+      });
+
+      // Filter article items
+      const items = document.querySelectorAll<HTMLElement>('.article-item');
+      items.forEach(item => {
+        const tags = (item.dataset.tags ?? '').split(',').filter(Boolean);
+        const visible = activeTag === 'all' || tags.includes(activeTag);
+        item.style.display = visible ? '' : 'none';
+      });
+
+      // Hide period sections that have no visible articles
+      document.querySelectorAll<HTMLElement>('.period-section').forEach(section => {
+        const visibleInSection = Array.from(section.querySelectorAll<HTMLElement>('.article-item'))
+          .some(item => item.style.display !== 'none');
+        section.style.display = visibleInSection ? '' : 'none';
+      });
+    });
+  }
+</script>
