@@ -1,0 +1,81 @@
+---
+title: "Azure Weekly: Python Gets First-Class MCP Support, Custom Agents Hit Azure Boards"
+description: "Azure MCP Server lands on PyPI, GitHub Copilot custom agents integrate with Azure DevOps, and OpenAI ships GPT-Realtime-1.5 for voice apps."
+pubDate: 2026-03-04
+tags: ["Azure", "DevOps", "AI", "Developer Experience"]
+draft: false
+---
+
+## Azure Goes All-In on Python-Native AI Development
+
+This past week saw Azure make significant moves toward making AI agent development feel native in Python. The Azure MCP Server [landed on PyPI](https://devblogs.microsoft.com/azure-sdk/azure-mcp-server-better-python-support), GitHub Copilot custom agents now [integrate directly into Azure Boards](https://learn.microsoft.com/en-us/azure/devops/release-notes/2026/sprint-269-update), and the February Azure SDK release shipped critical infrastructure for ASP.NET Core apps. If you've been waiting for Azure to meet Python developers where they are, this is the week it happened.
+
+## Azure MCP Server: Finally Native in Python
+
+Until last week, using the [Azure Model Context Protocol (MCP) Server](https://github.com/microsoft/mcp) meant running Node.js or .NET. For Python developers building AI agents—the majority of the AI ecosystem—this was friction. Now you can install and run the Azure MCP Server directly from PyPI with `uvx` or `pip`:
+
+```bash
+# Run on-demand with uvx (recommended)
+uvx --from msmcp-azure azmcp server start
+
+# Or install into your project
+pip install msmcp-azure
+```
+
+This matters because MCP is becoming the standard protocol for AI agents to interact with external tools and services. The [GitHub Copilot SDK](https://github.com/github/copilot-sdk) uses it. Claude Desktop uses it. VS Code, Visual Studio, IntelliJ, and Eclipse all support it. And now Python developers get first-class access to 40+ Azure services through a single MCP server—no JavaScript runtime required.
+
+The package supports the same server modes as the Node.js and .NET versions: `namespace` (default), `all`, or `single` tool modes, plus read-only mode to prevent accidental writes. You can run it in Docker for CI/CD pipelines, or use it directly in your IDE.
+
+What's significant here isn't just that Python is now supported—it's that Azure is recognizing where AI development is actually happening. Python is the lingua franca of AI tooling, and Azure was late to that party. This release closes the gap.
+
+## GitHub Copilot Custom Agents + Azure Boards: The AI DevOps Bridge
+
+Azure DevOps Sprint 269 shipped with a feature that's quietly important: [GitHub Copilot custom agents now integrate with Azure Boards](https://learn.microsoft.com/en-us/azure/devops/release-notes/2026/sprint-269-update).
+
+Here's how it works: you create a custom agent at the repository or org level in GitHub. That agent automatically shows up in Azure DevOps. When you create a pull request from a work item, you select which agent should generate the code. The agent writes the code, opens the PR, and links it back to the work item.
+
+This is the first real bridge between GitHub's native AI capabilities and Azure DevOps' work tracking. If you're an enterprise shop using Azure Boards for project management but GitHub for code hosting, you now get agentic code generation that respects your work item structure. The 2,000-repository connection limit increase (up from the previous cap) means large orgs can actually use this at scale.
+
+The interesting strategic move here is that Microsoft isn't trying to compete with GitHub's AI features—it's integrating them into Azure DevOps. That's a pragmatic acknowledgment that [GitHub is where the AI action is](https://www.baytechconsulting.com/blog/devops-future-azure-vs-github-2026), and Azure DevOps survives by being the enterprise workflow layer on top of it.
+
+## New OpenAI Models: GPT-Realtime-1.5 and GPT-Audio-1.5
+
+February brought two new OpenAI models to Azure: [GPT-Realtime-1.5 and GPT-Audio-1.5](https://learn.microsoft.com/en-us/azure/foundry-classic/openai/whats-new). These are specialized for low-latency, voice-first applications—think Copilot voice mode, customer service bots, or interactive voice assistants.
+
+The improvements over last year's GPT-Realtime and GPT-Audio models focus on instruction following, multilingual support, and tool calling, all while maintaining the sub-second latency required for natural conversation. If you're building anything that needs to feel like talking to a human, these are the models you want.
+
+Access is through the existing Azure OpenAI chat completion APIs, so if you're already using `gpt-4o` or similar, swapping in these models is a config change. The real question is whether the improved tool calling and instruction following justify the cost delta—but for voice-first apps, latency alone might be enough.
+
+## Azure SDK February Release: Infrastructure Upgrades
+
+The [February 2026 Azure SDK release](https://devblogs.microsoft.com/azure-sdk/azure-sdk-release-february-2026/) shipped with some important plumbing upgrades:
+
+### Azure.Core 1.51.0 for .NET
+
+This release adds support for `Microsoft.Extensions.Configuration` and `Microsoft.Extensions.DependencyInjection`, which means Azure SDK clients now play nicely with ASP.NET Core's native DI container. If you've been writing glue code to wire up Azure clients in .NET apps, you can probably delete some of it.
+
+The other key feature: **client certificate rotation** support in the transport layer. This enables dynamic token binding scenarios where you can update client certificates at runtime without tearing down the entire HTTP pipeline. If you're running workloads with short-lived certificates or compliance-driven cert rotation, this is table stakes.
+
+### corehttp 1.0.0b7 for Python
+
+Python gets native OpenTelemetry tracing support. The new `OpenTelemetryTracer` class wraps the OTel tracer for creating spans, and SDK clients can define tracing config with the `_instrumentation_config` class variable. This is critical for observability in production AI systems—you need to trace Azure SDK calls alongside your agent logic to diagnose latency or failures.
+
+### Azure Content Understanding 1.0.0b1
+
+This is the initial beta of Azure's unified API for extracting insights from documents, audio, and video. If you're building [multi-modal AI systems](/articles/choosing-the-right-ai-sdk), this is worth tracking—content understanding is one of the gaps between code-first AI and real-world business data.
+
+## What This Week Signals
+
+These updates cluster around a theme: **Azure is meeting developers where they are, not forcing them into Azure-specific workflows**.
+
+Python support for MCP, GitHub Copilot agents in Azure Boards, OpenTelemetry support in the Python SDK—these are all moves toward interoperability. Azure isn't trying to own the entire stack anymore. It's positioning itself as the enterprise-grade infrastructure layer for AI development that happens primarily in Python, GitHub, and open-source tooling.
+
+The risk for Azure is that this strategy only works if they stay competitive on AI capabilities and pricing. If [Claude Opus 4.6 on Azure Foundry](https://azure.microsoft.com/en-us/blog/claude-opus-4-6-anthropics-powerful-model-for-coding-agents-and-enterprise-workflows-is-now-available-in-microsoft-foundry-on-azure/) is meaningfully slower or more expensive than running it elsewhere, no amount of MCP integration will matter.
+
+But for now, Azure is making the right bets. The path to agentic DevOps [isn't through proprietary tooling](/articles/agentic-devops-next-evolution-of-shift-left)—it's through protocols, open standards, and letting developers use the tools they already know.
+
+## The Bottom Line
+
+Azure had a strong week. Python MCP support removes friction for the largest AI developer community. GitHub Copilot custom agents in Azure Boards bridge the gap between work tracking and AI code generation. And the SDK updates ship the infrastructure pieces—DI support, cert rotation, OTel tracing—that production AI systems actually need.
+
+Watch how Azure handles the next wave: if agentic workflows become the default, Azure's success depends on being the best place to *run* those agents, not necessarily the best place to *build* them. This week suggests they understand that distinction.
