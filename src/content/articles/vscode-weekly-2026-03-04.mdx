@@ -1,0 +1,82 @@
+---
+title: "VS Code Weekly: Agent Plugins Go Private, Terminal Gets Kitty Keyboard"
+description: "Late February brought private agent plugin support, terminal protocol upgrades, and quality-of-life improvements that show VS Code's multi-agent platform is maturing fast."
+pubDate: 2026-03-04
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+## Agent Plugins Break Out of the Marketplace
+
+The biggest change this week isn't flashy, but it's significant for teams building custom agent workflows: **agent plugins can now be installed from private GitHub repositories, direct git URLs, and local file paths** — not just the public marketplace.
+
+This shipped in the [February 26 Insiders build](https://code.visualstudio.com/updates/v1_110) and changes the economics of custom agent tooling. Before this, if you wanted to distribute internal agent plugins across your team, you had two options: publish to the public marketplace (exposing your tooling strategy) or manually share `.vsix` files (which doesn't scale). Now you can point VS Code at a private repo with `https` or SCP-style Git URLs, and everyone on the team gets the same plugins.
+
+For orgs building proprietary agent capabilities — think internal APIs, compliance tools, or domain-specific skills — this removes a distribution bottleneck. Your plugins stay private, version-controlled, and installable with a single config change.
+
+The same update added **search functionality to the Agent Plugins Installed view**, which sounds minor until you're managing a dozen custom plugins across multiple agent types. You can now filter installed plugins by name instead of scrolling through the list.
+
+## Kitty Keyboard Protocol Lands in Stable
+
+**Update 1.109.5** (released Feb 20) made the Kitty keyboard protocol generally available to all users after spending time in experimental. If you're not familiar, Kitty's keyboard protocol is a modern terminal input standard that solves decades-old keyboard ambiguity issues in terminal emulators.
+
+Traditional terminal protocols can't distinguish between `Ctrl+I` and `Tab`, or `Ctrl+M` and `Enter`. Kitty's protocol fixes this by encoding all key events unambiguously, enabling terminal apps to support shortcuts that previously collided with control codes.
+
+This matters for anyone running TUI apps, terminal-based editors, or custom tools that need rich keyboard input. Apps built with libraries like [crossterm](https://github.com/crossterm-rs/crossterm) or [notcurses](https://github.com/dankamongmen/notcurses) can now use the full keyboard in VS Code's integrated terminal — no more sacrificing `Ctrl+H` because it's indistinguishable from backspace.
+
+For the broader context: [January's v1.109 release](/articles/vscode-january-2026-copilot-update-roundup) positioned VS Code as the "home for multi-agent development" with Claude and Codex agent support. February's Insiders builds iterated daily on that vision. This week's updates show the platform is maturing — less "look at this new feature" and more "here's how we're removing friction."
+
+## Copilot Instructions Get a Default Path
+
+On Feb 24, VS Code added `~/.copilot/instructions` to the default instruction load paths. This is a small change with workflow implications: you can now drop `.md` files into that directory and they'll automatically be picked up as Copilot instructions without editing settings.
+
+Before this, configuring custom instructions required specifying paths explicitly in your settings. Now there's a convention: `~/.copilot/instructions` for global instructions, workspace-specific paths for project overrides. If you're using [custom agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents) or organization-wide agent skills, this makes distribution cleaner — one directory, no config changes.
+
+The same update added a **`Co-authored-by` commit trailer setting** for AI-generated commits. When enabled, any commit containing AI-generated code automatically includes a `Co-authored-by` trailer in the commit message. This addresses the attribution and auditability gap in AI-assisted development. If your org requires tracking AI contributions (or if you're anticipating future compliance requirements), enabling this now creates a paper trail.
+
+## YAML Config Files Clean Up
+
+A quality-of-life improvement for anyone authoring agent config files: tool names in YAML are now displayed without quotes when they don't contain special characters. This shipped on Feb 24 and makes `.yaml` agent definitions more readable.
+
+Before: `tools: ["read_file", "write_file"]`  
+Now: `tools: [read_file, write_file]`
+
+Minor, but these are the kinds of polish fixes that show Microsoft is paying attention to the developer experience of *building* agents, not just using them.
+
+## Background Agents Get Slash Commands
+
+**Update 1.109.5** added slash command support for background agents, including prompt files, hooks, and skills. Background agents run in isolated workspace copies for async tasks — think "refactor this module while I work on something else." Before this, they were limited to natural language prompts. Now you can invoke structured commands like `/skill security-review` or `/hook pre-commit` from background sessions.
+
+This brings background agents to parity with local agents in terms of tooling access. If you're using [agent hooks](/articles/agent-hooks-controlling-ai-codebase) or custom skills across your team, they now work consistently across all agent contexts.
+
+The update also added the ability to **rename background agent sessions** from the sessions list. Background sessions don't have the same interactive naming flow as local chats, so this fills a gap — you can now label long-running tasks with descriptive names after starting them.
+
+## MCP Servers Get Sandboxing
+
+On Feb 23, VS Code added sandboxing support for local MCP servers using stdio transport. MCP (Model Context Protocol) servers extend agent capabilities with custom tools — think database access, API integrations, or internal services. The new sandbox adds filesystem and network isolation boundaries.
+
+This is a trust and security feature. MCP servers run arbitrary code on your machine. Sandboxing limits what they can access, reducing the blast radius if a server is compromised or poorly written. You can still run unrestricted servers (many legitimate use cases require it), but now you have the option to constrain them.
+
+For teams building internal MCP servers, the [VS Code MCP documentation](https://code.visualstudio.com/docs/copilot/mcp-servers) now includes guidance on sandbox-compatible server design. If you're distributing MCP servers to your org, defaulting to sandboxed mode is the right call unless you have a specific reason not to.
+
+## Terminal Protocol Upgrades Continue
+
+Beyond Kitty keyboard support, the integrated terminal picked up **pixel dimension reporting during resize** (Feb 17). Programs that require pixel-level screen size information — not just character rows and columns — now get accurate dimensions during terminal resize events.
+
+This fixes rendering bugs in TUI apps that rely on pixel dimensions for layout calculations. If you've noticed misaligned UI elements in terminal apps after resizing the terminal pane, this update should fix it.
+
+VS Code also added **OSC 99 desktop notification support** (Feb 13), allowing terminal applications to trigger OS-level notifications. Long-running scripts can now notify you when they complete, even if VS Code is minimized. Combined with the earlier [Kitty graphics protocol support](/articles/vscode-weekly-2026-02-25), VS Code's terminal is converging on feature parity with standalone terminal emulators.
+
+## Quality Over Quantity
+
+No major feature drops this week, just steady execution: private plugin distribution, keyboard protocol maturity, instruction path conventions, and YAML formatting polish. These are the updates that compound over time.
+
+Microsoft shipped 20+ consecutive daily Insiders updates in February. The pace has slowed slightly as they move toward a March stable release, but the focus remains consistent: make VS Code the platform where multi-agent development happens, not just a place where you use one AI assistant.
+
+The private plugin support is the most strategic update. It signals Microsoft expects enterprises to build substantial internal agent tooling and wants to make VS Code the distribution platform for that tooling. Combine that with MCP sandboxing, custom skills, and agent hooks, and you have infrastructure for a world where every team has their own agent capabilities — not just access to Copilot and Claude.
+
+## The Bottom Line
+
+If you're building custom agent workflows for your team, the private plugin distribution is worth testing now. If you're a terminal power user, the Kitty keyboard protocol solves input ambiguity issues you've likely worked around for years. And if you're managing agent instructions across an org, the default `~/.copilot/instructions` path makes distribution cleaner.
+
+This week wasn't about new agent types or flashy demos. It was about making the existing multi-agent platform more usable, more secure, and more suitable for team-scale deployment. That's the kind of progress that sticks.
