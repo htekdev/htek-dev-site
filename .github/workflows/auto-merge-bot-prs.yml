@@ -1,0 +1,62 @@
+name: Auto-merge Bot PRs
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-merge-bot-prs
+  cancel-in-progress: false
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find and merge bot PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Looking for open, non-draft PRs by github-actions[bot]..."
+
+          prs=$(gh pr list \
+            --author "app/github-actions" \
+            --state open \
+            --json number,title,isDraft \
+            --jq '.[] | select(.isDraft == false) | "\(.number)\t\(.title)"')
+
+          if [ -z "$prs" ]; then
+            echo "No eligible PRs found. Nothing to merge."
+            exit 0
+          fi
+
+          echo "Found PRs to merge:"
+          echo "$prs"
+          echo ""
+
+          merged=0
+          failed=0
+
+          echo "$prs" | while IFS=$'\t' read -r number title; do
+            echo "---"
+            echo "Attempting to merge PR #${number}: ${title}"
+            if gh pr merge "$number" --squash --auto; then
+              echo "✅ Successfully enabled auto-merge for PR #${number}"
+              merged=$((merged + 1))
+            else
+              echo "❌ Failed to merge PR #${number}"
+              failed=$((failed + 1))
+            fi
+          done
+
+          echo ""
+          echo "=== Summary ==="
+          echo "Merged: ${merged}"
+          echo "Failed: ${failed}"

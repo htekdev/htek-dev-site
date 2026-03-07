@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import VideoHero from '../components/VideoHero.astro';
+import VideoSection from '../components/VideoSection.astro';
+import videoData from '../data/youtube-videos.json';
+---
+
+<BaseLayout
+  title="Content — htek.dev"
+  description="YouTube videos on agentic DevOps, AI development, testing, and software engineering by Hector Flores."
+>
+  <Navbar />
+  <main id="main-content">
+    <VideoHero
+      totalVideos={videoData.stats.totalVideos}
+      totalViews={videoData.stats.totalViews}
+      subscribers={videoData.stats.subscribers}
+      lastUpdated={videoData.lastUpdated}
+    />
+
+    <div class="max-w-6xl mx-auto px-6 py-16">
+      <!-- Topic filter bar -->
+      <div class="flex items-center gap-2 flex-wrap mb-12" id="topic-filters" aria-label="Filter by topic">
+        <button
+          data-topic="all"
+          class="topic-btn text-xs px-3 py-1.5 rounded-full border border-accent-cyan bg-accent-cyan/10 text-accent-cyan transition-colors"
+          aria-pressed="true"
+        >All Topics</button>
+        {videoData.topics.map(topic => (
+          <button
+            data-topic={topic.id}
+            class="topic-btn text-xs px-3 py-1.5 rounded-full border border-border-muted text-text-muted hover:border-accent-cyan/50 hover:text-accent-cyan transition-colors"
+            aria-pressed="false"
+          >
+            {topic.icon} {topic.title}
+          </button>
+        ))}
+      </div>
+
+      <!-- Topic sections -->
+      <div id="topics-root" class="space-y-16">
+        {videoData.topics.map(topic => (
+          <VideoSection
+            id={topic.id}
+            title={topic.title}
+            description={topic.description}
+            icon={topic.icon}
+            videos={topic.videos}
+          />
+        ))}
+      </div>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  const filterBar = document.getElementById('topic-filters');
+  if (filterBar) {
+    let activeTopic = 'all';
+
+    filterBar.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-topic]');
+      if (!btn) return;
+
+      activeTopic = btn.dataset.topic ?? 'all';
+
+      // Update button styles
+      filterBar.querySelectorAll<HTMLButtonElement>('.topic-btn').forEach(b => {
+        const selected = b.dataset.topic === activeTopic;
+        b.classList.toggle('border-accent-cyan', selected);
+        b.classList.toggle('bg-accent-cyan/10', selected);
+        b.classList.toggle('text-accent-cyan', selected);
+        b.classList.toggle('border-border-muted', !selected);
+        b.classList.toggle('text-text-muted', !selected);
+        b.setAttribute('aria-pressed', String(selected));
+      });
+
+      // Show/hide topic sections
+      document.querySelectorAll<HTMLElement>('.topic-section').forEach(section => {
+        const topicId = section.dataset.topic;
+        const visible = activeTopic === 'all' || topicId === activeTopic;
+        section.style.display = visible ? '' : 'none';
+      });
+    });
+  }
+</script>

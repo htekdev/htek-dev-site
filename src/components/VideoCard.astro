@@ -1,0 +1,85 @@
+---
+interface Props {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  publishedAt: string;
+  viewCount: number;
+  likeCount: number;
+  isNew: boolean;
+  isTrending: boolean;
+  relatedArticle?: string | null;
+}
+
+const { videoId, title, thumbnail, publishedAt, viewCount, likeCount, isNew, isTrending, relatedArticle } = Astro.props;
+
+const formattedDate = new Date(publishedAt).toLocaleDateString('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+});
+
+const formattedViews = viewCount >= 1000
+  ? `${(viewCount / 1000).toFixed(1)}K`
+  : viewCount.toString();
+---
+
+<a
+  href={`https://www.youtube.com/watch?v=${videoId}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="block group"
+>
+  <div class="bg-bg-surface border border-border-muted rounded-xl overflow-hidden transition-all duration-300 hover:border-accent-cyan/30 hover:-translate-y-1">
+    <!-- Thumbnail -->
+    <div class="relative aspect-video overflow-hidden">
+      <img
+        src={thumbnail}
+        alt={title}
+        loading="lazy"
+        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+      />
+      <!-- Badges -->
+      <div class="absolute top-2 left-2 flex gap-2">
+        {isNew && (
+          <span class="text-[10px] font-mono font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-cyan/90 text-bg-void">
+            New
+          </span>
+        )}
+        {isTrending && (
+          <span class="text-[10px] font-mono font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-rose/90 text-bg-void">
+            🔥 Trending
+          </span>
+        )}
+      </div>
+      <!-- Play overlay -->
+      <div class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors duration-300">
+        <svg class="w-12 h-12 text-white/0 group-hover:text-white/90 transition-colors duration-300" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+    </div>
+    <!-- Info -->
+    <div class="p-4">
+      <h3 class="text-sm font-heading font-semibold text-text-primary group-hover:text-accent-cyan transition-colors line-clamp-2 leading-snug">
+        {title}
+      </h3>
+      <div class="flex items-center gap-3 mt-2 text-xs text-text-muted">
+        <time datetime={publishedAt}>{formattedDate}</time>
+        <span>·</span>
+        <span>{formattedViews} views</span>
+        {likeCount > 0 && (
+          <>
+            <span>·</span>
+            <span>♥ {likeCount}</span>
+          </>
+        )}
+      </div>
+      {relatedArticle && (
+        <div class="mt-2">
+          <span class="text-[10px] text-accent-violet font-mono">📝 Related article →</span>
+        </div>
+      )}
+    </div>
+  </div>
+</a>

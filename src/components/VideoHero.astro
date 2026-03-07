@@ -1,0 +1,67 @@
+---
+interface Props {
+  totalVideos: number;
+  totalViews: number;
+  subscribers: number;
+  lastUpdated: string;
+}
+
+const { totalVideos, totalViews, subscribers, lastUpdated } = Astro.props;
+
+const formattedViews = totalViews >= 1000
+  ? `${(totalViews / 1000).toFixed(1)}K`
+  : totalViews.toString();
+
+const formattedDate = new Date(lastUpdated).toLocaleDateString('en-US', {
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+});
+---
+
+<section class="relative min-h-[50vh] flex items-center bg-bg-void overflow-hidden">
+  <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+    <div class="w-[600px] h-[600px] bg-accent-cyan/5 rounded-full blur-3xl"></div>
+  </div>
+  <div class="relative max-w-5xl mx-auto px-6 pt-32 pb-16 text-center">
+    <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-6">// content</span>
+    <h1 class="text-4xl md:text-6xl font-heading font-bold text-text-primary mb-4">
+      <span class="gradient-text">YouTube</span> Content
+    </h1>
+    <p class="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-10">
+      Videos on agentic DevOps, AI-powered development, testing practices, and building the future of software engineering.
+    </p>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4 max-w-md mx-auto mb-8">
+      <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+        <span class="text-2xl font-heading font-bold text-accent-cyan block">{totalVideos}</span>
+        <span class="text-text-muted text-xs">Videos</span>
+      </div>
+      <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+        <span class="text-2xl font-heading font-bold text-accent-cyan block">{formattedViews}</span>
+        <span class="text-text-muted text-xs">Views</span>
+      </div>
+      <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+        <span class="text-2xl font-heading font-bold text-accent-cyan block">{subscribers}</span>
+        <span class="text-text-muted text-xs">Subscribers</span>
+      </div>
+    </div>
+
+    <a
+      href="https://www.youtube.com/@htekdev?sub_confirmation=1"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+    >
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+      </svg>
+      Subscribe
+    </a>
+
+    <p class="text-text-muted text-xs mt-4">
+      Last updated: {formattedDate}
+    </p>
+  </div>
+</section>
