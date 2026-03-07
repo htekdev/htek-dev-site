@@ -10,6 +10,8 @@ interface Video {
   isNew: boolean;
   isTrending: boolean;
   relatedArticle?: string | null;
+  duration: string;
+  durationSeconds: number;
 }
 
 interface Props {
@@ -44,6 +46,8 @@ const { id, title, description, icon, videos } = Astro.props;
         isNew={video.isNew}
         isTrending={video.isTrending}
         relatedArticle={video.relatedArticle}
+        duration={video.duration}
+        durationSeconds={video.durationSeconds}
       />
     ))}
   </div>

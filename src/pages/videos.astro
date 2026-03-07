@@ -1,0 +1,223 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import VideoHero from '../components/VideoHero.astro';
+import VideoSection from '../components/VideoSection.astro';
+import videoData from '../data/youtube-videos.json';
+
+// Flatten all videos for length grouping
+const allVideos = videoData.topics.flatMap(t => t.videos);
+
+const lengthGroups = [
+  {
+    id: 'shorts',
+    title: 'Shorts',
+    description: 'Quick hits under 60 seconds — perfect for a fast insight or demo',
+    icon: '⚡',
+    videos: allVideos.filter(v => v.durationSeconds < 60).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()),
+  },
+  {
+    id: 'standard',
+    title: 'Standard',
+    description: 'Explainers and walkthroughs between 1 and 10 minutes',
+    icon: '🎬',
+    videos: allVideos.filter(v => v.durationSeconds >= 60 && v.durationSeconds < 600).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()),
+  },
+  {
+    id: 'deep-dives',
+    title: 'Deep Dives',
+    description: 'Long-form content, live streams, and extended tutorials — 10 minutes and beyond',
+    icon: '🎓',
+    videos: allVideos.filter(v => v.durationSeconds >= 600).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()),
+  },
+];
+---
+
+<BaseLayout
+  title="Videos — htek.dev"
+  description="YouTube videos on agentic DevOps, AI development, testing, and software engineering by Hector Flores."
+>
+  <Navbar />
+  <main id="main-content">
+    <VideoHero
+      totalVideos={videoData.stats.totalVideos}
+      totalViews={videoData.stats.totalViews}
+      subscribers={videoData.stats.subscribers}
+      lastUpdated={videoData.lastUpdated}
+    />
+
+    <div class="max-w-6xl mx-auto px-6 py-16">
+      <!-- View Mode Toggle -->
+      <div class="flex items-center justify-center gap-1 mb-10 bg-bg-surface border border-border-muted rounded-xl p-1 max-w-xs mx-auto">
+        <button
+          id="view-topic"
+          class="view-toggle text-sm font-semibold px-4 py-2 rounded-lg transition-all bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/30"
+          aria-pressed="true"
+        >By Topic</button>
+        <button
+          id="view-length"
+          class="view-toggle text-sm font-semibold px-4 py-2 rounded-lg transition-all text-text-muted hover:text-text-primary"
+          aria-pressed="false"
+        >By Length</button>
+      </div>
+
+      <!-- ===== BY TOPIC VIEW ===== -->
+      <div id="topic-view">
+        <!-- Topic filter bar -->
+        <div class="flex items-center gap-2 flex-wrap mb-12" id="topic-filters" aria-label="Filter by topic">
+          <button
+            data-topic="all"
+            class="filter-btn topic-btn text-xs px-3 py-1.5 rounded-full border border-accent-cyan bg-accent-cyan/10 text-accent-cyan transition-colors"
+            aria-pressed="true"
+          >All Topics</button>
+          {videoData.topics.map(topic => (
+            <button
+              data-topic={topic.id}
+              class="filter-btn topic-btn text-xs px-3 py-1.5 rounded-full border border-border-muted text-text-muted hover:border-accent-cyan/50 hover:text-accent-cyan transition-colors"
+              aria-pressed="false"
+            >
+              {topic.icon} {topic.title}
+            </button>
+          ))}
+        </div>
+
+        <!-- Topic sections -->
+        <div id="topics-root" class="space-y-16">
+          {videoData.topics.map(topic => (
+            <VideoSection
+              id={topic.id}
+              title={topic.title}
+              description={topic.description}
+              icon={topic.icon}
+              videos={topic.videos}
+            />
+          ))}
+        </div>
+      </div>
+
+      <!-- ===== BY LENGTH VIEW ===== -->
+      <div id="length-view" class="hidden">
+        <!-- Length filter bar -->
+        <div class="flex items-center gap-2 flex-wrap mb-12" id="length-filters" aria-label="Filter by length">
+          <button
+            data-length="all"
+            class="filter-btn length-btn text-xs px-3 py-1.5 rounded-full border border-accent-cyan bg-accent-cyan/10 text-accent-cyan transition-colors"
+            aria-pressed="true"
+          >All Lengths</button>
+          {lengthGroups.map(group => (
+            <button
+              data-length={group.id}
+              class="filter-btn length-btn text-xs px-3 py-1.5 rounded-full border border-border-muted text-text-muted hover:border-accent-cyan/50 hover:text-accent-cyan transition-colors"
+              aria-pressed="false"
+            >
+              {group.icon} {group.title}
+              <span class="ml-1 text-text-muted/60">({group.videos.length})</span>
+            </button>
+          ))}
+        </div>
+
+        <!-- Length sections -->
+        <div id="lengths-root" class="space-y-16">
+          {lengthGroups.map(group => (
+            <VideoSection
+              id={group.id}
+              title={group.title}
+              description={group.description}
+              icon={group.icon}
+              videos={group.videos}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  // View mode toggle
+  const viewTopic = document.getElementById('view-topic');
+  const viewLength = document.getElementById('view-length');
+  const topicView = document.getElementById('topic-view');
+  const lengthView = document.getElementById('length-view');
+
+  function setViewMode(mode: 'topic' | 'length') {
+    const isTopic = mode === 'topic';
+
+    topicView?.classList.toggle('hidden', !isTopic);
+    lengthView?.classList.toggle('hidden', isTopic);
+
+    if (viewTopic && viewLength) {
+      viewTopic.classList.toggle('bg-accent-cyan/10', isTopic);
+      viewTopic.classList.toggle('text-accent-cyan', isTopic);
+      viewTopic.classList.toggle('border', isTopic);
+      viewTopic.classList.toggle('border-accent-cyan/30', isTopic);
+      viewTopic.classList.toggle('text-text-muted', !isTopic);
+
+      viewLength.classList.toggle('bg-accent-cyan/10', !isTopic);
+      viewLength.classList.toggle('text-accent-cyan', !isTopic);
+      viewLength.classList.toggle('border', !isTopic);
+      viewLength.classList.toggle('border-accent-cyan/30', !isTopic);
+      viewLength.classList.toggle('text-text-muted', isTopic);
+
+      viewTopic.setAttribute('aria-pressed', String(isTopic));
+      viewLength.setAttribute('aria-pressed', String(!isTopic));
+    }
+  }
+
+  viewTopic?.addEventListener('click', () => setViewMode('topic'));
+  viewLength?.addEventListener('click', () => setViewMode('length'));
+
+  // Topic filter
+  const topicFilterBar = document.getElementById('topic-filters');
+  if (topicFilterBar) {
+    topicFilterBar.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-topic]');
+      if (!btn) return;
+
+      const activeTopic = btn.dataset.topic ?? 'all';
+
+      topicFilterBar.querySelectorAll<HTMLButtonElement>('.topic-btn').forEach(b => {
+        const selected = b.dataset.topic === activeTopic;
+        b.classList.toggle('border-accent-cyan', selected);
+        b.classList.toggle('bg-accent-cyan/10', selected);
+        b.classList.toggle('text-accent-cyan', selected);
+        b.classList.toggle('border-border-muted', !selected);
+        b.classList.toggle('text-text-muted', !selected);
+        b.setAttribute('aria-pressed', String(selected));
+      });
+
+      document.querySelectorAll<HTMLElement>('#topics-root .topic-section').forEach(section => {
+        const topicId = section.dataset.topic;
+        section.style.display = (activeTopic === 'all' || topicId === activeTopic) ? '' : 'none';
+      });
+    });
+  }
+
+  // Length filter
+  const lengthFilterBar = document.getElementById('length-filters');
+  if (lengthFilterBar) {
+    lengthFilterBar.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-length]');
+      if (!btn) return;
+
+      const activeLength = btn.dataset.length ?? 'all';
+
+      lengthFilterBar.querySelectorAll<HTMLButtonElement>('.length-btn').forEach(b => {
+        const selected = b.dataset.length === activeLength;
+        b.classList.toggle('border-accent-cyan', selected);
+        b.classList.toggle('bg-accent-cyan/10', selected);
+        b.classList.toggle('text-accent-cyan', selected);
+        b.classList.toggle('border-border-muted', !selected);
+        b.classList.toggle('text-text-muted', !selected);
+        b.setAttribute('aria-pressed', String(selected));
+      });
+
+      document.querySelectorAll<HTMLElement>('#lengths-root .topic-section').forEach(section => {
+        const topicId = section.dataset.topic;
+        section.style.display = (activeLength === 'all' || topicId === activeLength) ? '' : 'none';
+      });
+    });
+  }
+</script>

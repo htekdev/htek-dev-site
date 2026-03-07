@@ -62,9 +62,13 @@ Use the YouTube MCP server tools to fetch ALL videos from the channel:
 2. If there's a `nextPageToken`, use `youtube_playlist_items` with playlistId `UUlQ3i2ynrWV5tZJ6mHbVjWQ` and the page token to get remaining videos
 3. Continue paginating until all videos are fetched
 
-### 2. Get video statistics
+### 2. Get video statistics and durations
 
-Call `youtube_video_list` with parts `["statistics"]` for batches of up to 50 video IDs at a time. Record viewCount and likeCount for each video.
+Call `youtube_video_list` with parts `["statistics", "contentDetails"]` for batches of up to 50 video IDs at a time. Record viewCount, likeCount, and duration (ISO 8601 format like PT1M30S) for each video. Parse the duration into seconds for the `durationSeconds` field and determine the `lengthCategory`:
+
+- `short`: durationSeconds < 60
+- `standard`: durationSeconds >= 60 and < 600
+- `deep-dive`: durationSeconds >= 600
 
 ### 3. Categorize videos by topic
 
@@ -134,6 +138,9 @@ Read the existing `src/data/youtube-videos.json` file. Update it with the new da
           "thumbnail": "https://i.ytimg.com/vi/.../mqdefault.jpg",
           "publishedAt": "...",
           "stats": { "viewCount": 0, "likeCount": 0 },
+          "duration": "PT1M30S",
+          "durationSeconds": 90,
+          "lengthCategory": "standard",
           "isNew": false,
           "isTrending": false,
           "relatedArticle": "/articles/..." or null
