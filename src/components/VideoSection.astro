@@ -12,6 +12,7 @@ interface Video {
   relatedArticle?: string | null;
   duration: string;
   durationSeconds: number;
+  lengthCategory: string;
 }
 
 interface Props {
@@ -29,26 +30,28 @@ const { id, title, description, icon, videos } = Astro.props;
   <div class="flex items-center gap-3 mb-2">
     <span class="text-2xl">{icon}</span>
     <h2 class="text-xl font-heading font-bold text-text-primary">{title}</h2>
-    <span class="text-xs text-text-muted font-mono bg-bg-overlay px-2 py-0.5 rounded-full">
+    <span class="text-xs text-text-muted font-mono bg-bg-overlay px-2 py-0.5 rounded-full section-count">
       {videos.length} videos
     </span>
   </div>
   <p class="text-text-muted text-sm mb-6">{description}</p>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     {videos.map((video) => (
-      <VideoCard
-        videoId={video.videoId}
-        title={video.title}
-        thumbnail={video.thumbnail}
-        publishedAt={video.publishedAt}
-        viewCount={video.stats.viewCount}
-        likeCount={video.stats.likeCount}
-        isNew={video.isNew}
-        isTrending={video.isTrending}
-        relatedArticle={video.relatedArticle}
-        duration={video.duration}
-        durationSeconds={video.durationSeconds}
-      />
+      <div class="video-card-wrapper" data-length={video.lengthCategory}>
+        <VideoCard
+          videoId={video.videoId}
+          title={video.title}
+          thumbnail={video.thumbnail}
+          publishedAt={video.publishedAt}
+          viewCount={video.stats.viewCount}
+          likeCount={video.stats.likeCount}
+          isNew={video.isNew}
+          isTrending={video.isTrending}
+          relatedArticle={video.relatedArticle}
+          duration={video.duration}
+          durationSeconds={video.durationSeconds}
+        />
+      </div>
     ))}
   </div>
 </section>
