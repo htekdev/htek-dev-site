@@ -54,13 +54,13 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
               All
             </button>
             <button data-duration="short" class="dur-btn text-xs px-3 py-1 rounded-md transition-all text-text-muted hover:text-text-primary" aria-pressed="false">
-              ⚡ Shorts <span class="text-text-muted/50 ml-0.5">{shortCount}</span>
+              ⚡ Shorts <span class="dur-count text-text-muted/50 ml-0.5" data-dur="short">{shortCount}</span>
             </button>
             <button data-duration="standard" class="dur-btn text-xs px-3 py-1 rounded-md transition-all text-text-muted hover:text-text-primary" aria-pressed="false">
-              🎬 Standard <span class="text-text-muted/50 ml-0.5">{standardCount}</span>
+              🎬 Standard <span class="dur-count text-text-muted/50 ml-0.5" data-dur="standard">{standardCount}</span>
             </button>
             <button data-duration="deep-dive" class="dur-btn text-xs px-3 py-1 rounded-md transition-all text-text-muted hover:text-text-primary" aria-pressed="false">
-              🎓 Deep Dives <span class="text-text-muted/50 ml-0.5">{deepDiveCount}</span>
+              🎓 Deep Dives <span class="dur-count text-text-muted/50 ml-0.5" data-dur="deep-dive">{deepDiveCount}</span>
             </button>
           </div>
         </div>
@@ -95,6 +95,7 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
 
   function applyFilters() {
     let totalVisible = 0;
+    const durCounts: Record<string, number> = { 'short': 0, 'standard': 0, 'deep-dive': 0 };
 
     document.querySelectorAll<HTMLElement>('#topics-root .topic-section').forEach(section => {
       const topicId = section.dataset.topic;
@@ -107,10 +108,12 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
 
       let sectionVisible = 0;
       section.querySelectorAll<HTMLElement>('.video-card-wrapper').forEach(card => {
-        const lengthCat = card.dataset.length;
+        const lengthCat = card.dataset.length ?? '';
         const durationMatch = activeDuration === 'all' || lengthCat === activeDuration;
         card.style.display = durationMatch ? '' : 'none';
         if (durationMatch) sectionVisible++;
+        // Count all cards in matching topics for duration badge updates
+        if (lengthCat) durCounts[lengthCat] = (durCounts[lengthCat] || 0) + 1;
       });
 
       // Update section count badge
@@ -125,6 +128,12 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
 
       section.style.display = sectionVisible > 0 ? '' : 'none';
       totalVisible += sectionVisible;
+    });
+
+    // Update duration filter counts to reflect the active topic
+    document.querySelectorAll<HTMLElement>('.dur-count').forEach(el => {
+      const dur = el.dataset.dur ?? '';
+      el.textContent = String(durCounts[dur] || 0);
     });
 
     const noResults = document.getElementById('no-results');
