@@ -1,0 +1,87 @@
+---
+title: "GitHub Weekly: Copilot Coding Agent Levels Up, Enterprise AI Gets Real Governance"
+description: "Model selection, self-review, security scanning, and enterprise agent controls all shipped this week. Here's what just changed."
+pubDate: 2026-03-03
+tags: ["GitHub Copilot", "DevOps", "Developer Experience", "AI"]
+draft: false
+---
+
+## GitHub Doubles Down on Agentic Workflows
+
+If you blinked this week, you missed five major updates to GitHub's agent ecosystem. Model selection for Copilot coding agent. Self-review before PRs. Built-in security scanning. Enterprise AI controls going GA. And GitHub Actions finally killing the double-zip artifact problem.
+
+Let's break down what actually matters.
+
+## Copilot Coding Agent Gets Model Selection
+
+The [Copilot coding agent](https://github.blog/ai-and-ml/github-copilot/whats-new-with-github-copilot-coding-agent/) now lets you pick your model. Before this, every background task ran on a single default model—you couldn't pay for a beefier model for complex refactors or drop down to something faster for routine work.
+
+Now you can. The Agents panel includes a model picker. Use a faster model for straightforward tasks like adding unit tests. Upgrade to a more capable model when you're dealing with gnarly refactors or integration tests that need real edge cases. Or leave it on auto and let GitHub choose.
+
+Model selection is live for Copilot Pro and Pro+ users now, with Business and Enterprise coming soon.
+
+I've been watching agent capabilities evolve since [GitHub launched agentic workflows](/articles/github-agentic-workflows-hands-on-guide), and this is exactly the kind of control teams need when they're delegating real work to agents. A one-size-fits-all model makes sense for demos. In production, you want options.
+
+## Self-Review Before the PR Opens
+
+Here's the painful part of reviewing agent output: you open the diff and the logic technically works, but nobody would write it that way. String concatenation that's overly complex. Variable names that make no sense. Patterns that violate your team's conventions.
+
+Copilot coding agent now reviews its own changes using [Copilot code review](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review) before opening the PR. It gets feedback, iterates, and improves the patch. By the time you're tagged for review, someone already went through it.
+
+In [one GitHub Checkout demo](https://youtu.be/S1ch_6fjp5M?t=212), the agent caught that its own string concatenation was unnecessarily complex and fixed it before the pull request landed. That kind of thing used to be your problem.
+
+This is a big deal. Self-review means the agent isn't just generating code—it's applying the same quality bar you'd expect from a human contributor. That's the difference between a code generator and an actual coding assistant.
+
+## Security Scanning Baked Into Agent Workflows
+
+AI-generated code can introduce the same risks as human-written code: vulnerable patterns, secrets accidentally committed, dependencies with known CVEs. The difference is agents do it faster.
+
+Copilot coding agent now runs [code scanning, secret scanning, and dependency vulnerability checks](https://github.blog/changelog/2025-10-28-copilot-coding-agent-now-automatically-validates-code-security-and-quality/) directly inside its workflow. If a dependency has a known issue or something looks like a committed API key, it gets flagged before the PR opens.
+
+Code scanning is normally part of GitHub Advanced Security (GHAS). With Copilot coding agent, you get it for free. That's not a small thing—GHAS is a paid add-on. GitHub is essentially giving you enterprise-grade security scanning on every agent-generated PR without requiring an upgrade.
+
+This is exactly what I was talking about in [my article on context engineering](/articles/context-engineering-key-to-ai-development)—agents need guardrails built into the pipeline, not bolted on after the fact.
+
+## Enterprise AI Controls Go Generally Available
+
+GitHub's [Enterprise AI Controls and agent control plane](https://github.blog/changelog/2026-02-26-enterprise-ai-controls-agent-control-plane-now-generally-available/) just hit general availability. This is the governance layer enterprises actually need when they're deploying agents at scale.
+
+What you get:
+
+- **AI Controls tab in enterprise settings**: One consolidated view for all AI-related policies and settings. No more hunting across different admin panels.
+- **Audit logs with agent visibility**: Full visibility into what agents are doing, with `actor_is_agent` identifiers and `user`/`user_id` fields so you can see who the agent is acting on behalf of.
+- **Cloud agent session activity**: View all agent sessions from the last 24 hours, not just the first 1,000 records. Search and filter by specific agents, including third-party agents.
+- **Custom agent APIs**: Programmatically apply enterprise-wide custom agent definitions for greater control and compliance. Set the source organization and list custom agents defined in your canonical `.github-private/agents/*.md` repository path.
+- **AI manager role**: Decentralize AI administration through an enterprise custom role with fine-grained permissions for viewing audit logs, agent session activity, and managing AI Controls.
+
+MCP enterprise allowlists remain in preview—GitHub is redesigning them to scale better across organizations without creating multiple registries.
+
+If you're managing Copilot across an enterprise, this is what you've been waiting for. Real governance, real auditability, real control. Not just "AI is enabled for everyone" or "AI is disabled." Actual enterprise-grade administration.
+
+## GitHub Actions: No More Double-Zip Artifacts
+
+GitHub Actions now supports [uploading and downloading non-zipped artifacts](https://github.blog/changelog/2026-02-26-github-actions-now-supports-uploading-and-downloading-non-zipped-artifacts). Previously, every artifact you uploaded with `actions/upload-artifact` was automatically zipped. If you uploaded a compressed file to maintain permissions or reduce size, you got a compressed file inside another compressed file. The double-zip problem.
+
+Now you can set the `archive` parameter to `false` in [v7 of `actions/upload-artifact`](https://github.com/actions/upload-artifact/releases/tag/v7.0.0) and upload unzipped artifacts. This solves three major problems:
+
+1. No more unzipping when downloading a single file via the browser
+2. If your browser supports the file type, you can view files directly (HTML, images, markdown)
+3. No more double-zip problem when you upload compressed files
+
+This applies to new artifacts uploaded with v7 where `archive` is set to `false` (currently defaults to `true` for backwards compatibility). You'll also need to update to [v8 of `actions/download-artifact`](https://github.com/actions/download-artifact/releases/tag/v8.0.0).
+
+It's a small quality-of-life fix, but it removes one of those stupid little frictions that adds up when you're working with CI/CD pipelines daily.
+
+## Also Shipped This Week
+
+- **[Copilot metrics now includes plan mode telemetry](https://github.blog/changelog/2026-03-02-copilot-metrics-now-includes-plan-mode/)**: Enterprises can track adoption and engagement trends for plan mode alongside existing Copilot metrics.
+- **[Gemini 3.1 Pro in public preview](https://github.blog/changelog/2026-02-19-gemini-3-1-pro-is-now-in-public-preview-in-github-copilot)**: Google's latest agentic coding model, now available in GitHub Copilot. Early testing shows high tool precision with fewer tool calls per benchmark.
+- **[GitHub Actions runner scale set client](https://github.blog/changelog/2026-02-05-github-actions-early-february-2026-updates)**: Build custom autoscaling solutions for GitHub Actions runners without requiring Kubernetes. Public preview now available.
+
+## The Bottom Line
+
+GitHub is making a serious bet on agents. Not just as a feature, but as a core part of how developers work. Model selection, self-review, security scanning, enterprise governance—these aren't experimental features. They're production-ready capabilities designed for teams shipping real code.
+
+The signal here is clear: agents aren't assistants anymore. They're teammates. And GitHub is building the infrastructure to make that work at enterprise scale.
+
+If you're still treating Copilot like autocomplete, you're missing the bigger shift. The tooling just got a lot more capable this week.
