@@ -4,7 +4,6 @@ const navLinks = [
   { label: 'Writing', href: '/#writing' },
   { label: 'Connect', href: '/#connect' },
   { label: 'Articles', href: '/articles' },
-  { label: 'Content', href: '/content' },
 ];
 ---
 
@@ -25,6 +24,12 @@ const navLinks = [
           {link.label}
         </a>
       ))}
+      <a
+        href="/content"
+        class="content-link text-sm font-semibold transition-all"
+      >
+        Content
+      </a>
       <a
         href="/consulting"
         class="consulting-link text-sm font-semibold transition-all"
@@ -71,6 +76,12 @@ const navLinks = [
       </a>
     ))}
     <a
+      href="/content"
+      class="mobile-nav-link content-link text-2xl font-heading font-semibold transition-all"
+    >
+      Content
+    </a>
+    <a
       href="/consulting"
       class="mobile-nav-link consulting-link text-2xl font-heading font-semibold transition-all"
     >
@@ -108,6 +119,21 @@ const navLinks = [
 </script>
 
 <style>
+  .content-link {
+    background: linear-gradient(to right, #7C3AED, #EC4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-decoration: none;
+  }
+
+  .content-link:hover {
+    background: linear-gradient(to right, #8B5CF6, #F472B6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   .consulting-link {
     background: linear-gradient(to right, #00E5FF, #7C3AED);
     -webkit-background-clip: text;
