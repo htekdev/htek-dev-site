@@ -1,0 +1,95 @@
+---
+title: "Specs = Tests: Why Spec-Driven Terraform Starts With Tests, Not Documents"
+description: "Everyone says start with specs. I say specs ARE tests. Here's why Terraform IaC with AI agents needs test-first thinking, not more documents."
+pubDate: 2026-03-07
+tags: ["AI", "DevOps", "GitHub Copilot", "Automation"]
+draft: false
+---
+
+## The Spec-Driven Development Debate Has It Backwards
+
+A colleague recently asked me whether spec-driven development applies to Terraform. The question itself reveals a gap in how our industry thinks about specs — and it's a gap that matters a lot more now that AI agents are writing our infrastructure code.
+
+The conventional wisdom goes like this: write a specification document, then write code that implements the spec. Clean. Linear. Professional. And for Terraform Infrastructure as Code, people imagine this means writing architecture documents, naming conventions, and compliance requirements in markdown files, then having GitHub Copilot generate HCL that follows them.
+
+Here's my problem with that: **specs are not deterministically enforceable.** A markdown document that says "all S3 buckets must have encryption enabled" is a suggestion. It's guidance. It's the same category as [agent instructions](/articles/agent-hooks-controlling-ai-codebase) — and I've written extensively about why instructions alone aren't enforcement. An AI agent will read your spec, nod politely, and create an unencrypted bucket anyway because it optimized for something else in its context window.
+
+## My Definition: Specs = Tests = Code
+
+There's been a lot of churn on what "spec-driven development" actually means. I have my own definition that I've been pushing, and it's different from what most people teach:
+
+> **Specs don't define what the code does. Specs define what the code creates. So specs should govern the tests, and the tests govern the code.**
+
+This is an important distinction. A traditional spec says "deploy a VNet with three subnets." That's describing an *outcome*, not behavior. You know what else describes an expected outcome? A test assertion. `expect(subnets).toHaveLength(3)`. The spec and the test are saying the same thing — one is just enforceable and the other isn't.
+
+That's why I say **Specs = Tests = Code.** They're not three separate phases. They're three expressions of the same intent, and the only one that actually prevents bad infrastructure from shipping is the test.
+
+So when someone asks me "should I start with specs?", my answer is: **start with tests.** The tests *are* your spec. They're the executable, deterministic, enforceable version of what your infrastructure should look like.
+
+## The Terraform Testing Gap Is Real
+
+Here's the uncomfortable truth: most programming languages have mature testing ecosystems. JavaScript has Jest. Python has pytest. Go has a built-in test framework with mocking support. You can write a test, run it in milliseconds, get immediate feedback, and iterate.
+
+Terraform? [Terraform's native test framework](https://developer.hashicorp.com/terraform/language/tests) arrived in v1.6 and got [provider mocking in v1.7](https://developer.hashicorp.com/terraform/language/tests/mocking). It's a start, but it's nowhere near what application developers take for granted. The tests create real infrastructure by default. There's [no support for parameterized test cases](https://www.env0.com/blog/terratest-vs-terraform-opentofu-test-in-depth-comparison) via `for_each` in run blocks. You can't test against multiple provider versions. And the feedback loop is minutes to hours, not milliseconds.
+
+[Terratest](https://terratest.gruntwork.io/) gives you more power — full Go testing capabilities with mocking, table-driven tests, and real assertions. But now you're writing tests in Go for infrastructure defined in HCL, which is a language context switch that [slows teams down and creates maintenance burden](https://www.massdriver.cloud/blogs/terraform-test-considered-harmful).
+
+The result? Most Terraform codebases have **zero tests.** Teams rely on `terraform plan`, eyeball the output, and pray. That worked when humans were the only ones writing infrastructure. It doesn't work when an AI agent can generate 40 resources in 90 seconds.
+
+## Why This Matters More in the Agentic Era
+
+I've written about [how AI agents write fake tests that pass but test nothing](/articles/tests-are-everything-agentic-ai) — tests that compile, run green, and validate absolutely nothing. [Research shows](https://medium.com/@lagarciag/why-ai-generated-tests-prove-less-than-you-think-264bf180c7d6) AI-generated tests achieve only 20% mutation scores on real-world code. That means 80% of potential bugs slip through.
+
+Now apply that to Terraform. An AI agent tasked with "create a secure Azure landing zone" will generate HCL that looks right. It might even generate `.tftest.hcl` files that run assertions. But without a testing framework that enforces meaningful validation — encryption checks, network isolation verification, IAM policy correctness — those tests are security theater.
+
+This is exactly the pattern I built [agent-proof architecture](/articles/agent-proof-architecture-agentic-devops) to prevent: **code change = test change**, enforced structurally, not as a guideline. For Terraform, the same principle applies. Every `.tf` file change should require a corresponding test change that validates the infrastructure outcome.
+
+The challenge is that most IaC languages — Terraform included — are **lacking enough support for the true testing features we need in the agentic era.** We need to be creative.
+
+## Getting Creative: What a Terraform Testing Strategy Actually Looks Like
+
+Here's what I'd recommend for teams using Terraform with GitHub Copilot:
+
+### Have the Agent Build Its Own Testing Framework
+
+Instead of hoping your AI agent will respect a spec document, have it define and maintain a testing framework it can lean on. This means:
+
+1. **Policy-as-code as the spec layer.** Tools like [OPA (Open Policy Agent)](https://www.openpolicyagent.org/), [Checkov](https://www.checkov.io/), and [HashiCorp Sentinel](https://www.hashicorp.com/sentinel) let you write rules that are both human-readable *and* machine-enforceable. A Rego policy that says `deny[msg] { not input.resource.aws_s3_bucket.encryption }` is simultaneously your spec and your test. That's the Specs = Tests convergence in practice. Static analysis tools like [tflint](https://github.com/terraform-linters/tflint) and [Trivy](https://trivy.dev/) add another enforcement layer — catching misconfigurations and security issues before anything gets planned or applied.
+
+2. **`terraform test` for module contract validation.** Use the [native test framework](https://developer.hashicorp.com/terraform/cli/commands/test) for what it's good at: validating module inputs, outputs, and basic resource creation. With [provider mocking in v1.7+](https://developer.hashicorp.com/terraform/language/tests/mocking), you can run **plan-based tests** — validating infrastructure *before* provisioning real resources — which is critical for AI agent workflows where you want fast feedback without cloud costs. Don't try to make it do full integration testing — it wasn't designed for that.
+
+3. **Terratest for integration and behavioral tests.** When you need to verify that a deployed VNet actually has the right peering connections, or that an AKS cluster's network policy blocks cross-namespace traffic, [Terratest](https://terratest.gruntwork.io/) with Go gives you the assertion power you need. Yes, it's a language switch. If your team prefers Python or BDD-style specs, [terraform-compliance](https://terraform-compliance.com/) lets you write Gherkin-syntax tests like `Then it must have encryption enabled` — which is arguably the closest thing to "specs that are literally tests." Pick the tool that fits your team; the principle stays the same.
+
+4. **Pre-commit enforcement via hookflows.** Use [Copilot agent hooks](/articles/agentic-ops-workflow-framework-for-ai-agents) to block commits that modify `.tf` files without corresponding test changes. Same principle as my [test enforcement architecture](/articles/test-enforcement-architecture-ai-agents), adapted for HCL.
+
+### The Layered Enforcement Model
+
+This maps to the three-pillar model I use for all [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left):
+
+| Layer | Terraform Implementation | Purpose |
+|-------|--------------------------|---------|
+| **Enablement** | `copilot-instructions.md` with naming conventions, module patterns, architecture decisions | Tell the agent what you expect |
+| **Enforcement** | Agent hooks running `terraform validate`, `tflint`, Checkov scans on every edit | Make it impossible to break the rules |
+| **Final Gate** | CI/CD pipeline with `terraform plan` review, OPA policies, manual approval for prod | Verify everything before it ships |
+
+Most teams only have the final gate. Some have enablement. Almost nobody has enforcement at the development layer — and that's where the agent is actually writing code.
+
+## Context Engineering Makes This Work
+
+The [Research → Plan → Implement workflow](/articles/context-engineering-key-to-ai-development) my colleague asked about maps naturally to this:
+
+**Research** is context retrieval — pulling existing module interfaces, cloud provider constraints, and compliance requirements into the agent's context. Use `@file` and `@folder` references to feed relevant Terraform modules and policies.
+
+**Plan** is where specs and tests converge. Use [Copilot's Plan Mode](/articles/plan-mode-vs-custom-agents-discovery) for the architecture conversation. But instead of writing a spec document, write test assertions. Define what the infrastructure *must* look like in executable form.
+
+**Implement** is constrained execution. The agent writes Terraform that passes the tests. Hooks enforce formatting and validation. The CI pipeline is the final gate.
+
+The key insight from [context engineering](/articles/context-engineering-key-to-ai-development): give the agent your tests as context, not just your specs. Tests are unambiguous. Specs are interpretable. When an AI agent sees `assert resource_count == 3`, there's no room for creative interpretation.
+
+## The Bottom Line
+
+Spec-driven development for Terraform doesn't start with documents. It starts with tests. The spec *is* the test — an executable, enforceable expression of what your infrastructure must look like.
+
+Languages are still catching up to what the agentic era demands from testing frameworks. Terraform's native testing is young and limited. But by combining policy-as-code, `terraform test`, Terratest, and agent hooks, you can build a testing strategy that lets AI agents write infrastructure code you can actually trust.
+
+Don't write a spec and hope the agent follows it. Write a test and make it impossible to ship infrastructure that doesn't pass.
