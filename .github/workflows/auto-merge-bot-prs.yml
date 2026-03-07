@@ -28,6 +28,7 @@ jobs:
 
           prs=$(gh pr list \
             --author "app/github-actions" \
+            --label "automation" \
             --state open \
             --json number,title,isDraft \
             --jq '.[] | select(.isDraft == false) | "\(.number)\t\(.title)"')
