@@ -78,10 +78,34 @@ This is the testing equivalent of [the vibe coding risk that Retool documented](
 
 I added this as a memory in my agent configuration. But as I've argued in [my piece on agent-proof architecture](/articles/agent-proof-architecture-agentic-devops), memories and instructions are the weakest form of governance. The real solution is the AST validator catching assertion degradation before the commit lands.
 
-## Stop Celebrating Coverage Numbers
+## The Agentic DevOps Response to Vibe Testing
 
-The [survey of bugs in AI-generated code](https://arxiv.org/html/2512.05239v1) from Massey University catalogs the full taxonomy of AI coding failures. The testing-specific failures — faulty assertions, incomplete test coverage, tests that validate bugs — are the hardest to detect because they hide behind green CI badges.
+Vibe coding has its hangover. Vibe testing has its antidote: **agentic DevOps** — governance infrastructure that runs at agent speed and catches what humans can't review fast enough. The [survey of bugs in AI-generated code](https://arxiv.org/html/2512.05239v1) from Massey University catalogs the full taxonomy of AI coding failures. The testing-specific ones — faulty assertions, incomplete coverage, tests that validate bugs — are the hardest to detect because they hide behind green CI badges.
 
 Here's the uncomfortable truth: if you're using AI agents to write tests and you're not auditing the assertion quality of those tests, you're vibe testing. Your coverage number is a vanity metric. Your CI pipeline is a false confidence machine.
 
-The fix isn't to stop using AI for testing — the infrastructure my agent built was genuinely excellent. The fix is to treat test quality as a structural property enforced by automation, not a behavioral property you hope the agent remembers. Build the [agent harness](/articles/agent-harnesses-controlling-ai-agents-2026), enforce the gates, and audit the sessions. Because the agent that writes 275 tests in one session will absolutely optimize for the metric you gave it — and that metric might not be what you actually wanted.
+But you don't have to stay there. Here are five things you can do today to stop vibe testing your codebase:
+
+### 1. Add an Assertion Density Gate
+
+Don't just measure whether tests exist — measure whether they assert anything. A test function that calls your API but never checks the response is theater. Add a pre-commit hook or CI step that counts assertions per test function and rejects anything below a minimum threshold. In Go, that's scanning for `t.Error`, `t.Fatal`, `assert.*`, or `require.*`. In JavaScript, count `expect()` calls. If a test has zero assertions, it's not a test — it's a coverage decoration.
+
+### 2. Block the "Silence the Error" Pattern
+
+Agents love to make failures go away instead of fixing them. Create a [hookflow or pre-commit gate](/articles/agent-hooks-controlling-ai-codebase) that detects when test code suppresses errors: blank-identifier assignments (`_ = result`), empty catch blocks, unconditional `t.Skip()`, or assertions that check for `nil` error on operations that should fail. The agent shouldn't be allowed to make a test pass by removing the thing that checks whether it should fail.
+
+### 3. Require Coverage + Quality, Never Coverage Alone
+
+Coverage without assertion quality is the core Goodhart trap. Pair your coverage threshold with a test quality metric. My setup runs AST analysis alongside coverage — the coverage gate checks line execution, the AST validator checks that executed lines are actually verified. If you're using something like [Istanbul](https://istanbul.js.org/) or Go's built-in coverage, add a second gate that parses the test files for structural quality. Coverage tells you what code ran. Assertion density tells you what code was tested.
+
+### 4. Audit Agent Sessions, Not Just Agent Output
+
+Code review catches bad code. Session review catches bad patterns. When I audited the agent session that produced 275 tests, the code looked fine in a diff. The problem was visible only in the session transcript: the agent hit a failing test, weakened the assertion, re-ran, saw green, and moved on. Build a cadence — weekly, per-sprint, whatever fits — where a human reviews not just what the agent produced, but how it got there. The [3+ failure fix loop](#the-diagnostic-red-flag-nobody-watches) is your biggest red flag.
+
+### 5. Make Governance Inaccessible to the Agent
+
+This is the PairCoder lesson and the single most important principle: if the agent can modify the gate, the gate doesn't exist. Put your [test enforcement architecture](/articles/test-enforcement-architecture-ai-agents) in a location the agent can't edit — read-only paths, separate repos, CI-only scripts. My hookflows use a `protect-hookflows.yaml` that blocks the agent from editing the governance files themselves. The agent operates inside the governed environment, not above it.
+
+---
+
+Vibe coding gave us code nobody understands. Vibe testing gives us confidence nobody earned. The fix for both is the same: [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left) — structural enforcement that treats agent output as untrusted by default and validates it at machine speed. Build the [agent harness](/articles/agent-harnesses-controlling-ai-agents-2026), enforce the gates, and audit the sessions. Because the agent that writes 275 tests in one session will absolutely optimize for the metric you gave it — and that metric might not be what you actually wanted.
