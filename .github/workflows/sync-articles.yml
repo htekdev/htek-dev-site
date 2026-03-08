@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -32,22 +34,25 @@ jobs:
 
       - name: Stamp pubDate for newly added articles
         run: |
-          TODAY=$(date -u +"%Y-%m-%d")
-          # Find article files that were newly added (status A) in this push
-          # Guard against shallow/first-commit repos where HEAD~1 may not exist
-          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
-            DIFF_CMD="git diff --name-status HEAD~1 HEAD"
-          else
-            DIFF_CMD="git show --name-status --format= HEAD"
+          BEFORE="${{ github.event.before }}"
+          # Null SHA means first push — compare against empty tree
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            BEFORE=$(git hash-object -t tree /dev/null)
           fi
-          $DIFF_CMD | grep -E '^A\s+src/content/articles/.+\.(md|mdx)$' | cut -f2 | while IFS= read -r file; do
-            echo "Stamping pubDate=$TODAY on $file"
-            ARTICLE_FILE="$file" TODAY="$TODAY" node -e "
+          # Find article files Added in this push (full range, not just HEAD~1)
+          git diff --name-status "$BEFORE" HEAD | grep -E '^A\s+src/content/articles/.+\.(md|mdx)$' | cut -f2 | while IFS= read -r file; do
+            # Use the file's first-commit date as pubDate (when it entered the repo)
+            FIRST_DATE=$(git log --diff-filter=A --format=%as -- "$file" | tail -1)
+            if [ -z "$FIRST_DATE" ]; then
+              FIRST_DATE=$(date -u +"%Y-%m-%d")
+            fi
+            echo "Stamping pubDate=$FIRST_DATE on $file"
+            ARTICLE_FILE="$file" PUB_DATE="$FIRST_DATE" node -e "
               const fs = require('fs');
               const file = process.env.ARTICLE_FILE;
-              const today = process.env.TODAY;
+              const pubDate = process.env.PUB_DATE;
               const content = fs.readFileSync(file, 'utf8');
-              const updated = content.replace(/^pubDate:.*\$/m, 'pubDate: ' + today);
+              const updated = content.replace(/^pubDate:.*\$/m, 'pubDate: ' + pubDate);
               if (updated !== content) fs.writeFileSync(file, updated);
             "
           done
