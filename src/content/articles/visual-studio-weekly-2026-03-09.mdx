@@ -1,0 +1,74 @@
+---
+title: "Visual Studio Weekly: WinForms Agents, Smarter Testing, and the Profiler Gets Unit Test Support"
+description: "Visual Studio's February update doubles down on AI agents for legacy code and delivers practical wins for testing and debugging workflows."
+pubDate: 2026-03-09
+tags: ["Developer Experience", "AI", "Visual Studio", "Productivity"]
+draft: false
+---
+
+## Visual Studio Is Betting on Specialized Agents
+
+Microsoft's February update for Visual Studio 2026 (version 18.3) dropped on February 24th, and it's clear where the team is placing its bets: specialized AI agents that understand your actual workflow, not just generic code completion. The standout addition this month is the WinForms Expert agent, but the real story is how Visual Studio is turning every IDE capability — debugging, profiling, testing — into an agentic surface.
+
+This isn't about shipping more AI features for the sake of it. It's about making the AI useful for the unglamorous work that takes up most of your day: maintaining WinForms apps that have been running since 2010, writing unit tests for code you didn't write, and figuring out why your app is stuck in a loop at 3 AM.
+
+## WinForms Finally Gets Its Own Agent
+
+If you're maintaining WinForms applications in 2026, you're either very unlucky or working in an industry where "if it ain't broke, don't rewrite it in React" is the guiding principle. Either way, the new [WinForms Expert agent](https://devblogs.microsoft.com/visualstudio/visual-studio-february-update/) is specifically for you.
+
+This agent understands the weird corners of WinForms development that generic AI assistants don't: the difference between designer-generated code and your business logic, how CodeDOM serialization works, when to use `TableLayoutPanel` versus manual layouts, and why your `async` event handler keeps crashing the UI thread. It knows about nullable reference types in .NET 8-10, high-DPI scaling, and dark mode — the kinds of modernization tasks that don't make for exciting blog posts but will save you hours of digging through StackOverflow.
+
+The WinForms agent is automatically invoked when Visual Studio detects you're working in a WinForms context, which means you don't need to remember to summon it. It's just there, like a senior engineer who's been maintaining Windows desktop apps since the Bush administration.
+
+## GitHub Copilot Testing Goes Live
+
+Visual Studio's test generation feature, built on [GitHub Copilot for .NET testing](https://devblogs.microsoft.com/dotnet/github-copilot-testing-for-dotnet-available-in-visual-studio/), is now available in the stable channel. Type `@Test` in Copilot Chat, describe what you want to test, and it generates xUnit, NUnit, or MSTest code that actually compiles.
+
+What makes this useful is the context awareness. The agent knows your project's testing framework, your existing test patterns, and the structure of the code under test. It's not just vomiting out boilerplate — it's generating tests that match how your team already writes them. If you're working on a codebase with decent test coverage, this can legitimately speed up the "write tests for this new feature" step of your workflow.
+
+I've covered [context engineering](/articles/context-engineering-key-to-ai-development) before, and this is a good example of why it matters. The test agent only works well because it has access to your solution structure, your existing tests, and your conventions. Without that context, it's just autocomplete with extra steps.
+
+## The Profiler Agent Learned to Run Unit Tests
+
+The Profiler agent (`@profiler`) now supports unit tests, which is a bigger deal than it sounds. Previously, if you wanted to optimize a performance-critical code path, the Profiler agent would give you advice but couldn't measure the impact of changes. Now it can discover relevant unit tests or BenchmarkDotNet benchmarks, run them before and after your optimization, and show you the actual performance delta.
+
+If you don't have benchmarks set up, the agent will create a small measurement harness so you can at least get a baseline. This makes the Profiler agent practical for C++ projects, where setting up benchmarks is often more work than the optimization itself.
+
+This is the kind of feature that doesn't look impressive in a demo but makes a real difference when you're trying to justify why you spent three hours shaving 50ms off a database query. The agent gives you numbers you can put in a PR description.
+
+## Custom Agents Are Now Real
+
+Visual Studio shipped [custom agents](https://devblogs.microsoft.com/visualstudio/custom-agents-in-visual-studio-built-in-and-build-your-own-agents/) alongside the February update, and they're more than just "write your own system prompt." You can build agents that connect to external knowledge sources via Model Context Protocol (MCP) — think internal documentation, design systems, APIs, databases — so the agent isn't limited to what's in your repo.
+
+Teams are already building agents for code review that check PRs against actual style guides stored in SharePoint, design system enforcement agents connected to Figma, and planning agents that gather requirements before any code gets written. The [awesome-copilot repo](https://github.com/github/awesome-copilot) has community-contributed configurations you can use as starting points.
+
+Custom agents live as `.agent.md` files in `.github/agents/` in your repository. This is still a preview feature, so the format might change, but the foundation is there: you define the agent's purpose, specify which tools it can use, and optionally point it at external MCP servers. If you're already using [GitHub's Copilot SDK](/articles/github-copilot-sdk-agents-for-every-app), this should feel familiar.
+
+## Slash Commands for Your Custom Prompts
+
+If you've built custom prompts for Copilot Chat, you can now invoke them with slash commands. Type `/` in the chat input and your custom prompts appear at the top of the list, marked with a bookmark icon. Two new built-in commands shipped with this feature:
+
+- `/generateInstructions` — Auto-generates a `copilot-instructions.md` file for your repo using your coding style and conventions
+- `/savePrompt` — Extracts a reusable prompt from your current chat thread and saves it so you can invoke it later
+
+This is a workflow accelerator. If you have a prompt you use ten times a day ("explain this code path," "write a migration script for this schema change"), turning it into a slash command cuts out the copy-paste step.
+
+## Better Debugging for Collections
+
+The IEnumerable Visualizer now supports DataTips when you hover over cells in the grid. If you're debugging a `List<T>` of complex objects or a dictionary with structured values, you can hover over any cell and see the full object in a tooltip, just like you would in the editor or Watch window.
+
+This is one of those "why wasn't this always there?" features. When you're stepping through LINQ queries that return deeply nested objects, being able to inspect them inline without manually expanding every node in the Watch window is a quality-of-life win.
+
+## Call Stack Analysis with Copilot
+
+The Call Stack window now has an "Analyze with Copilot" option that explains why your app is stuck. When you pause execution, Copilot reviews the current stack and tells you whether the thread is waiting on work, looping, or blocked by something. It's not magic — the agent is just reading the same stack frames you are — but it saves you the cognitive load of translating cryptic Win32 API calls into "oh, it's waiting on a mutex."
+
+This is useful for debugging production issues where the call stack looks like alphabet soup and you're not sure if the app is deadlocked or just waiting on I/O.
+
+## What This Signals About Visual Studio's Direction
+
+The February update makes it clear that Visual Studio is moving toward a model where every major IDE capability — debugging, profiling, testing, code generation, modernization — has an agentic layer on top of it. The built-in agents (Debugger, Profiler, Test, Modernize, WinForms Expert) are the template, and custom agents let you extend that model to your team's specific workflows.
+
+This is different from the early days of Copilot, where the value proposition was "autocomplete but better." Now it's "turn your IDE into a system that understands your entire development context and can take actions based on it." The shift from single-turn prompts to multi-step agentic workflows is where the productivity gains actually happen. I've written about [choosing the right AI SDK](/articles/choosing-the-right-ai-sdk) before, and Visual Studio's approach is a good case study in prioritizing tool integration over raw model capabilities.
+
+If you're still treating Copilot as a fancy autocomplete, you're missing the point. The agents are the feature now.
