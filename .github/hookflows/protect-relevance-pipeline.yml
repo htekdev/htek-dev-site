@@ -1,0 +1,30 @@
+# Protect Article Relevance Pipeline Workflows
+#
+# Prevents accidental edits to the article-relevance-audit and issue-worker
+# agentic workflows. These workflows form a closed-loop content maintenance
+# pipeline and should only be modified intentionally.
+
+name: protect-relevance-pipeline
+description: Protect the article relevance audit and issue worker agentic workflows from accidental modification
+
+blocking: true
+
+on:
+  file:
+    lifecycle: pre
+    types: [edit]
+    paths:
+      - ".github/workflows/article-relevance-audit.md"
+      - ".github/workflows/issue-worker.md"
+
+steps:
+  - name: Warn about relevance pipeline edit
+    run: |
+      echo "⚠️ You are editing a relevance pipeline workflow file."
+      echo ""
+      echo "These workflows form a closed-loop content maintenance system:"
+      echo "  - article-relevance-audit.md — weekly audit, creates issues"
+      echo "  - issue-worker.md — daily triage, assigns issues to Copilot"
+      echo ""
+      echo "Changes to these files can affect the automated content maintenance pipeline."
+      echo "Make sure you understand the interaction between both workflows before editing."
