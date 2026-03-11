@@ -32,30 +32,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Stamp pubDate for newly added articles
-        run: |
-          BEFORE="${{ github.event.before }}"
-          # Null SHA means first push — compare against empty tree
-          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            BEFORE=$(git hash-object -t tree /dev/null)
-          fi
-          # Find article files Added in this push (full range, not just HEAD~1)
-          git diff --name-status "$BEFORE" HEAD | grep -E '^A\s+src/content/articles/.+\.(md|mdx)$' | cut -f2 | while IFS= read -r file; do
-            # Use the file's first-commit date as pubDate (when it entered the repo)
-            FIRST_DATE=$(git log --diff-filter=A --format=%as -- "$file" | tail -1)
-            if [ -z "$FIRST_DATE" ]; then
-              FIRST_DATE=$(date -u +"%Y-%m-%d")
-            fi
-            echo "Stamping pubDate=$FIRST_DATE on $file"
-            ARTICLE_FILE="$file" PUB_DATE="$FIRST_DATE" node -e "
-              const fs = require('fs');
-              const file = process.env.ARTICLE_FILE;
-              const pubDate = process.env.PUB_DATE;
-              const content = fs.readFileSync(file, 'utf8');
-              const updated = content.replace(/^pubDate:.*\$/m, 'pubDate: ' + pubDate);
-              if (updated !== content) fs.writeFileSync(file, updated);
-            "
-          done
+      - name: Stamp pubDate for articles from git history
+        run: node scripts/stamp-pubdates.mjs --apply
 
       - name: Sync to DEV.to
         continue-on-error: true
