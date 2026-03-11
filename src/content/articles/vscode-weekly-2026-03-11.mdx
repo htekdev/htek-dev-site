@@ -1,0 +1,110 @@
+---
+title: "VS Code Weekly: Microsoft Moves to Weekly Releases Starting with v1.111"
+description: "VS Code abandons monthly releases for weekly cadence. First drop: Autopilot mode, agent permissions, scoped hooks, and debug snapshots."
+pubDate: 2026-03-11
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+## The Release Model Just Changed
+
+Microsoft just made the most significant shift in VS Code's shipping strategy since the project launched: **starting with version 1.111, VS Code moves from monthly stable releases to weekly releases**.
+
+This isn't a small adjustment. Monthly releases have been VS Code's rhythm for years. Developers knew when updates would land, extension authors had predictable windows for compatibility testing, and enterprises had a stable cadence for rollout planning. That's all gone now.
+
+The [v1.111 release notes](https://code.visualstudio.com/updates/v1_111) state it plainly: "Welcome to the 1.111 release of Visual Studio Code, **the first of our weekly Stable releases**!" The team explains they're "improv[ing] our engineering processes to ship high-quality features at a faster pace."
+
+What this means in practice: features no longer wait 2-3 weeks for the next monthly window. If a capability is ready, it ships. If you're tracking Insiders builds, the gap between experimental and stable just compressed significantly.
+
+## Why This Matters
+
+Microsoft doesn't change release cadences lightly. The move signals confidence in their CI/CD pipeline and a strategic bet that **faster iteration beats stability predictability** in the current AI development landscape.
+
+The agent and AI space moves too fast for monthly cycles. GitHub Copilot ships weekly. Anthropic and OpenAI release new models on unpredictable timelines. Competitors like Cursor and Windsurf iterate daily. A monthly stable release meant VS Code's agent features were always 2-4 weeks behind what Insiders users had — and potentially 6+ weeks behind competitors who ship continuously.
+
+By moving to weekly releases, Microsoft is effectively collapsing the Insiders-to-Stable gap without eliminating Insiders. Insiders remains the daily bleeding edge, but Stable is now only 7 days behind at most, not 30.
+
+For enterprises, this is a mixed signal. Faster releases mean faster security patches and bug fixes, but also less time to validate changes in staging environments before production rollout. Organizations that auto-update VS Code will need to adjust QA cycles — or pin to specific versions and test on their own schedule.
+
+## What Shipped in v1.111
+
+The first weekly release isn't a small maintenance drop. It introduces four major agent features that would have headlined any monthly release:
+
+### Autopilot Mode (Preview)
+
+The new permissions picker in Chat view now includes three autonomy levels:
+
+- **Default Approvals**: Standard confirmation dialogs for tool calls
+- **Bypass Approvals**: Auto-approve everything, retry on errors
+- **Autopilot**: Full autonomy — the agent runs until it signals completion via `task_complete` tool
+
+Autopilot is the headline feature. Enable it via `chat.autopilot.enabled`, set the permission level, and the agent iterates without human input until it's done. This is Microsoft's answer to [agentic workflows](/articles/agentic-ops-workflow-framework-for-ai-agents) where tasks span multiple steps and require continuous execution.
+
+The security implications are obvious: Autopilot bypasses all approval gates, including destructive actions like file edits, terminal commands, and external API calls. VS Code warns you the first time you enable it. Only use this if you trust the agent's context and guardrails.
+
+### Agent-Scoped Hooks (Preview)
+
+Custom agent frontmatter now supports hooks that **only run for specific agents**, not globally across all chat interactions. Enable via `chat.useCustomAgentHooks` and define hooks in the `hooks` section of your `.agent.md` file.
+
+This solves the namespace collision problem I covered in [Agent Hooks: Controlling AI Without Fighting the Codebase](/articles/agent-hooks-controlling-ai-codebase). Before this, adding a pre-processing hook affected *every* agent in your workspace. Now you can scope hooks to individual agents, making it practical to have multiple agents with different preprocessing logic in the same project.
+
+For teams building custom agents, this is a major flexibility gain. You can enforce linting on code-generation agents, block config changes on deployment agents, and skip all hooks on read-only agents — without writing conditional logic in every hook.
+
+### Debug Events Snapshot
+
+You can now attach a snapshot of agent debug events as chat context using `#debugEventsSnapshot`, or click the sparkle icon in the Agent Debug panel to add it to the chat composer.
+
+This is a troubleshooting feature. When an agent behaves unexpectedly, the debug snapshot includes loaded customizations, token consumption, tool calls, and event logs. Instead of asking "why did the agent do that?" and getting a hallucinated explanation, you can ask with the actual debug data in context.
+
+The debug panel now supports filtered views by timestamp, so you can isolate specific events around the problematic behavior. Combined with [agent harnesses](/articles/agent-harnesses-controlling-ai-agents-2026) and structured logging, debug snapshots give you observability into agent decision-making.
+
+### Chat Tip Improvements
+
+VS Code redesigned the chat tips experience with structured onboarding. Foundational tips (like using the Plan agent or creating custom agents) show first. Quality-of-life tips (experimental settings, Mermaid diagrams) appear later in random order.
+
+Tips now include keyboard shortcuts, only show when a single chat session is visible, and hide after you act on or dismiss them. The update adds tips for `/init` (project configuration) and `/fork` (branching conversations).
+
+This is polish, not a feature. But it shows Microsoft is optimizing for discoverability. As the agent platform grows more complex, users need guidance on what's possible. The structured tip flow addresses that without cluttering the UI.
+
+## Engineering Process Changes
+
+The release notes include a section on engineering improvements that's unusually transparent for Microsoft:
+
+- **Test plan item creation**: One-click creation from feature request issues
+- **Verification step generation**: Auto-generated testing steps for assigned issues
+- **Automatic PR media attachment**: Images/GIFs from merged PRs auto-post to linked issues
+- **Chat showcase pipeline**: Automated tip creation for `chat-showcase` labeled issues
+
+These aren't user-facing features. They're internal workflow improvements to support the faster release cadence. Microsoft is documenting them publicly, which suggests they're confident this process scales — or they're signaling to enterprises that the quality bar isn't dropping despite the pace increase.
+
+## The Extension Ecosystem Angle
+
+Weekly releases compress the extension compatibility window. Extension authors previously had ~4 weeks between stable releases to test and publish updates. That window is now 7 days.
+
+This particularly affects extensions that depend on VS Code APIs or interact with agent features. The [vscode-copilot-chat](https://github.com/microsoft/vscode-copilot-chat) repo already ships daily in Insiders. Extensions that don't move as fast will lag behind stable releases, creating compatibility gaps.
+
+Microsoft added basic IntelliSense for localized strings in extension `package.json` files this release — `Go to Definition` and `Find all References` for `package.nls.json` keys. It's a small improvement, but it signals they're paying attention to extension authoring friction as the platform accelerates.
+
+## Deprecated Features Update
+
+**Edit Mode** is officially deprecated as of v1.110 and will be fully removed in v1.125. You can temporarily re-enable it via `chat.editMode.hidden`, but that setting disappears in ~12 weeks (under the old monthly cadence) or ~14 weeks (under the new weekly cadence).
+
+Edit Mode was an early agent UX experiment that didn't pan out. Microsoft is removing it to reduce code surface area and focus on the agent model that's working: chat-driven iterations with explicit approval gates. The deprecation timeline is short, which aligns with the faster release cadence — no reason to drag out removals when you can iterate to a better model quickly.
+
+## The Competitive Context
+
+This move directly responds to [Cursor](https://cursor.sh) and [Windsurf](https://codeium.com/windsurf), which iterate daily and ship features faster than VS Code's monthly cycle allowed. By moving to weekly releases, Microsoft compresses the feature gap without abandoning stability guarantees.
+
+The timing is also strategic. [GitHub Copilot Workspace](https://github.com/features/copilot/workspace) launched in February as a standalone web-based agent IDE. VS Code's agent features are now the primary battleground for GitHub's "agents in your existing tools" strategy vs. purpose-built agent IDEs. Faster releases mean VS Code can respond to Workspace feedback and competitive features in days, not months.
+
+For developers, this is a net positive. More competition means faster innovation. But it also means the editor landscape is fragmenting. A year ago, everyone was on the same monthly VS Code release. Now we have Insiders (daily), Stable (weekly), forks like Cursor (continuous), and cloud IDEs like GitHub Codespaces (continuous backend, monthly VS Code sync). Keeping up with "what's available where" is getting harder.
+
+## The Bottom Line
+
+Microsoft just bet that **weekly iteration beats monthly predictability** in the AI editor race. v1.111 proves they can ship substantial features on that cadence — Autopilot, scoped hooks, debug snapshots, and chat UX improvements in a single week.
+
+For users, this means faster access to new capabilities and faster bug fixes. For enterprises, it means tighter testing windows and more frequent change management. For extension authors, it means less time to adapt to API changes.
+
+The open question is whether Microsoft can sustain this pace without degrading quality. The first weekly release shipped four preview features, not GA-quality capabilities. If weekly releases become a stream of experimental flags and beta UX, the faster cadence won't matter — users will stay on pinned versions until features stabilize.
+
+But if Microsoft pulls this off — high-quality, incremental improvements every seven days — VS Code's agent platform becomes significantly harder for competitors to match. Not because of any single feature, but because the feedback loop compresses from months to weeks. That's the bet. We'll see if it pays off.
