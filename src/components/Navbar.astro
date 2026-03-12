@@ -32,7 +32,7 @@ const navLinks = [
       </a>
       <a
         href="/agentic-devops"
-        class="agentic-link text-sm font-semibold transition-all"
+        class="agentic-btn text-sm font-semibold transition-all"
       >
         Agentic DevOps
       </a>
@@ -89,7 +89,7 @@ const navLinks = [
     </a>
     <a
       href="/agentic-devops"
-      class="mobile-nav-link agentic-link text-2xl font-heading font-semibold transition-all"
+      class="mobile-nav-link agentic-btn text-2xl font-heading font-semibold transition-all"
     >
       Agentic DevOps
     </a>
@@ -146,15 +146,36 @@ const navLinks = [
     background-clip: text;
   }
 
-  .agentic-link {
+  .agentic-btn {
+    position: relative;
+    padding: 0.3rem 0.85rem;
+    border-radius: 9999px;
+    text-decoration: none;
     background: linear-gradient(to right, #34d399, #22d3ee);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-decoration: none;
   }
 
-  .agentic-link:hover {
+  .agentic-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    padding: 1px;
+    background: linear-gradient(to right, #34d399, #22d3ee);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+  }
+
+  .agentic-btn:hover::before {
+    opacity: 1;
+  }
+
+  .agentic-btn:hover {
     background: linear-gradient(to right, #6ee7b7, #67e8f9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
