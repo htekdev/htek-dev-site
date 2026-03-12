@@ -174,7 +174,7 @@ const stackLayers = [
         <h1 class="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-text-primary mb-8 leading-tight">
           DevOps Was Built for
           <span class="block mt-2">
-            <span class="agentic-gradient bg-clip-text text-transparent">Humans.</span>
+            <span class="agentic-gradient">Humans.</span>
           </span>
           <span class="block text-3xl md:text-5xl lg:text-5xl mt-4 text-text-secondary font-medium">
             Agents Need Something New.
@@ -203,7 +203,7 @@ const stackLayers = [
       <div class="max-w-6xl mx-auto px-6">
         <span class="inline-block font-mono text-accent-violet text-sm tracking-wider mb-4">// core beliefs</span>
         <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">
-          What I Believe About <span class="agentic-gradient bg-clip-text text-transparent">Agentic DevOps</span>
+          What I Believe About <span class="agentic-gradient">Agentic DevOps</span>
         </h2>
         <p class="text-text-secondary text-lg max-w-3xl mb-16">
           These aren't predictions — they're principles I've built production systems around. Every belief has a corresponding implementation, article, and battle scar.
@@ -320,7 +320,7 @@ const stackLayers = [
       <div class="relative max-w-3xl mx-auto px-6 text-center">
         <span class="inline-block font-mono text-accent-violet text-sm tracking-wider mb-4">// let's build</span>
         <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">
-          Ready to Go <span class="agentic-gradient bg-clip-text text-transparent">Agentic?</span>
+          Ready to Go <span class="agentic-gradient">Agentic?</span>
         </h2>
         <p class="text-text-secondary text-lg mb-10 leading-relaxed">
           I help engineering teams adopt agentic practices — from GitHub Copilot rollouts to custom agent architectures with production-grade governance. Let's talk about what this looks like for your team.
@@ -338,6 +338,10 @@ const stackLayers = [
 <style>
   .agentic-gradient {
     background: linear-gradient(135deg, #bc8cff, #58a6ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
   }
 
   .belief-card {
