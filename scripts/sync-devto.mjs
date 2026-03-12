@@ -9,7 +9,7 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { sleep, computeHash, convertBody, writeFrontmatter, readArticles } from "./lib/sync-utils.mjs";
+import { sleep, computeHash, convertBody, resolveImageUrl, writeFrontmatter, readArticles, RAW_IMAGE_BASE_URL } from "./lib/sync-utils.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ARTICLES_DIR = path.resolve(__dirname, "..", "src", "content", "articles");
@@ -153,7 +153,7 @@ async function main() {
     }
 
     const canonicalUrl = `${SITE_URL}/articles/${slug}/`;
-    const bodyMarkdown = convertBody(content, SITE_URL);
+    const bodyMarkdown = convertBody(content, SITE_URL, RAW_IMAGE_BASE_URL);
     const tags = mapTags(frontmatter.tags);
 
     const payload = {
@@ -164,7 +164,7 @@ async function main() {
         tags,
         canonical_url: canonicalUrl,
         description: frontmatter.description || "",
-        ...(frontmatter.heroImage && { main_image: `${SITE_URL}${frontmatter.heroImage}` }),
+        ...(frontmatter.heroImage && { main_image: resolveImageUrl(frontmatter.heroImage, RAW_IMAGE_BASE_URL) }),
       },
     };
 
