@@ -1,0 +1,389 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const beliefs = [
+  {
+    icon: '🛡️',
+    title: 'Governance Before Velocity',
+    description: 'Agent sprawl is the new technical debt. Every agent needs a harness, every action needs a gate, and every output needs validation — before you scale.',
+  },
+  {
+    icon: '🧪',
+    title: 'Tests Are the Ultimate Guardrail',
+    description: 'If an agent can\'t prove its work with passing tests, it doesn\'t ship. Period. Tests aren\'t optional in an agentic world — they\'re the only thing standing between velocity and chaos.',
+  },
+  {
+    icon: '🏗️',
+    title: 'Architecture-First Autonomy',
+    description: 'Layer enforcement, hook-based controls, and structural boundaries make agents incapable of violating your architecture — not just unlikely to.',
+  },
+  {
+    icon: '💡',
+    title: 'Developer Fulfillment Over Throughput',
+    description: 'Speed without satisfaction is a race to burnout. The goal isn\'t more PRs — it\'s developers who feel empowered, creative, and in control of their tools.',
+  },
+  {
+    icon: '🔄',
+    title: 'Self-Healing Over Self-Deploying',
+    description: 'The real promise of agentic infrastructure isn\'t autonomous deployment — it\'s autonomous detection, diagnosis, and resolution of issues before humans even notice.',
+  },
+];
+
+const tools = [
+  {
+    name: 'GitHub Copilot',
+    category: 'Agent Runtime',
+    description: 'AI pair programming that evolved into a full agent runtime. Copilot isn\'t just autocomplete — it\'s the foundation for coding agents that understand your entire codebase.',
+    link: 'https://github.com/features/copilot',
+  },
+  {
+    name: 'Agentic Workflows',
+    category: 'CI/CD Orchestration',
+    description: 'GitHub Actions meets AI. Write CI/CD in Markdown, define safe-outputs, and let agents orchestrate multi-step pipelines with built-in governance.',
+    link: '/articles/github-agentic-workflows-hands-on-guide',
+  },
+  {
+    name: 'Copilot SDK',
+    category: 'Agent Development',
+    description: 'Production-grade SDK for building custom agents. Model routing, tool orchestration, and enterprise-ready authentication — not a toy wrapper.',
+    link: '/articles/github-copilot-sdk-agents-for-every-app',
+  },
+  {
+    name: 'Agent Hooks & Hookflows',
+    category: 'Governance',
+    description: 'Pre-commit and pre-push enforcement for agent behavior. Hooks validate architecture rules, mock policies, and test coverage before code ever leaves the IDE.',
+    link: '/articles/agent-hooks-controlling-ai-codebase',
+  },
+  {
+    name: 'Model Context Protocol',
+    category: 'Infrastructure Access',
+    description: 'MCP gives agents structured access to your infrastructure — Azure resources, databases, APIs — through a standardized protocol with built-in security boundaries.',
+    link: 'https://modelcontextprotocol.io',
+  },
+  {
+    name: 'Self-Healing Infrastructure',
+    category: 'Autonomous Operations',
+    description: 'Agents that monitor, detect anomalies, and execute remediation autonomously. From log analysis to scaling decisions — with human approval gates where it matters.',
+    link: '/articles/self-healing-infrastructure-with-agentic-ai',
+  },
+];
+
+const articles = [
+  {
+    title: 'Agentic DevOps: The Next Evolution of Shift Left',
+    description: 'DevOps protected teams from velocity. Agentic AI creates velocity so extreme we need DevOps designed for agents, not humans.',
+    slug: 'agentic-devops-next-evolution-of-shift-left',
+  },
+  {
+    title: 'Agentic-Ops: A Workflow Framework for AI Agents',
+    description: 'Stop blaming AI for messy code. The problem isn\'t agent velocity — it\'s that you haven\'t built the guardrails to match it.',
+    slug: 'agentic-ops-workflow-framework-for-ai-agents',
+  },
+  {
+    title: 'Building Agent-Proof Architecture',
+    description: 'Layered enforcement that makes agents structurally incapable of shipping untested code.',
+    slug: 'agent-proof-architecture-agentic-devops',
+  },
+  {
+    title: 'Tests Are Everything in Agentic AI',
+    description: 'Without comprehensive test coverage, agentic AI will fail. Here\'s how to build DevOps guardrails that prevent AI from shipping broken code.',
+    slug: 'tests-are-everything-agentic-ai',
+  },
+  {
+    title: 'Test Enforcement Architecture for AI Agents',
+    description: 'I built test coverage enforcement that blocks AI agents from shipping untested code.',
+    slug: 'test-enforcement-architecture-ai-agents',
+  },
+  {
+    title: 'Self-Healing Infrastructure with Agentic AI',
+    description: 'How GitHub Copilot and Claude Code with Azure MCP server are enabling self-healing DevOps environments.',
+    slug: 'self-healing-infrastructure-with-agentic-ai',
+  },
+  {
+    title: 'Agent Harnesses: Controlling AI Agents in 2026',
+    description: 'Enterprises average 12 AI agents with only 27% connected. The real challenge isn\'t building agents — it\'s the harness that governs them.',
+    slug: 'agent-harnesses-controlling-ai-agents-2026',
+  },
+  {
+    title: 'Agent Hooks: Controlling AI in Your Codebase',
+    description: 'Instructions alone aren\'t enforcement. Here\'s how I built a hook-based system to make AI agents respect architecture rules.',
+    slug: 'agent-hooks-controlling-ai-codebase',
+  },
+  {
+    title: 'GitHub Agentic Workflows: A Hands-On Guide',
+    description: 'I wrote GitHub automation in Markdown instead of YAML. Here\'s what I learned building 4 AI-powered workflows in 30 minutes.',
+    slug: 'github-agentic-workflows-hands-on-guide',
+  },
+  {
+    title: 'How Agentic AI Is Transforming Dev Teams',
+    description: 'Development used to be the bottleneck. Now features are easy. The new constraint? Figuring out what to build.',
+    slug: 'agentic-ai-transforming-dev-teams',
+  },
+];
+
+const stackLayers = [
+  {
+    label: 'Developer Experience',
+    items: ['GitHub Copilot', 'Copilot SDK', 'IDE Extensions'],
+    color: 'accent-cyan',
+    gradient: 'from-accent-cyan/20 to-accent-cyan/5',
+  },
+  {
+    label: 'Agent Orchestration',
+    items: ['Agentic Workflows', 'Custom Agents', 'MCP Servers'],
+    color: 'accent-green',
+    gradient: 'from-accent-green/20 to-accent-green/5',
+  },
+  {
+    label: 'Governance & Enforcement',
+    items: ['Agent Hooks', 'Hookflows', 'Test Enforcement'],
+    color: 'accent-rose',
+    gradient: 'from-accent-rose/20 to-accent-rose/5',
+  },
+  {
+    label: 'Infrastructure',
+    items: ['GitHub Actions', 'Self-Healing', 'Azure / Cloud'],
+    color: 'text-muted',
+    gradient: 'from-white/10 to-white/5',
+  },
+];
+---
+
+<BaseLayout
+  title="Agentic DevOps — htek.dev"
+  description="DevOps was built for humans. Agents need something new. Explore the philosophy, tooling, and architecture behind Agentic DevOps."
+>
+  <Navbar />
+  <main id="main-content">
+
+    <!-- Hero -->
+    <section class="relative min-h-[85vh] flex items-center bg-bg-void overflow-hidden">
+      <!-- Background effects -->
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-accent-green/8 rounded-full blur-[120px]"></div>
+        <div class="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-accent-cyan/5 rounded-full blur-[80px]"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-accent-rose/5 rounded-full blur-[80px]"></div>
+      </div>
+      <!-- Grid overlay -->
+      <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: linear-gradient(rgba(52,211,153,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(52,211,153,0.3) 1px, transparent 1px); background-size: 60px 60px;"></div>
+
+      <div class="relative max-w-5xl mx-auto px-6 pt-32 pb-20 text-center">
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-6 opacity-80">// agentic-devops</span>
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-text-primary mb-8 leading-tight">
+          DevOps Was Built for
+          <span class="block mt-2">
+            <span class="agentic-gradient">Humans.</span>
+          </span>
+          <span class="block text-3xl md:text-5xl lg:text-5xl mt-4 text-text-secondary font-medium">
+            Agents Need Something New.
+          </span>
+        </h1>
+        <p class="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-12 leading-relaxed">
+          Shift-left was about moving quality earlier. Agentic DevOps is about
+          designing systems where AI agents operate at machine speed — with
+          governance, test enforcement, and architecture boundaries that make
+          safety structural, not aspirational.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a href="#beliefs" class="inline-flex items-center gap-2 bg-accent-green/15 border border-accent-green/30 text-accent-green font-semibold px-8 py-3 rounded-lg hover:bg-accent-green/25 transition-all">
+            Core Beliefs
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+          </a>
+          <a href="#tooling" class="inline-flex items-center gap-2 text-text-muted hover:text-text-primary font-medium px-8 py-3 rounded-lg transition-colors">
+            Explore the Stack →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Core Beliefs -->
+    <section id="beliefs" class="fade-in py-24 md:py-32 bg-bg-void">
+      <div class="max-w-6xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// core beliefs</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">
+          What I Believe About <span class="agentic-gradient">Agentic DevOps</span>
+        </h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          These aren't predictions — they're principles I've built production systems around. Every belief has a corresponding implementation, article, and battle scar.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {beliefs.map((belief, i) => (
+            <div class={`belief-card group bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 transition-all duration-300 hover:border-accent-green/30 hover:bg-white/[0.05] ${i === beliefs.length - 1 && beliefs.length % 3 === 2 ? 'md:col-span-2 lg:col-span-1' : ''}`}>
+              <span class="text-4xl mb-5 block">{belief.icon}</span>
+              <h3 class="text-xl font-heading font-semibold text-text-primary mb-3 group-hover:text-accent-green transition-colors">{belief.title}</h3>
+              <p class="text-text-secondary text-sm leading-relaxed">{belief.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- The Agentic DevOps Stack -->
+    <section id="stack" class="fade-in py-24 md:py-32 bg-bg-surface relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent-green/5 rounded-full blur-[100px]"></div>
+      </div>
+      <div class="relative max-w-4xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// architecture</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">The Agentic DevOps Stack</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          Four layers. Each one enforces the layer above. Agents get freedom at the top and constraints at the bottom.
+        </p>
+
+        <div class="space-y-4">
+          {stackLayers.map((layer, i) => (
+            <div class={`stack-layer group relative bg-gradient-to-r ${layer.gradient} border border-white/[0.08] rounded-xl p-6 transition-all duration-300 hover:border-${layer.color}/30`}>
+              <div class="flex flex-col md:flex-row md:items-center gap-4">
+                <div class="flex items-center gap-3 md:w-64 shrink-0">
+                  <span class={`font-mono text-xs text-${layer.color} opacity-60`}>0{i + 1}</span>
+                  <h3 class={`font-heading font-semibold text-${layer.color}`}>{layer.label}</h3>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  {layer.items.map((item: string) => (
+                    <span class="inline-block text-xs font-mono text-text-muted bg-white/[0.05] border border-white/[0.08] rounded-full px-3 py-1">{item}</span>
+                  ))}
+                </div>
+              </div>
+              {i < stackLayers.length - 1 && (
+                <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 text-text-muted/30">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <p class="text-text-muted text-sm mt-10 text-center font-mono">
+          ↑ Freedom &nbsp;&nbsp;|&nbsp;&nbsp; Constraints ↓
+        </p>
+      </div>
+    </section>
+
+    <!-- Tooling Ecosystem -->
+    <section id="tooling" class="fade-in py-24 md:py-32 bg-bg-void">
+      <div class="max-w-6xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// tooling</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">The Ecosystem That Makes It Real</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          Agentic DevOps isn't theory — it's a stack of real tools I use daily to build, govern, and ship with AI agents.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tools.map((tool) => (
+            <a href={tool.link} class="tool-card group block bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 transition-all duration-300 hover:border-accent-green/30 hover:bg-white/[0.05] hover:-translate-y-1" target={tool.link.startsWith('http') ? '_blank' : undefined} rel={tool.link.startsWith('http') ? 'noopener noreferrer' : undefined}>
+              <span class="inline-block font-mono text-[10px] text-accent-green/70 tracking-widest uppercase mb-3">{tool.category}</span>
+              <h3 class="text-lg font-heading font-semibold text-text-primary mb-3 group-hover:text-accent-green transition-colors">{tool.name}</h3>
+              <p class="text-text-secondary text-sm leading-relaxed">{tool.description}</p>
+              <span class="inline-flex items-center gap-1 mt-4 text-xs text-accent-green opacity-0 group-hover:opacity-100 transition-opacity">
+                {tool.link.startsWith('http') ? 'Visit' : 'Read more'} →
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Related Articles -->
+    <section id="articles" class="fade-in py-24 md:py-32 bg-bg-surface">
+      <div class="max-w-6xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// deep dives</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">Read the Full Arguments</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          Every belief above has a detailed article behind it. Here's where the philosophy meets implementation.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {articles.map((article) => (
+            <a href={`/articles/${article.slug}`} class="article-link group block bg-bg-void/50 border border-white/[0.06] rounded-xl p-5 transition-all duration-300 hover:border-accent-green/30 hover:-translate-y-0.5">
+              <h3 class="text-text-primary font-heading font-semibold group-hover:text-accent-green transition-colors mb-2">{article.title}</h3>
+              <p class="text-text-muted text-sm leading-relaxed">{article.description}</p>
+            </a>
+          ))}
+        </div>
+
+        <div class="text-center mt-12">
+          <a href="/articles" class="inline-flex items-center gap-2 text-accent-green hover:text-accent-cyan font-mono text-sm transition-colors">
+            View all articles →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="fade-in py-24 md:py-32 bg-bg-void relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent-green/5 rounded-full blur-[120px]"></div>
+      </div>
+      <div class="relative max-w-3xl mx-auto px-6 text-center">
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// let's build</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">
+          Ready to Go <span class="agentic-gradient">Agentic?</span>
+        </h2>
+        <p class="text-text-secondary text-lg mb-10 leading-relaxed">
+          I help engineering teams adopt agentic practices — from GitHub Copilot rollouts to custom agent architectures with production-grade governance. Let's talk about what this looks like for your team.
+        </p>
+        <a href="/consulting#book" class="inline-block bg-accent-green text-bg-void font-semibold px-8 py-3 rounded-lg hover:opacity-90 transition-opacity">
+          Book a Free Consultation
+        </a>
+      </div>
+    </section>
+
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .agentic-gradient {
+    background: linear-gradient(135deg, #34d399, #22d3ee);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .belief-card {
+    position: relative;
+  }
+
+  .belief-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0), transparent);
+    border-radius: 2px 2px 0 0;
+    transition: background 0.3s ease;
+  }
+
+  .belief-card:hover::before {
+    background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.5), transparent);
+  }
+
+  .tool-card {
+    position: relative;
+  }
+
+  .tool-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    background: radial-gradient(circle at 50% 0%, rgba(52, 211, 153, 0.06), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .tool-card:hover::after {
+    opacity: 1;
+  }
+
+  .stack-layer {
+    position: relative;
+  }
+</style>
