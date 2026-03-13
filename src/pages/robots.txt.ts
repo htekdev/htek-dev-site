@@ -4,6 +4,16 @@ export const GET: APIRoute = () => {
   const robotsTxt = `
 User-agent: *
 Allow: /
+Crawl-delay: 1
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
 
 Sitemap: https://htek.dev/sitemap-index.xml
 `.trim();

@@ -53,11 +53,14 @@ const brightStars = Array.from({ length: 15 }, (_, i) => ({
         alt="Hector Flores"
         width="160"
         height="160"
+        loading="eager"
+        fetchpriority="high"
         class="w-28 h-28 md:w-40 md:h-40 rounded-full object-cover border-2 border-accent-cyan/30 shadow-[0_0_30px_rgba(0,229,255,0.15)]"
       />
     </div>
     <h1 class="text-6xl md:text-8xl lg:text-9xl font-heading font-extrabold tracking-tight gradient-text">
       @htekdev
+      <span class="sr-only"> — Hector Flores, Software Engineer &amp; AI Developer</span>
     </h1>
     <p class="text-xl md:text-2xl font-light text-text-secondary mt-4 tracking-wide">
       Hector Flores

@@ -5,9 +5,35 @@ import Footer from '../../components/Footer.astro';
 import ArticleCard from '../../components/ArticleCard.astro';
 import { getCollection } from 'astro:content';
 
+const siteUrl = (Astro.site ?? new URL('https://htek.dev')).origin;
+
 const articles = (await getCollection('articles'))
   .filter(a => !a.data.draft)
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const blogSchema = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Blog',
+  name: 'htek.dev Articles',
+  description: 'Technical articles by Hector Flores on AI, GitHub Copilot, DevOps, and modern software engineering.',
+  url: `${siteUrl}/articles`,
+  author: {
+    '@type': 'Person',
+    name: 'Hector Flores',
+    url: siteUrl,
+  },
+  blogPost: articles.slice(0, 10).map(article => ({
+    '@type': 'BlogPosting',
+    headline: article.data.title,
+    description: article.data.description,
+    datePublished: article.data.pubDate.toISOString(),
+    url: `${siteUrl}/articles/${article.id}`,
+    author: {
+      '@type': 'Person',
+      name: 'Hector Flores',
+    },
+  })),
+});
 
 // Collect all unique tags
 const allTags = [...new Set(articles.flatMap(a => a.data.tags))].sort();
@@ -33,9 +59,10 @@ for (const article of articles) {
 const periods = periodOrder.filter(p => grouped[p]?.length > 0);
 ---
 
-<BaseLayout title="Articles — htek.dev" description="Thoughts on AI, development, and the future of software by Hector Flores.">
+<BaseLayout title="Articles on AI, DevOps & Software Engineering — htek.dev" description="Technical articles by Hector Flores on AI, GitHub Copilot, DevOps, software architecture, and modern development practices.">
+  <script type="application/ld+json" set:html={blogSchema} />
   <Navbar />
-  <main class="max-w-5xl mx-auto px-6 pt-32 pb-16">
+  <main id="main-content" class="max-w-5xl mx-auto px-6 pt-32 pb-16">
     <h1 class="text-4xl md:text-5xl font-heading font-bold gradient-text">Articles</h1>
     <p class="text-text-muted mt-2">Thoughts on AI, development, and the future of software.</p>
 
