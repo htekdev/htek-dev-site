@@ -7,23 +7,27 @@ interface Props {
   modifiedDate?: Date;
   tags?: string[];
   image?: string;
+  wordCount?: number;
 }
 
 import '../styles/global.css';
 import SEO from '../components/SEO.astro';
 
 const {
-  title = 'Hector Flores — htek.dev',
+  title = '@htekdev — Hector Flores | htek.dev',
   description = 'Inspiring a New Era of Software Development Through GitHub Copilot & AI',
   seoType,
   publishDate,
   modifiedDate,
   tags,
   image,
+  wordCount,
 } = Astro.props;
 
-const canonicalUrl = new URL(Astro.url.pathname, 'https://htek.dev').href;
-const ogImage = image ? new URL(image, 'https://htek.dev').href : 'https://htek.dev/hector-caricature.png';
+const siteOrigin = Astro.site ?? new URL('https://htek.dev');
+const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).href;
+const ogImage = image ? new URL(image, siteOrigin).href : new URL('/hector-caricature.png', siteOrigin).href;
+const ogImageAlt = title;
 ---
 
 <!doctype html>
@@ -34,6 +38,7 @@ const ogImage = image ? new URL(image, 'https://htek.dev').href : 'https://htek.
     <meta name="description" content={description} />
     <meta name="author" content="Hector Flores" />
     <meta name="theme-color" content="#0d1117" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 
     <!-- Open Graph -->
     <meta property="og:title" content={title} />
@@ -41,6 +46,8 @@ const ogImage = image ? new URL(image, 'https://htek.dev').href : 'https://htek.
     <meta property="og:type" content={seoType === 'article' ? 'article' : 'website'} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:alt" content={ogImageAlt} />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="htek.dev" />
     {seoType === 'article' && publishDate && (
       <meta property="article:published_time" content={publishDate.toISOString()} />
@@ -54,6 +61,8 @@ const ogImage = image ? new URL(image, 'https://htek.dev').href : 'https://htek.
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@htekdev" />
+    <meta name="twitter:creator" content="@htekdev" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
@@ -65,9 +74,22 @@ const ogImage = image ? new URL(image, 'https://htek.dev').href : 'https://htek.
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+    <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -85,9 +107,19 @@ const ogImage = image ? new URL(image, 'https://htek.dev').href : 'https://htek.
       publishDate={publishDate}
       modifiedDate={modifiedDate}
       tags={tags}
+      wordCount={wordCount}
     />
 
     <title>{title}</title>
+
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-T3BDRRQ8M1"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-T3BDRRQ8M1');
+    </script>
   </head>
   <body class="bg-bg-void text-text-primary antialiased font-body">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-bg-surface focus:text-accent-cyan focus:px-4 focus:py-2 focus:rounded">

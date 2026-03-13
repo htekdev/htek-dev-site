@@ -8,6 +8,10 @@ import rehypeWrapTables from './src/plugins/rehype-wrap-tables.mjs';
 export default defineConfig({
   site: 'https://htek.dev',
   trailingSlash: 'never',
+  prefetch: {
+    defaultStrategy: 'viewport',
+    prefetchAll: false,
+  },
   build: {
     format: 'directory',
   },

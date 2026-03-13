@@ -1,0 +1,53 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  currentSlug: string;
+  currentTags: string[];
+  limit?: number;
+}
+
+const { currentSlug, currentTags, limit = 3 } = Astro.props;
+
+const allArticles = (await getCollection('articles'))
+  .filter(a => !a.data.draft && a.id !== currentSlug);
+
+// Score articles by tag overlap
+const scored = allArticles.map(article => {
+  const overlap = article.data.tags.filter(t => currentTags.includes(t)).length;
+  return { article, score: overlap };
+}).filter(s => s.score > 0);
+
+// Sort by score (most overlap first), then by date (newest first)
+scored.sort((a, b) => b.score - a.score || b.article.data.pubDate.valueOf() - a.article.data.pubDate.valueOf());
+
+const related = scored.slice(0, limit).map(s => s.article);
+---
+
+{related.length > 0 && (
+  <nav aria-label="Related articles" class="mt-12">
+    <h2 class="text-xl font-heading font-bold text-text-primary mb-6">Related Articles</h2>
+    <div class="space-y-4">
+      {related.map(article => (
+        <a
+          href={`/articles/${article.id}`}
+          class="block p-4 rounded-lg border border-border-muted hover:border-accent-cyan/30 bg-bg-surface/50 hover:bg-bg-surface transition-colors group"
+        >
+          <h3 class="font-heading font-semibold text-text-primary group-hover:text-accent-cyan transition-colors">
+            {article.data.title}
+          </h3>
+          <p class="text-text-muted text-sm mt-1 line-clamp-2">
+            {article.data.description}
+          </p>
+          <div class="flex flex-wrap gap-2 mt-2">
+            {article.data.tags.slice(0, 3).map(tag => (
+              <span class="text-xs text-text-muted bg-bg-surface px-2 py-0.5 rounded-full border border-border-muted">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </a>
+      ))}
+    </div>
+  </nav>
+)}
