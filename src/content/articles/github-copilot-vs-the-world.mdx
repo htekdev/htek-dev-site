@@ -19,7 +19,8 @@ Let's start with cold, hard capabilities. Here's what you're actually getting:
 | Capability | GitHub Copilot | Claude Code | Cursor | Windsurf |
 |---|---|---|---|---|
 | **Multi-Model Support** | [GPT-4.1, Claude Sonnet 4, Opus 4.6, Gemini 2.5/3 Pro, Grok](https://docs.github.com/en/copilot/using-github-copilot/ai-models/changing-the-ai-model-for-copilot-chat) | Claude only | OpenAI, Anthropic, Gemini | Limited |
-| **IDE Coverage** | [VS Code](https://code.visualstudio.com/docs/copilot/overview), [Visual Studio](https://learn.microsoft.com/en-us/visualstudio/ide/visual-studio-github-copilot-install-and-states), [JetBrains](https://plugins.jetbrains.com/plugin/17718-github-copilot), Xcode, Eclipse, Neovim, [CLI](https://github.blog/changelog/2026-02-25-github-copilot-cli-is-now-generally-available/) | Terminal only | VS Code fork | Proprietary IDE |
+| **IDE Coverage** | [VS Code](https://code.visualstudio.com/docs/copilot/overview), [Visual Studio](https://learn.microsoft.com/en-us/visualstudio/ide/visual-studio-github-copilot-install-and-states), [JetBrains](https://plugins.jetbrains.com/plugin/17718-github-copilot), Xcode, Eclipse, Neovim, **[CLI](https://github.blog/changelog/2026-02-25-github-copilot-cli-is-now-generally-available/)** | Terminal only | VS Code fork | Proprietary IDE |
+| **Terminal Agent** | [Copilot CLI](https://github.com/features/copilot/cli) — sub-agents, `/fleet`, `/plan`, `/resume`, multi-model | Claude Code CLI — deep but single-model | None native | None native |
 | **Autonomous Agents** | [Coding Agent](https://github.blog/news-insights/product-news/github-copilot-the-agent-awakens/) — assigns to issues, creates PRs | Agentic CLI sessions | Background Agents | Cascade agent |
 | **Third-Party Agents** | [Claude & Codex agents](https://github.blog/changelog/2026-02-04-third-party-agents-for-copilot-in-public-preview/) in preview | None | None | None |
 | **Extension Ecosystem** | [Extensions marketplace](https://github.com/features/copilot/extensions), SDK, private extensions | None | Some plugins | Limited |
@@ -59,6 +60,25 @@ And the [third-party agent support](https://github.blog/changelog/2026-02-04-thi
 
 The [Copilot SDK](https://github.blog/news-insights/product-news/introducing-the-github-copilot-sdk/) takes it further — Node.js, Python, Go, and .NET libraries that let you [build custom agents](/articles/github-copilot-sdk-agents-for-every-app) that plug into the Copilot runtime. I've written extensively about the [common mistakes developers make building custom agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents), and the extensibility story is unmatched. Add [Copilot Extensions](https://github.com/features/copilot/extensions) and [agentic workflows](/articles/github-agentic-workflows-hands-on-guide) on top, and you have a complete agentic platform — not just a code completion tool.
 
+## The Copilot CLI: The Tool That Killed Claude Code's Last Advantage
+
+Here's where I get personal, because I use [GitHub Copilot CLI](https://github.com/features/copilot/cli) every single day. It [went GA in February 2026](https://github.blog/changelog/2026-02-25-github-copilot-cli-is-now-generally-available/), and it is — without exaggeration — **the best thing GitHub has ever shipped.**
+
+Claude Code's entire pitch was: "we're the terminal-first agentic coding experience." That was their moat. Their differentiator. The thing that made developers choose them over IDE-bound tools. And GitHub just filled that moat with concrete.
+
+Copilot CLI isn't a chatbot in your terminal. It's a [full agentic development environment](https://github.blog/ai-and-ml/github-copilot/power-agentic-workflows-in-your-terminal-with-github-copilot-cli/) that plans, builds, reviews, tests, and iterates — all without leaving the command line. Here's what makes it devastating:
+
+- **Specialized sub-agents** — It doesn't do everything itself. It [delegates to purpose-built agents](https://github.blog/changelog/2026-01-14-github-copilot-cli-enhanced-agents-context-management-and-new-ways-to-install) — Explore for codebase questions, Task for builds and tests, Code Review for diffs, General-Purpose for complex multi-step work. Each agent gets its own context window and toolset.
+- **[`/fleet` parallelization](https://github.com/features/copilot/cli)** — Spin up multiple sub-agents in parallel. Run multiple models against the same problem simultaneously. Claude Code can't do this.
+- **[`/plan` mode](https://github.blog/changelog/2026-01-21-github-copilot-cli-plan-before-you-build-steer-as-you-go)** — Collaborative planning before implementation. The agent asks clarifying questions, builds a structured plan, and waits for your approval before writing a single line of code. Plan, then execute. Control your agent, don't just pray it gets it right.
+- **`/resume` session persistence** — Walk away, come back tomorrow, pick up exactly where you left off. Memory and compaction keep long sessions from collapsing under context limits.
+- **CLI ↔ IDE handoff** — Start with a `/plan` in the CLI, then seamlessly open the work in VS Code to refine. Or go the other way — start in the IDE, drop to CLI for heavy lifting.
+- **Multi-model in the terminal** — Run `/model` and choose between GPT-5 mini, GPT-4.1, Claude Opus 4.6, Gemini — *in the same session*. Claude Code locks you into Claude. Period.
+- **[Custom agents, skills, hooks, and MCP](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/comparing-cli-features)** — Build specialized agents for your team's workflows. Add skills for domain-specific tasks. Create hooks for governance gates. Connect any MCP server for external tool integration.
+- **Native GitHub integration** — Built on GitHub's own [MCP integration](https://github.blog/changelog/2025-04-04-mcp-support-in-copilot/), so it works directly with your issues, PRs, and repositories. No third-party GitHub tokens. No setup friction. It just knows your code graph.
+
+Let me put this bluntly: **Claude Code is a single-model terminal agent. Copilot CLI is a multi-model, multi-agent, extensible, enterprise-governed terminal platform with native GitHub integration.** The comparison isn't even fair anymore. I covered [the week Copilot CLI launched](/articles/copilot-cli-biggest-week-yet) — it was the biggest leap in developer tooling I'd seen in years, and it's only gotten better since.
+
 ## Stability: The Uncomfortable Conversation
 
 Let's talk about something the "try this new AI tool!" crowd doesn't want to discuss — **who's backing these things and will they exist in two years?**
@@ -75,7 +95,7 @@ This is the workflow lock-in problem I keep [writing about](/articles/agentic-de
 
 ## The Speed Nobody Talks About
 
-GitHub Copilot's iteration speed is staggering and underappreciated. VS Code ships Copilot updates [weekly](https://code.visualstudio.com/updates). The [Copilot CLI went GA](https://github.blog/changelog/2026-02-25-github-copilot-cli-is-now-generally-available/) in February 2026 — I covered [that launch extensively](/articles/copilot-cli-biggest-week-yet). Model additions happen monthly — they went from supporting GPT-4 to offering [10+ models across three major AI providers](https://docs.github.com/en/copilot/using-github-copilot/ai-models/changing-the-ai-model-for-copilot-chat) in under a year.
+GitHub Copilot's iteration speed is staggering and underappreciated. VS Code ships Copilot updates [weekly](https://code.visualstudio.com/updates). The Copilot CLI shipped [hundreds of improvements](https://github.blog/changelog/2026-02-25-github-copilot-cli-is-now-generally-available/) during its preview period alone — from initial preview to GA in five months, adding sub-agents, `/fleet` parallelization, plan mode, session memory, custom agents, and skills along the way. Model additions happen monthly — they went from supporting GPT-4 to offering [10+ models across three major AI providers](https://docs.github.com/en/copilot/using-github-copilot/ai-models/changing-the-ai-model-for-copilot-chat) in under a year.
 
 GitHub isn't building everything in-house. They're taking the **best-of-breed** approach — bringing in the best models from OpenAI, Anthropic, and Google, the best agents from third parties, and wrapping it all in enterprise-grade governance. That's not a tool strategy. That's a platform strategy. And there are [strong signals](https://github.blog/news-insights/product-news/) pointing toward a GitHub agentic IDE on the horizon — a purpose-built development environment that would combine GitHub's platform depth with first-party editor innovation.
 
@@ -83,7 +103,7 @@ GitHub isn't building everything in-house. They're taking the **best-of-breed** 
 
 Here's my unfiltered take: the AI coding tool market is consolidating, and **GitHub Copilot is the only platform positioned to be the singular agentic development platform for enterprise.**
 
-Claude Code gave us MCP — respect. Cursor proved the market existed — respect. But both are *tools*. GitHub Copilot is becoming a **platform** — one that integrates third-party AI models, third-party agents, custom extensions, and enterprise governance into the place where 100+ million developers already work.
+Claude Code gave us MCP — respect. Cursor proved the market existed — respect. But both are *tools*. GitHub Copilot is becoming a **platform** — one that integrates third-party AI models, third-party agents, a killer terminal-native CLI, custom extensions, and enterprise governance into the place where 100+ million developers already work.
 
 Stop tool-hopping. Stop chasing the next flashy demo. The platform that owns the code graph, the social graph, the CI/CD graph, AND the AI graph is going to win. That's GitHub. And it's not even close.
 
