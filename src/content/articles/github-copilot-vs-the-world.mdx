@@ -76,8 +76,21 @@ Copilot CLI isn't a chatbot in your terminal. It's a [full agentic development e
 - **Multi-model in the terminal** — Run `/model` and choose between GPT-5 mini, GPT-4.1, Claude Opus 4.6, Gemini — *in the same session*. Claude Code locks you into Claude. Period.
 - **[Custom agents, skills, hooks, and MCP](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/comparing-cli-features)** — Build specialized agents for your team's workflows. Add skills for domain-specific tasks. Create hooks for governance gates. Connect any MCP server for external tool integration.
 - **Native GitHub integration** — Built on GitHub's own [MCP integration](https://github.blog/changelog/2025-04-04-mcp-support-in-copilot/), so it works directly with your issues, PRs, and repositories. No third-party GitHub tokens. No setup friction. It just knows your code graph.
+- **`/delegate` to cloud** — Working on something big? Run [`/delegate`](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli) and hand your entire session off to GitHub's cloud coding agent, which picks up the work and opens a PR. Terminal to cloud in one command.
+- **`/research` deep dives** — Built-in [deep research](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli) capability that searches GitHub and the web, then synthesizes findings. No separate tool needed.
 
-Let me put this bluntly: **Claude Code is a single-model terminal agent. Copilot CLI is a multi-model, multi-agent, extensible, enterprise-governed terminal platform with native GitHub integration.** The comparison isn't even fair anymore. I covered [the week Copilot CLI launched](/articles/copilot-cli-biggest-week-yet) — it was the biggest leap in developer tooling I'd seen in years, and it's only gotten better since.
+### The Copilot CLI Extension Ecosystem
+
+This is the part that really buries the competition. Copilot CLI has a **full extension ecosystem** — something Claude Code doesn't even attempt:
+
+- **[Plugins and plugin marketplaces](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/comparing-cli-features)** (`/plugin`) — Installable packages that bundle custom agents, skills, hooks, and MCP servers into shareable, distributable units. Teams can publish and discover plugins through marketplaces. Claude Code has... a config file.
+- **[Skills](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli)** (`/skills`) — Modular capabilities you can install, enable, and manage. Think of them as specialized knowledge packs — a React reviewer skill, a Terraform validator skill, a video editing skill. Install them, invoke them by name, and the agent knows exactly what to do.
+- **[Custom agent profiles](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/comparing-cli-features)** (`/agent`) — Define specialized agent personas with their own instructions, tools, and constraints. A security auditor agent. A docs writer agent. A test generator agent. Browse and switch between them on the fly.
+- **[Hooks for governance](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/comparing-cli-features)** — Pre and post lifecycle hooks that enforce policies. Block commits without tests. Validate file changes. Run linters before edits land. This is [agent governance](/articles/top-5-mistakes-creating-custom-github-copilot-agents) built directly into the CLI.
+- **[LSP integration](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli)** — Full Language Server Protocol support for code intelligence. Go-to-definition, hover info, diagnostics — all feeding into the agent's understanding of your code. Configure per-repo or per-user.
+- **Instruction file ecosystem** — The CLI reads `copilot-instructions.md`, `.github/instructions/**/*.instructions.md`, `CLAUDE.md`, `GEMINI.md`, and `AGENTS.md`. Yes, it even reads Claude's instruction format. That's how confident GitHub is — they'll eat your competitor's config files too.
+
+Let me put this bluntly: **Claude Code is a single-model terminal agent with a config file. Copilot CLI is a multi-model, multi-agent, extensible, plugin-powered, enterprise-governed terminal platform with native GitHub integration.** The comparison isn't even fair anymore. I covered [the week Copilot CLI launched](/articles/copilot-cli-biggest-week-yet) — it was the biggest leap in developer tooling I'd seen in years, and it's only gotten better since.
 
 ## Stability: The Uncomfortable Conversation
 
