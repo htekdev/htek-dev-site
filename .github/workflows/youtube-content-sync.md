@@ -70,9 +70,11 @@ Call `youtube_video_list` with parts `["statistics", "contentDetails"]` for batc
 - `standard`: durationSeconds >= 60 and < 600
 - `deep-dive`: durationSeconds >= 600
 
+**IMPORTANT: Only include deep-dive videos (durationSeconds >= 600).** Discard all short and standard videos. The content dashboard is a long-form video archive — shorts and standard-length clips are excluded.
+
 ### 3. Categorize videos by topic
 
-Analyze each video's title to assign it to exactly ONE topic. Use these categories:
+Analyze each remaining deep-dive video's title to assign it to exactly ONE topic. Use these categories:
 
 | Topic ID | Title | Icon | Keywords to match |
 |----------|-------|------|-------------------|
@@ -112,7 +114,7 @@ Not every video needs a related article. Only set `relatedArticle` when there's 
 
 ### 6. Build the JSON data file
 
-Read the existing `src/data/youtube-videos.json` file. Update it with the new data while preserving the structure:
+Read the existing `src/data/youtube-videos.json` file. Update it with the new data while preserving the structure. **Only include topics that have at least one deep-dive video. Omit empty topics entirely.**
 
 ```json
 {
@@ -164,7 +166,10 @@ If there are changes, write the updated JSON to `src/data/youtube-videos.json` a
 ## Guidelines
 
 - Always fetch ALL videos — don't stop at the first page
+- **Only include deep-dive videos (≥600 seconds) in the final output** — discard shorts and standard-length clips
+- **Only include topics that contain at least one deep-dive video** — omit empty topics
 - Use cache-memory to store the last run's video count and total views for comparison
+- `stats.totalVideos` and `stats.totalViews` should reflect only the included deep-dive videos
 - The JSON must be valid and properly formatted
 - Topic order: agentic-devops, testing-quality, ai-agents, copilot-tools, content-creation, architecture, career, azure-devops
 - Do NOT create the PR if nothing meaningful changed

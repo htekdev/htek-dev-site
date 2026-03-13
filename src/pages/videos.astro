@@ -5,16 +5,11 @@ import Footer from '../components/Footer.astro';
 import VideoHero from '../components/VideoHero.astro';
 import VideoSection from '../components/VideoSection.astro';
 import videoData from '../data/youtube-videos.json';
-
-const allVideos = videoData.topics.flatMap(t => t.videos);
-const shortCount = allVideos.filter(v => v.durationSeconds < 60).length;
-const standardCount = allVideos.filter(v => v.durationSeconds >= 60 && v.durationSeconds < 600).length;
-const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
 ---
 
 <BaseLayout
   title="Videos — htek.dev"
-  description="YouTube videos on agentic DevOps, AI development, testing, and software engineering by Hector Flores."
+  description="Long-form YouTube deep dives on agentic DevOps, AI development, and software engineering by Hector Flores."
 >
   <Navbar />
   <main id="main-content">
@@ -26,9 +21,8 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
     />
 
     <div class="max-w-6xl mx-auto px-6 py-16">
-      <!-- Filter controls -->
-      <div class="space-y-4 mb-12">
-        <!-- Topic filter -->
+      <!-- Topic filter -->
+      <div class="mb-12">
         <div class="flex items-center gap-2 flex-wrap" id="topic-filters" aria-label="Filter by topic">
           <button
             data-topic="all"
@@ -45,31 +39,12 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
             </button>
           ))}
         </div>
-
-        <!-- Duration filter — compact segmented control -->
-        <div class="flex items-center gap-3" id="duration-filters" aria-label="Filter by duration">
-          <span class="text-[11px] text-text-muted font-mono uppercase tracking-wider">Duration</span>
-          <div class="flex items-center gap-1 bg-bg-surface border border-border-muted rounded-lg p-0.5">
-            <button data-duration="all" class="dur-btn text-xs px-3 py-1 rounded-md transition-all bg-white/10 text-text-primary font-semibold" aria-pressed="true">
-              All
-            </button>
-            <button data-duration="short" class="dur-btn text-xs px-3 py-1 rounded-md transition-all text-text-muted hover:text-text-primary" aria-pressed="false">
-              ⚡ Shorts <span class="dur-count text-text-muted/50 ml-0.5" data-dur="short">{shortCount}</span>
-            </button>
-            <button data-duration="standard" class="dur-btn text-xs px-3 py-1 rounded-md transition-all text-text-muted hover:text-text-primary" aria-pressed="false">
-              🎬 Standard <span class="dur-count text-text-muted/50 ml-0.5" data-dur="standard">{standardCount}</span>
-            </button>
-            <button data-duration="deep-dive" class="dur-btn text-xs px-3 py-1 rounded-md transition-all text-text-muted hover:text-text-primary" aria-pressed="false">
-              🎓 Deep Dives <span class="dur-count text-text-muted/50 ml-0.5" data-dur="deep-dive">{deepDiveCount}</span>
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- No results message -->
       <div id="no-results" class="hidden text-center py-16">
-        <p class="text-text-muted text-lg">No videos match this filter combination.</p>
-        <button id="clear-filters" class="mt-4 text-sm text-accent-cyan hover:underline">Clear all filters</button>
+        <p class="text-text-muted text-lg">No videos match this filter.</p>
+        <button id="clear-filters" class="mt-4 text-sm text-accent-cyan hover:underline">Clear filter</button>
       </div>
 
       <!-- Topic sections -->
@@ -91,11 +66,9 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
 
 <script>
   let activeTopic = 'all';
-  let activeDuration = 'all';
 
   function applyFilters() {
     let totalVisible = 0;
-    const durCounts: Record<string, number> = { 'short': 0, 'standard': 0, 'deep-dive': 0 };
 
     document.querySelectorAll<HTMLElement>('#topics-root .topic-section').forEach(section => {
       const topicId = section.dataset.topic;
@@ -106,34 +79,9 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
         return;
       }
 
-      let sectionVisible = 0;
-      section.querySelectorAll<HTMLElement>('.video-card-wrapper').forEach(card => {
-        const lengthCat = card.dataset.length ?? '';
-        const durationMatch = activeDuration === 'all' || lengthCat === activeDuration;
-        card.style.display = durationMatch ? '' : 'none';
-        if (durationMatch) sectionVisible++;
-        // Count all cards in matching topics for duration badge updates
-        if (lengthCat) durCounts[lengthCat] = (durCounts[lengthCat] || 0) + 1;
-      });
-
-      // Update section count badge
-      const countEl = section.querySelector('.section-count');
-      if (countEl && activeDuration !== 'all') {
-        const total = section.querySelectorAll('.video-card-wrapper').length;
-        countEl.textContent = `${sectionVisible}/${total} videos`;
-      } else if (countEl) {
-        const total = section.querySelectorAll('.video-card-wrapper').length;
-        countEl.textContent = `${total} videos`;
-      }
-
-      section.style.display = sectionVisible > 0 ? '' : 'none';
-      totalVisible += sectionVisible;
-    });
-
-    // Update duration filter counts to reflect the active topic
-    document.querySelectorAll<HTMLElement>('.dur-count').forEach(el => {
-      const dur = el.dataset.dur ?? '';
-      el.textContent = String(durCounts[dur] || 0);
+      const videoCount = section.querySelectorAll('.video-card-wrapper').length;
+      section.style.display = videoCount > 0 ? '' : 'none';
+      totalVisible += videoCount;
     });
 
     const noResults = document.getElementById('no-results');
@@ -160,29 +108,9 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
     applyFilters();
   });
 
-  // Duration filter
-  const durationFilterBar = document.getElementById('duration-filters');
-  durationFilterBar?.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-duration]');
-    if (!btn) return;
-    activeDuration = btn.dataset.duration ?? 'all';
-
-    durationFilterBar.querySelectorAll<HTMLButtonElement>('.dur-btn').forEach(b => {
-      const selected = b.dataset.duration === activeDuration;
-      b.classList.toggle('bg-white/10', selected);
-      b.classList.toggle('text-text-primary', selected);
-      b.classList.toggle('font-semibold', selected);
-      b.classList.toggle('text-text-muted', !selected);
-      b.setAttribute('aria-pressed', String(selected));
-    });
-
-    applyFilters();
-  });
-
   // Clear filters
   document.getElementById('clear-filters')?.addEventListener('click', () => {
     activeTopic = 'all';
-    activeDuration = 'all';
 
     topicFilterBar?.querySelectorAll<HTMLButtonElement>('.topic-btn').forEach(b => {
       const selected = b.dataset.topic === 'all';
@@ -190,15 +118,6 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
       b.classList.toggle('bg-accent-cyan/10', selected);
       b.classList.toggle('text-accent-cyan', selected);
       b.classList.toggle('border-border-muted', !selected);
-      b.classList.toggle('text-text-muted', !selected);
-      b.setAttribute('aria-pressed', String(selected));
-    });
-
-    durationFilterBar?.querySelectorAll<HTMLButtonElement>('.dur-btn').forEach(b => {
-      const selected = b.dataset.duration === 'all';
-      b.classList.toggle('bg-white/10', selected);
-      b.classList.toggle('text-text-primary', selected);
-      b.classList.toggle('font-semibold', selected);
       b.classList.toggle('text-text-muted', !selected);
       b.setAttribute('aria-pressed', String(selected));
     });
