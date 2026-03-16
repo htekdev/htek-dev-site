@@ -1,0 +1,117 @@
+---
+title: "Visual Studio Weekly: Custom Agents, MCP Governance, and Performance Upgrades"
+description: "Visual Studio 2026 March update brings custom agents, enterprise MCP controls, smarter debugging with Copilot, and C++ performance wins."
+pubDate: 2026-03-16
+tags: ["Developer Experience", "AI", "Visual Studio", "Productivity"]
+draft: false
+---
+
+Visual Studio 2026's March update (18.4.0) dropped on March 10, and it's one of those releases where every section has something meaningful. Custom agents are here. MCP governance is buttoned up for enterprise. Debugging got smarter with Copilot. And MSVC v14.51 preview delivers measurable runtime performance gains.
+
+Let me walk through what shipped and what it means for your workflow.
+
+## Build Your Own Custom Agents
+
+The biggest feature: you can now [define custom Copilot agents](https://devblogs.microsoft.com/visualstudio/custom-agents-in-visual-studio-built-in-and-build-your-own-agents/) as `.agent.md` files in your repository. These aren't just prompt templates. Custom agents get full workspace awareness, code understanding, tool access, and MCP connections to external knowledge sources like internal docs, design systems, or databases.
+
+Drop them in `.github/agents/` and they show up in Visual Studio's agent picker:
+
+````markdown
+your-repo/
+└── .github/
+    └── agents/
+        └── code-reviewer.agent.md
+````
+
+I've been experimenting with custom agents for context-specific workflows: PR reviewers wired to ADR repos via MCP, planning agents that ask clarifying questions before I write a line of code, and design system enforcers that catch UI drift early by querying Figma. The power here isn't that agents replace general-purpose Copilot—it's that you can specialize them for how your team actually works.
+
+A few things to know:
+- If you don't specify a model, the agent uses whatever's selected in the model picker
+- Tool names vary across Copilot platforms, so verify what's available in Visual Studio specifically
+- The [awesome-copilot repo](https://github.com/github/awesome-copilot) has community-contributed examples, but you'll need to check tool names before using them in VS
+
+This is preview, so the format may shift. But the pattern is clear: agents are becoming programmable, and MCP makes them genuinely extensible.
+
+## Enterprise MCP Governance
+
+If you're running Visual Studio in an enterprise environment, the March update adds [MCP governance through GitHub allowlists](https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-notes#enterprise-level-mcp-governance). Admins can now specify which MCP servers are allowed within their organization.
+
+When an allowlist is configured, you can only connect to approved servers. Try to connect to an unauthorized one and you'll get an error message. No exceptions. This is critical for organizations that need to control which MCP servers process sensitive data and maintain compliance with security policies.
+
+For teams using MCP to connect agents to internal knowledge bases, this closes a major governance gap. You don't want developers accidentally wiring Copilot to an unapproved third-party MCP server that might leak proprietary context. Now admins have a clear control point.
+
+## Smarter Debugging with Copilot
+
+The March update brings several Copilot improvements that integrate directly into your debugging workflow:
+
+**Smart Watch Suggestions**: Copilot now offers context-aware expression suggestions right in the Watch window. Just place your cursor in the text box and Copilot suggests relevant expressions based on your current debugging context. This speeds up watch creation and helps you monitor the most meaningful runtime values without guessing.
+
+**Profile Tests with Copilot**: There's a new "Profile with Copilot" command in the Test Explorer context menu. Right-click a test, select it, and the Profiler Agent automatically runs the test, analyzes its performance (CPU + instrumentation), and delivers actionable insights. It's currently supported in .NET with Instrumentation profiling by default.
+
+**Debug-Time Perf Tips**: Performance optimization now happens while you debug, not after. As you step through code, Visual Studio shows execution time and performance signals inline for each step. Spot a slow LINQ query or sluggish helper method? Click the Perf Tip and ask Copilot for optimization suggestions on the spot.
+
+These features embed performance analysis and optimization into the regular debugging loop. You're not context-switching to a separate profiling session or manually instrumenting code—Copilot surfaces bottlenecks and suggests fixes as you step through.
+
+## New Find_symbol Tool for Agent Mode
+
+Visual Studio now includes a `find_symbol` tool for [GitHub Copilot agent mode](https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-notes#find_symbol-tool-for-agent-mode). This gives agents language-aware symbol navigation across your codebase:
+
+- Find all references to symbols across your project
+- Access metadata like type information, declarations, and scope
+
+Supported languages include C++, C#, Razor, and TypeScript, plus any language with a supported LSP extension. Enable the tool and Copilot uses it automatically when answering questions or suggesting multi-file changes. This is how agents get accurate refactoring suggestions and cross-project analysis—they're not just pattern-matching text, they're querying your project's symbol graph.
+
+For best results, write clear prompts and use models that support tool-calling (check [GitHub's AI model comparison](https://docs.github.com/copilot/reference/ai-models/model-comparison)).
+
+## MSVC Build Tools v14.51 Preview: Runtime Performance Gains
+
+If you're working in C++, MSVC Build Tools v14.51 Preview shipped with meaningful runtime performance improvements over v14.50 on the SPEC CPU 2017 benchmark suite:
+
+- +6.5% Integer, Arm64, PGO
+- +5.0% Integer, X64, PGO
+- +4.4% Integer, Arm64, VS Defaults
+- +4.3% Integer, X64, VS Defaults
+- +1.1% to +1.9% Floating Point across scenarios
+
+Optimization improvements include:
+- Better SLP vectorizer with partial vector support
+- Improved SROA handling of indirect accesses and large structs
+- More aggressive inlining for functions with few uses
+- Better inline expansion of memset/memcpy for AVX
+- Outer loop and multi-exit loop unrolling
+
+You'll also see improved ASan ARM64 support (still experimental) and progress on C++23 conformance with 133 Developer Community bugs fixed.
+
+To install, select either _MSVC Build Tools for x64/x86 (Preview)_ or _MSVC Build Tools for ARM64/ARM64EC (Preview)_ under the _Desktop development with C++_ workload in the Visual Studio Installer.
+
+There are known issues: CMake targets using the Visual Studio (MSBuild) generator need a workaround, and PowerShell command line builds aren't configured yet. Both will be fixed in future previews.
+
+## JSON Editor Now Ships with Core Editor
+
+Small but impactful: the JSON editor is now [included in the Core Editor](https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-notes#json-editor-improvements) by default. Previously, you needed the full Web Development workload to get JSON editing capabilities. Now you get JSON editing without the full web tooling install.
+
+The JSON editor also updated to support JSON Schema Draft 2020-12 and Draft 2019-09 (previously only Draft 4 and Draft 7), which means better IntelliSense and validation when working with modern schemas that use `$defs`, `$anchor`, and improved vocabulary support.
+
+## HTML Rich Copy/Cut
+
+Visual Studio now supports [HTML clipboard format when cutting or copying code](https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-notes#html-rich-copycut). Paste colorized code into web versions of Office apps, Azure DevOps work items, or any HTML-based control. Syntax highlighting and formatting are preserved.
+
+It's turned on by default. Customize it at **Tools → Options → Text Editor → Advanced** where you can toggle "Copy rich text on copy/cut" and set the max length.
+
+This is one of those workflow paper cuts that adds up. If you're writing design docs in Confluence, filing bugs in Azure DevOps, or pasting code samples into PowerPoint, this just works now.
+
+## Fix NuGet Vulnerabilities with Copilot
+
+Visual Studio now lets you [fix NuGet package vulnerabilities directly from Solution Explorer with Copilot](https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-notes#fix-vulnerabilities-with-copilot). When Copilot detects a vulnerability, you get an immediate notification. Click through and Copilot automatically resolves it with the right dependency updates.
+
+No manual vulnerability research. No hunting down correct package versions. Copilot analyzes the vulnerability and recommends targeted fixes that keep dependencies secure without disrupting your workflow.
+
+This integrates security into daily work. You address vulnerabilities right when they're discovered, not in a separate security review sprint.
+
+## The Bottom Line
+
+This update shows where Visual Studio is headed: Copilot isn't just a chat assistant anymore. It's embedded in debugging, testing, profiling, and security workflows. Custom agents let you program Copilot's behavior for team-specific patterns. MCP governance gives enterprises the control they need to deploy these capabilities safely.
+
+The March update also shipped with HTML rich copy, JSON editor updates, and C++ performance wins that compound over time. Nothing here is a silver bullet, but together, these features reduce friction in the inner loop and make AI assistance something you use reflexively, not consciously.
+
+If you're on Visual Studio 2026 Stable, update to 18.4.0 and try out custom agents. If you're in C++, install the MSVC v14.51 preview and run your benchmarks. The ecosystem is moving fast, and the tools that win are the ones that make agents programmable and governance explicit.
