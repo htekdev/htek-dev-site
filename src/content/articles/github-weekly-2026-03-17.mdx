@@ -1,0 +1,87 @@
+---
+title: "GitHub Weekly: Agentic Workflows Hit Prime Time"
+description: "GPT-5.4 goes GA, JetBrains gets custom agents, Actions gets smarter OIDC tokens, and security automation gets a UX overhaul."
+pubDate: 2026-03-17
+tags: ["GitHub Copilot", "DevOps", "Developer Experience", "AI"]
+draft: false
+---
+
+## The Agentic Takeover is Real
+
+This week, GitHub shipped a flood of updates that make one thing clear: the platform is doubling down on agentic automation across the board. From GPT-5.4 going generally available in Copilot to custom agents landing in JetBrains IDEs, GitHub is moving fast to turn AI from a code-completion tool into an actual development partner. At the same time, they're hardening security workflows and fixing long-standing friction points in Actions and issue tracking.
+
+Here's what shipped and why it matters.
+
+## GPT-5.4 is Now Generally Available in GitHub Copilot
+
+OpenAI's latest agentic coding model, [GPT-5.4](https://github.blog/changelog/2026-03-05-gpt-5-4-is-generally-available-in-github-copilot), is now rolling out to Copilot Pro, Pro+, Business, and Enterprise users. Early testing shows it's hitting "new rates of success" for multi-step, tool-dependent processes—exactly what you need when Copilot is opening PRs, running tests, and debugging issues autonomously.
+
+GPT-5.4 is available in the model picker across VS Code, Visual Studio, JetBrains, Xcode, Eclipse, GitHub CLI, github.com, and the Copilot coding agent. Admins on Business and Enterprise plans need to enable the model via policy settings before teams can use it.
+
+This is OpenAI's first model explicitly designed for agentic workflows, and it shows. Where earlier models would stall on complex tasks requiring multiple tool calls, GPT-5.4 can chain operations without losing context. If you've been frustrated by agents that give up halfway through a refactor, this upgrade should feel like night and day.
+
+GPT-5.4 mini also went GA this week—a faster, cheaper variant optimized for speed over depth. If you're using agents for repetitive tasks like code reviews or formatting fixes, mini cuts costs without sacrificing quality.
+
+## JetBrains Users Get Custom Agents, Hooks, and MCP Auto-Approve
+
+JetBrains has been playing catch-up with VS Code on agentic features, but [this week's update](https://github.blog/changelog/2026-03-11-major-agentic-capabilities-improvements-in-github-copilot-for-jetbrains-ides/) changes that. Custom agents, sub-agents, and the plan agent are now generally available in JetBrains IDEs. If you've been waiting to build specialized agents tailored to your team's workflows, you can now do it directly in IntelliJ, PyCharm, or any JetBrains IDE.
+
+**Agent hooks are in public preview**, letting you run custom commands at key points during agent sessions. You can trigger logic when a user submits a prompt, before/after a tool is invoked, or when an error occurs. Hooks are defined in a `hooks.json` file stored in `.github/hooks/`. This is huge for teams that need policy enforcement or external integrations—like auto-tagging issues, notifying Slack, or kicking off deployment pipelines when agents complete work.
+
+**MCP (Model Context Protocol) also gets auto-approve support**, so you can configure server and tool-level permissions to reduce manual approvals during agent sessions. If you're running agents against internal APIs or company-specific tools, this removes a major friction point.
+
+JetBrains also added support for `AGENTS.md` and `CLAUDE.md` instruction files, making it easier to define project-specific behavior without forcing developers to configure settings manually. I've covered the value of [context engineering](/articles/context-engineering-key-to-ai-development) before—this is GitHub making it a first-class feature.
+
+## Actions OIDC Tokens Now Support Repository Custom Properties
+
+GitHub Actions [now supports repository custom properties as OIDC token claims](https://github.blog/changelog/2026-03-12-actions-oidc-tokens-now-support-repository-custom-properties). This is a sleeper feature that's going to save enterprise teams thousands of hours of configuration drift and manual policy updates.
+
+Here's the problem it solves: when you're managing hundreds or thousands of repositories, you need a consistent way to control which workflows can access which cloud resources. Before this update, you had two bad options: hardcode repository names into trust policies (manual, error-prone) or maintain per-workflow configuration (doesn't scale).
+
+Now, you can tag repositories with custom properties (like `environment: production`, `team: platform`, or `compliance: pci`) and those properties automatically flow into OIDC tokens as claims prefixed with `repo_property_`. Your cloud provider's trust policy can reference these claims, so access control is based on repository attributes instead of static allow lists.
+
+This is attribute-based access control (ABAC) done right. New repositories automatically inherit the right policies based on their properties. Governance metadata lives in one place. No more configuration drift when teams rename repos or restructure orgs. If you're running [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left) workflows that spin up infrastructure on demand, this feature is essential.
+
+## Copilot Coding Agent Can Now Skip Actions Approval
+
+When Copilot's coding agent opens a PR or pushes changes, GitHub treats it like an outside contributor. Actions workflows don't run until a human clicks "Approve and run workflows." This protects against malicious code execution, but it also slows down feedback loops when you're iterating with an agent.
+
+GitHub [added a repository setting](https://github.blog/changelog/2026-03-13-optionally-skip-approval-for-copilot-coding-agent-actions-workflows) to let admins opt out of manual approval. Workflows now run immediately after Copilot pushes changes, so you get instant test results and build feedback.
+
+This is a trust trade-off. If your Actions workflows have access to production secrets or deploy automatically, skipping approval is risky. But if you're using agents for feature development on isolated branches with limited permissions, the speed gain is worth it. I've written about [building trust into agentic workflows](/articles/github-agentic-workflows-hands-on-guide)—this setting gives you the control to decide where on that spectrum your team sits.
+
+## Security Automation Gets a UX Overhaul
+
+GitHub Advanced Security [got a guided setup experience](https://github.blog/changelog/2026-03-17-github-advanced-security-setup-made-simple/) that makes it easier to enable security features at scale. The new UI lets you configure security settings and target repositories faster, with better visibility into what's enabled where.
+
+GHAS has always been powerful but intimidating. The old configuration flow assumed you knew exactly what you wanted before you started. The new guided experience walks you through decisions and shows you the impact of each setting. If you're rolling out code scanning, secret scanning, or Dependabot across an organization, this update makes the process less painful.
+
+GitHub also shipped [push protection exemptions for roles, teams, and apps](https://github.blog/changelog/2026-03-17-push-protection-exemptions-for-roles-teams-and-apps/). Organizations can now designate specific roles, teams, or apps as exempt from secret scanning push protection. Exemption status is evaluated at push time, so you can grant flexibility to trusted automation without disabling security for everyone.
+
+Secret scanning also got an update: [39 detectors now have push protection enabled by default](https://github.blog/changelog/2026-03-10-secret-scanning-pattern-updates-march-2026), and 28 new secret types were added from 15 providers, including Lark, Vercel, Snowflake, and Supabase. GitHub is playing catch-up with the explosion of SaaS API tokens—every new integration is a potential leak surface, and these updates close gaps.
+
+## Issue Fields: Structured Metadata Finally Arrives
+
+GitHub [launched issue fields in public preview](https://github.blog/changelog/2026-03-12-issue-fields-structured-issue-metadata-is-in-public-preview/), replacing label-based workarounds like `priority/p0` or `severity/high` with typed, org-wide metadata that's searchable, reportable, and consistent across repositories.
+
+Every organization gets four preconfigured fields: Priority, Effort, Start date, and Target date. Admins can create up to 25 custom fields per org across four types: single select, text, number, and date. Fields can be pinned to specific issue types (bugs, features, tasks, custom types), so you only see relevant metadata in the sidebar.
+
+The real value is in reporting. You can search and filter issues by field values across repositories, add issue fields as columns in project views, and track field changes in the issue timeline. The API and webhook support means you can build automation on top of this—like auto-escalating high-priority bugs or generating burn-down charts from effort estimates.
+
+This has been one of the most-requested features for years. Labels were never designed for structured data, and workarounds like issue body templates were brittle. Issue fields make GitHub Issues usable for actual project management, not just bug tracking.
+
+## Copilot Code Review Goes Full Agentic
+
+Copilot's code review feature [now runs on an agentic architecture](https://github.blog/changelog/2026-03-05-copilot-code-review-now-runs-on-an-agentic-architecture/) and is generally available for all Copilot Pro, Pro+, Business, and Enterprise users. Instead of analyzing diffs in isolation, Copilot now uses tool-calling to gather broader repository context—directory structure, related code, references—so feedback reflects how changes fit into the larger codebase.
+
+The result: more actionable guidance, lower noise, higher-quality findings. GitHub claims reviews now prioritize "correctness and architectural integrity" over style nitpicks. You can also [request a code review from GitHub CLI](https://github.blog/changelog/2026-03-11-request-copilot-code-review-from-github-cli) now—just run `gh pr create` or `gh pr edit` and add Copilot as a reviewer without leaving the terminal.
+
+This is part of a broader trend: GitHub is moving reviews from static analysis to active reasoning. If you've read my piece on [top mistakes creating custom agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents), you know context matters. Agentic code review gets that right.
+
+## The Bottom Line
+
+This week's updates aren't isolated features—they're pieces of a coherent strategy. GitHub is transforming its platform from a place where you store code into a place where AI agents *do work*. GPT-5.4 gives agents better reasoning. JetBrains gets custom agents and hooks. Actions gets smarter OIDC tokens. Security automation gets easier to deploy at scale. Issue tracking gets structured metadata. Code review gets context-aware.
+
+The common thread: GitHub is making it easier to run agentic workflows safely and productively. If you're still treating Copilot as an autocomplete tool, you're missing the shift. The platform is betting that the future of software development looks less like humans writing code with AI assistance and more like humans directing AI agents that write, test, review, and deploy code autonomously.
+
+We're not there yet, but this week brought us a lot closer.
