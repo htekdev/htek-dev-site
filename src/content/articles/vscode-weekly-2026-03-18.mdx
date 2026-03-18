@@ -1,0 +1,170 @@
+---
+title: "VS Code Weekly: One Week Into Weekly Releases, Microsoft Ships 10+ Insiders Features"
+description: "Seven days after the first weekly stable drop, VS Code Insiders adds MCP support, image carousel, plugin install from source, and independent browser zoom."
+pubDate: 2026-03-18
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+## The First Week of Weekly Releases
+
+One week ago, Microsoft [shipped VS Code 1.111](/articles/vscode-weekly-2026-03-11) — the first weekly stable release — with Autopilot mode, agent permissions, and scoped hooks. Since then, the Insiders build (v1.112) has accumulated **10+ new features** through March 16, validating the faster release cadence with tangible velocity.
+
+The [v1.112 Insiders release notes](https://code.visualstudio.com/updates/v1_112) show daily incremental updates, not monthly batching. Features ship as soon as they're ready, tested in Insiders, and roll to Stable the following week. This is the new model in action.
+
+What's most interesting isn't any single feature — it's the **distribution of effort**. Instead of one massive agent overhaul, the team shipped quality-of-life improvements, plugin ecosystem updates, and UX polish in parallel. This suggests Microsoft has multiple teams working concurrently, each shipping on their own cadence rather than waiting for a monthly release window.
+
+Let's break down what landed.
+
+## MCP Server Support in Copilot CLI Background Agents
+
+The biggest feature this week: [Copilot CLI background agents](https://code.visualstudio.com/docs/copilot/agents/copilot-cli) now support [Model Context Protocol (MCP) servers](https://modelcontextprotocol.io/introduction).
+
+MCP is Anthropic's open protocol for connecting AI systems to external data sources and tools. It launched in November 2025 as a way to standardize how agents access databases, APIs, file systems, and third-party services without custom integrations per tool.
+
+VS Code added MCP support for local chat agents in the [January 2026 release](https://code.visualstudio.com/updates/v1_109). This update extends it to background agents — the Copilot CLI instances that run in separate processes and can be handed off for long-running tasks.
+
+**Why this matters**: Background agents can now use the same MCP servers as local agents, eliminating the need to maintain separate tool configurations. If you've connected your agent to a Postgres database via MCP, background agents automatically inherit that connection. Same for Slack, GitHub, Jira, or any other MCP-compatible tool.
+
+This reduces friction for multi-agent workflows where you delegate tasks between local and background agents. The tool surface area stays consistent regardless of execution context.
+
+[MCP adoption is accelerating](https://github.com/modelcontextprotocol/servers) — the protocol already supports 50+ integrations, from databases to cloud platforms to developer tools. Microsoft betting on MCP as the standard agent interop layer is a strong signal for the ecosystem.
+
+## Image Carousel View for Chat Sessions
+
+A new image carousel view lets you browse and navigate images from chat sessions and workspace files. Images from tool calls render as clickable pills, opening a carousel editor with previous/next navigation.
+
+This is a UX improvement for agents that generate diagrams, charts, or screenshots during conversations. Previously, images appeared inline in the chat transcript and required scrolling to compare. The carousel view isolates them into a dedicated navigation experience.
+
+Use case: Ask an agent to generate three architecture diagram variations. The carousel lets you flip between them side-by-side without re-reading the entire conversation. For visual debugging workflows (screenshot diffs, UI mockups), this saves time.
+
+Minor feature, but it shows Microsoft is polishing the agent UX based on real usage patterns. Agents generate more images than pure text responses, so image-specific navigation makes sense.
+
+## File Links in Copilot CLI Sessions Are Now Clickable
+
+File paths in Copilot CLI sessions now render as clickable links that open the referenced file directly in the VS Code editor.
+
+Before this, CLI agents would reference file paths as plain text. You'd copy the path, use Cmd+P / Ctrl+P to open it manually, or use `code <file>` from the terminal. Now you just click the link.
+
+This is one of those friction-reducing updates that compounds over time. Agents reference files constantly — logs, config files, source code. Making those references one-click instead of three-step copy-paste operations removes cognitive overhead during agent conversations.
+
+## Install Plugins from Source
+
+You can now clone and install agent plugins directly from a GitHub repo or git URL via **Install Plugin from Source** in the Extensions view.
+
+This complements the existing [agent plugins marketplace](https://code.visualstudio.com/docs/copilot/customization/agent-plugins) introduced in the [February 2026 release](/articles/vscode-weekly-2026-03-04). Marketplace plugins are curated bundles of skills, tools, hooks, and MCP servers. But what if you want a plugin that's not published yet, or you're developing your own?
+
+Install from source solves that. Point VS Code at a git URL, and it clones the plugin repo and registers it locally. This enables:
+
+- **Testing private plugins** before publishing to the marketplace
+- **Contributing to plugin development** by running forks or branches
+- **Installing org-internal plugins** that shouldn't be public
+
+The update also adds support for plugin-specific component paths (`commands/`, `skills/`, `agents/`, `hooks/`, `MCP/`) per the updated plugin spec. This standardizes where plugins store their components, making it easier to build and distribute them.
+
+For teams building custom agent toolchains, this is a significant workflow improvement. You can now version-control agent capabilities as git repos and distribute them without going through the marketplace.
+
+## Discover Chat Customizations in Parent Folders
+
+New setting: `chat.useCustomizationsInParentRepositories`
+
+If your current workspace folder isn't a git repository, VS Code now searches parent directories for chat customizations (skills, prompts, agents, hooks).
+
+This addresses a specific workflow: monorepos where individual packages aren't git roots, but the monorepo root is. Before this, you'd open a package subdirectory and lose access to customizations defined at the monorepo level. Now VS Code walks up the directory tree until it finds a git root and loads customizations from there.
+
+Small change, big impact for monorepo users. Customizations no longer need to be duplicated across packages.
+
+## Integrated Browser Gets Independent Zoom Controls
+
+The integrated browser now supports independent zoom, letting you zoom browser content without affecting VS Code editor zoom level.
+
+Previously, zooming the browser zoomed the entire VS Code window, which broke your editor layout. This was particularly annoying when testing responsive designs — you'd zoom the browser to preview mobile viewports and your code became unreadable.
+
+Zoom is accessible via the browser menu and keyboard shortcuts. You can now set different zoom levels for editor and browser, which is what you'd expect from a multi-panel IDE.
+
+This aligns with the [agentic browser tools](https://code.visualstudio.com/updates/v1_110#_agentic-browser-tools-experimental) introduced in v1.110, where agents drive the browser to interact with your app and verify changes. Independent zoom means the agent can adjust browser viewport without disrupting your editor view.
+
+## Agent Permissions and Steering for Copilot CLI
+
+Insiders added support for **steering and queuing messages** in Copilot CLI agents, plus **permission levels** for CLI sessions.
+
+Steering was previously only available for local agents. Now you can send follow-up messages to background agents mid-execution to redirect their approach without waiting for completion. This is the same "queue and steer" feature from the [February 2026 release](https://code.visualstudio.com/updates/v1_110).
+
+Permission levels bring the Autopilot/Bypass Approvals/Default Approvals model to CLI agents. You can now set autonomy level per CLI session, not just in the chat UI.
+
+This makes background agents and local agents behaviorally consistent. The UX difference is execution context (separate process vs. embedded), but the control surface is identical.
+
+## Chat Can Directly Analyze Images on Disk
+
+Chat can now analyze images stored on disk, not just images pasted or generated during the conversation.
+
+Use case: You have a screenshot or diagram saved locally. Before this, you'd paste it into chat or use `/attach` to reference it. Now you can just reference the file path directly, and the agent reads it from disk.
+
+This reduces the steps for visual analysis workflows. If you're debugging UI issues and have a folder of screenshots, you can now ask "analyze all screenshots in `/tests/screenshots/`" without manually attaching each one.
+
+## Plugin and MCP Server Enablement at Workspace and Global Level
+
+Agent plugins and MCP servers can now be enabled or disabled at workspace and global scope.
+
+This gives you per-project control over which tools and capabilities are available to agents. If a plugin is useful for one project but not another, disable it at the workspace level without affecting other workspaces.
+
+This is particularly important for teams with security or compliance requirements. You can disable external MCP servers (e.g., web search, API access) in production codebases while keeping them enabled for development environments.
+
+Workspace-level enablement also prevents accidental tool access. If an agent can shell out to external services via an MCP server, you probably don't want that enabled by default in every project.
+
+## Smaller UX Improvements
+
+Several smaller updates that improve daily workflows:
+
+- **Minimap right-click context menu** now includes a **Side** option for discoverability of minimap positioning settings
+- **Default location for hook configurations** added at `~/.copilot/hooks` for global hooks outside project directories
+- **Freeform text responses** always available when an agent asks clarifying questions with predefined options (you're not forced to pick from the list)
+- **Modal editor dialog** can now be resized and moved within the workbench window (changes persist per session, not across restarts)
+- **Integrated browser right-click context menu** with standard browser actions and **Add Element to Chat** option
+- **New `editor.find.closeOnResult` setting** — Find dialog auto-closes after a search match, moving focus to matched text (disabled by default)
+- **Claude agent mode** no longer in preview — it's now generally available
+
+Each of these is a 5-minute quality-of-life fix. Individually minor, but collectively they reduce friction across dozens of daily interactions.
+
+## The Community Reaction to Autopilot and Weekly Releases
+
+The [VS Code 1.111 release](https://www.theregister.com/2026/03/11/visual_studio_code_moves_to/) generated significant discussion, particularly around Autopilot mode.
+
+[The Register](https://www.theregister.com/2026/03/11/visual_studio_code_moves_to/) ran a story titled "Microsoft ships VS Code weekly, adds Autopilot mode so AI can wreak havoc without bothering you," framing the feature as a security risk. The article notes that Google also enables auto-approval of AI agents "while their documentation warns against it."
+
+[Visual Studio Magazine](https://visualstudiomagazine.com/articles/2026/03/12/hands-on-with-vs-code-1-111-autopilot-preview.aspx) published a hands-on review, concluding that Autopilot is "not quite an 'ooh, ahh' type thing" — it's useful for repetitive refactoring tasks but not a game-changer for complex workflows.
+
+The [VS Code Insiders Podcast](https://www.vscodepodcast.com/20) did a deep dive with Justin Chen on Autopilot and the evolving chat UX, explaining when to use default vs. bypass approvals and practical tips for safe, hands-off workflows.
+
+Reddit and Hacker News threads focused on two concerns:
+
+1. **What's the point of Insiders if Stable ships weekly?** The answer: Insiders is still daily, so you're 7 days ahead instead of 30.
+2. **Can enterprises keep up with weekly releases?** Organizations that auto-update will need tighter QA cycles or pin to specific versions.
+
+The broader narrative: Microsoft is accelerating to match competitors like Cursor and Windsurf, which iterate continuously. Weekly releases compress the feature gap without abandoning stability guarantees.
+
+## What This Week's Updates Signal
+
+The first week of weekly releases delivered **incremental, parallel improvements** across agent UX, plugin ecosystem, and CLI agents — not a single tentpole feature. This suggests the weekly model is working as intended: ship when ready, don't batch for a monthly window.
+
+What's notable is the **distribution across problem domains**:
+
+- **Extensibility**: MCP support for CLI agents, install plugins from source, workspace-level plugin enablement
+- **UX polish**: Image carousel, clickable file links, browser zoom, modal dialog resizing
+- **Agent control**: Steering and permissions for CLI agents, debug snapshots, freeform responses
+
+This is Microsoft's play: **make agents reliable through tooling, not model improvements**. They can't control when OpenAI or Anthropic ship better models, but they can control how agents interact with your codebase, how you control autonomy, and how you debug failures.
+
+The MCP bet is particularly strategic. By supporting the protocol early and extending it to background agents, Microsoft positions VS Code as the agent platform that "just works" with the growing MCP ecosystem. If MCP becomes the standard (and it's trending that way), VS Code gets first-mover advantage on integrations.
+
+## The Bottom Line
+
+One week into weekly releases, Microsoft shipped **10+ features** across Insiders, proving the faster cadence isn't just marketing — it's producing consistent velocity.
+
+The distribution of updates shows a mature platform: no more "ship everything in one monthly drop and hope it works." Instead, MCP support ships when ready, image carousel ships when polished, plugin install ships when tested. Each update is small, focused, and independently valuable.
+
+For developers, this means faster access to improvements without waiting for release windows. For enterprises, it means tighter validation cycles. For the ecosystem, it means VS Code is now iterating at the same pace as purpose-built agent IDEs like Cursor.
+
+The open question is sustainability. Can Microsoft keep this pace for months without shipping half-baked features or degrading quality? The first week looks good — but the first week always does. Check back in 8-12 weeks to see if the quality bar holds.
+
+If it does, VS Code's agent platform becomes significantly harder to compete with. Not because of any single killer feature, but because the feedback loop from user request to shipped improvement compresses from months to days. That's the real advantage of weekly releases.
