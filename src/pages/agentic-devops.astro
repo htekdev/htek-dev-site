@@ -6,28 +6,28 @@ import Footer from '../components/Footer.astro';
 const beliefs = [
   {
     icon: '🛡️',
-    title: 'Governance Before Velocity',
-    description: 'Agent sprawl is the new technical debt. Every agent needs a harness, every action needs a gate, and every output needs validation — before you scale.',
+    title: 'Set the Rules Before You Hit Go',
+    description: 'Agents move fast. Guardrails need to exist before they start — not after something breaks.',
   },
   {
     icon: '🧪',
-    title: 'Tests Are the Ultimate Guardrail',
-    description: 'If an agent can\'t prove its work with passing tests, it doesn\'t ship. Period. Tests aren\'t optional in an agentic world — they\'re the only thing standing between velocity and chaos.',
+    title: 'No Tests, No Ship',
+    description: 'If the agent can\'t prove its work with passing tests, it doesn\'t get committed. That\'s the line.',
   },
   {
     icon: '🏗️',
-    title: 'Architecture-First Autonomy',
-    description: 'Layer enforcement, hook-based controls, and structural boundaries make agents incapable of violating your architecture — not just unlikely to.',
+    title: 'Make Bad Changes Impossible',
+    description: 'Don\'t rely on agents following instructions. Build structural boundaries they literally can\'t cross.',
   },
   {
     icon: '💡',
-    title: 'Developer Fulfillment Over Throughput',
-    description: 'Speed without satisfaction is a race to burnout. The goal isn\'t more PRs — it\'s developers who feel empowered, creative, and in control of their tools.',
+    title: 'Empower the Developer, Not Just the Throughput',
+    description: 'More PRs per hour means nothing if developers feel like babysitters. The goal is creative control.',
   },
   {
     icon: '🔄',
-    title: 'Self-Healing Over Self-Deploying',
-    description: 'The real promise of agentic infrastructure isn\'t autonomous deployment — it\'s autonomous detection, diagnosis, and resolution of issues before humans even notice.',
+    title: 'Detect and Fix Before Anyone Notices',
+    description: 'The real promise isn\'t autonomous deployment — it\'s autonomous detection and resolution of problems.',
   },
 ];
 
@@ -122,33 +122,6 @@ const articles = [
     slug: 'agentic-ai-transforming-dev-teams',
   },
 ];
-
-const stackLayers = [
-  {
-    label: 'Developer Experience',
-    items: ['GitHub Copilot', 'Copilot SDK', 'IDE Extensions'],
-    color: 'accent-cyan',
-    gradient: 'from-accent-cyan/20 to-accent-cyan/5',
-  },
-  {
-    label: 'Agent Orchestration',
-    items: ['Agentic Workflows', 'Custom Agents', 'MCP Servers'],
-    color: 'accent-green',
-    gradient: 'from-accent-green/20 to-accent-green/5',
-  },
-  {
-    label: 'Governance & Enforcement',
-    items: ['Agent Hooks', 'Hookflows', 'Test Enforcement'],
-    color: 'accent-rose',
-    gradient: 'from-accent-rose/20 to-accent-rose/5',
-  },
-  {
-    label: 'Infrastructure',
-    items: ['GitHub Actions', 'Self-Healing', 'Azure / Cloud'],
-    color: 'text-muted',
-    gradient: 'from-white/10 to-white/5',
-  },
-];
 ---
 
 <BaseLayout
@@ -187,9 +160,12 @@ const stackLayers = [
           safety structural, not aspirational.
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a href="#beliefs" class="inline-flex items-center gap-2 bg-accent-green/15 border border-accent-green/30 text-accent-green font-semibold px-8 py-3 rounded-lg hover:bg-accent-green/25 transition-all">
-            Core Beliefs
+          <a href="#evolution" class="inline-flex items-center gap-2 bg-accent-green/15 border border-accent-green/30 text-accent-green font-semibold px-8 py-3 rounded-lg hover:bg-accent-green/25 transition-all">
+            See the Evolution
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+          </a>
+          <a href="#beliefs" class="inline-flex items-center gap-2 text-text-muted hover:text-text-primary font-medium px-8 py-3 rounded-lg transition-colors">
+            Core Beliefs →
           </a>
           <a href="#tooling" class="inline-flex items-center gap-2 text-text-muted hover:text-text-primary font-medium px-8 py-3 rounded-lg transition-colors">
             Explore the Stack →
@@ -198,15 +174,682 @@ const stackLayers = [
       </div>
     </section>
 
+    <!-- The Evolution -->
+    <section id="evolution" class="fade-in py-24 md:py-32 bg-bg-surface relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 left-1/3 w-[400px] h-[400px] bg-accent-green/5 rounded-full blur-[100px]"></div>
+      </div>
+      <div class="relative max-w-5xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// evolution</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">
+          How We Got Here
+        </h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          Every era of software delivery follows the same pattern: compress the feedback loop.
+          The tighter the loop, the faster you learn, the lower the risk, the more you ship.
+        </p>
+
+        <!-- Era Cards -->
+        <div class="space-y-12">
+
+          <!-- Era 1: The Old Way -->
+          <div class="era-card bg-white/[0.02] border border-white/[0.06] rounded-2xl p-8 md:p-10">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="inline-block font-mono text-[10px] text-red-400 tracking-widest uppercase bg-red-400/10 border border-red-400/20 rounded-full px-3 py-1">Phase 1</span>
+              <h3 class="text-xl md:text-2xl font-heading font-semibold text-text-primary">The Linear Pipeline</h3>
+            </div>
+            <p class="text-text-secondary text-sm leading-relaxed max-w-2xl mb-8">
+              Before DevOps, teams planned for months, built in isolation, tested at the end, and deployed infrequently.
+              Feedback arrived after the fact — and the cost of fixing issues grew the further right they were discovered.
+            </p>
+            <div class="overflow-x-auto">
+              <svg viewBox="0 0 800 130" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[800px] mx-auto">
+                <defs>
+                  <marker id="evo-arr-r" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#f87171"/>
+                  </marker>
+                </defs>
+                <rect x="10" y="30" width="130" height="48" rx="8" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="1.5"/>
+                <text x="75" y="52" fill="#f87171" text-anchor="middle" font-size="13" font-weight="600" font-family="system-ui">Plan</text>
+                <text x="75" y="68" fill="rgba(248,113,113,0.6)" text-anchor="middle" font-size="10" font-family="system-ui">2-3 months</text>
+                <rect x="170" y="30" width="130" height="48" rx="8" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="1.5"/>
+                <text x="235" y="52" fill="#f87171" text-anchor="middle" font-size="13" font-weight="600" font-family="system-ui">Develop</text>
+                <text x="235" y="68" fill="rgba(248,113,113,0.6)" text-anchor="middle" font-size="10" font-family="system-ui">3-6 months</text>
+                <rect x="330" y="30" width="130" height="48" rx="8" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="1.5"/>
+                <text x="395" y="52" fill="#f87171" text-anchor="middle" font-size="13" font-weight="600" font-family="system-ui">Test</text>
+                <text x="395" y="68" fill="rgba(248,113,113,0.6)" text-anchor="middle" font-size="10" font-family="system-ui">1-2 months</text>
+                <rect x="490" y="30" width="130" height="48" rx="8" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="1.5"/>
+                <text x="555" y="52" fill="#f87171" text-anchor="middle" font-size="13" font-weight="600" font-family="system-ui">Deploy</text>
+                <text x="555" y="68" fill="rgba(248,113,113,0.6)" text-anchor="middle" font-size="10" font-family="system-ui">1-2 weeks</text>
+                <rect x="650" y="30" width="130" height="48" rx="8" fill="rgba(248,113,113,0.06)" stroke="#f87171" stroke-width="1.5"/>
+                <text x="715" y="52" fill="#f87171" text-anchor="middle" font-size="13" font-weight="600" font-family="system-ui">Feedback</text>
+                <text x="715" y="68" fill="rgba(248,113,113,0.6)" text-anchor="middle" font-size="10" font-family="system-ui">Too late</text>
+                <line x1="140" y1="54" x2="168" y2="54" stroke="#f87171" stroke-width="1.5" marker-end="url(#evo-arr-r)"/>
+                <line x1="300" y1="54" x2="328" y2="54" stroke="#f87171" stroke-width="1.5" marker-end="url(#evo-arr-r)"/>
+                <line x1="460" y1="54" x2="488" y2="54" stroke="#f87171" stroke-width="1.5" marker-end="url(#evo-arr-r)"/>
+                <line x1="620" y1="54" x2="648" y2="54" stroke="#f87171" stroke-width="1.5" marker-end="url(#evo-arr-r)"/>
+                <line x1="10" y1="100" x2="780" y2="100" stroke="rgba(248,113,113,0.2)" stroke-width="1" stroke-dasharray="4"/>
+                <text x="395" y="120" fill="#f87171" text-anchor="middle" font-size="12" font-weight="600" font-family="system-ui">6-12 months per release</text>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Era 2: DevOps -->
+          <div class="era-card bg-white/[0.02] border border-white/[0.06] rounded-2xl p-8 md:p-10">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="inline-block font-mono text-[10px] text-blue-400 tracking-widest uppercase bg-blue-400/10 border border-blue-400/20 rounded-full px-3 py-1">Phase 2</span>
+              <h3 class="text-xl md:text-2xl font-heading font-semibold text-text-primary">The Continuous Loop</h3>
+            </div>
+            <p class="text-text-secondary text-sm leading-relaxed max-w-2xl mb-8">
+              DevOps turned the line into a loop. Test quicker, deliver quicker, run security checks quicker, plan quicker.
+              Everything shifted left. Feedback became continuous.
+            </p>
+            <div class="overflow-x-auto">
+              <svg viewBox="0 0 700 310" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[700px] mx-auto">
+                <defs>
+                  <marker id="evo-arr-b" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#60a5fa"/>
+                  </marker>
+                </defs>
+                <ellipse cx="350" cy="140" rx="195" ry="105" fill="none" stroke="rgba(96,165,250,0.12)" stroke-width="1.5"/>
+                <g transform="translate(350,140)">
+                  <g transform="translate(0,-105)">
+                    <rect x="-42" y="-16" width="84" height="32" rx="16" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="0" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">Plan</text>
+                    <text x="0" y="12" fill="rgba(96,165,250,0.6)" text-anchor="middle" font-size="8" font-family="system-ui">1-2 weeks</text>
+                  </g>
+                  <g transform="translate(138,-74)">
+                    <rect x="-42" y="-16" width="84" height="32" rx="16" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="0" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">Code</text>
+                    <text x="0" y="12" fill="rgba(96,165,250,0.6)" text-anchor="middle" font-size="8" font-family="system-ui">days</text>
+                  </g>
+                  <g transform="translate(170,0)">
+                    <rect x="-50" y="-16" width="100" height="32" rx="16" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="0" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">Build & Test</text>
+                    <text x="0" y="12" fill="rgba(96,165,250,0.6)" text-anchor="middle" font-size="8" font-family="system-ui">minutes (CI)</text>
+                  </g>
+                  <g transform="translate(138,74)">
+                    <rect x="-42" y="-16" width="84" height="32" rx="16" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="0" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">Release</text>
+                    <text x="0" y="12" fill="rgba(96,165,250,0.6)" text-anchor="middle" font-size="8" font-family="system-ui">hours (CD)</text>
+                  </g>
+                  <g transform="translate(0,105)">
+                    <rect x="-42" y="-16" width="84" height="32" rx="16" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="0" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">Deploy</text>
+                    <text x="0" y="12" fill="rgba(96,165,250,0.6)" text-anchor="middle" font-size="8" font-family="system-ui">minutes</text>
+                  </g>
+                  <g transform="translate(-138,74)">
+                    <rect x="-42" y="-16" width="84" height="32" rx="16" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="0" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">Operate</text>
+                    <text x="0" y="12" fill="rgba(96,165,250,0.6)" text-anchor="middle" font-size="8" font-family="system-ui">continuous</text>
+                  </g>
+                  <g transform="translate(-170,0)">
+                    <rect x="-42" y="-16" width="84" height="32" rx="16" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="0" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">Monitor</text>
+                    <text x="0" y="12" fill="rgba(96,165,250,0.6)" text-anchor="middle" font-size="8" font-family="system-ui">real-time</text>
+                  </g>
+                  <g transform="translate(-138,-74)">
+                    <rect x="-46" y="-16" width="92" height="32" rx="16" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="0" fill="#60a5fa" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">Feedback</text>
+                    <text x="0" y="12" fill="rgba(96,165,250,0.6)" text-anchor="middle" font-size="8" font-family="system-ui">immediate</text>
+                  </g>
+                  <!-- Clockwise arrows -->
+                  <path d="M 38,-103 Q 98,-98 126,-82" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#evo-arr-b)"/>
+                  <path d="M 172,-55 Q 188,-30 178,-8" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#evo-arr-b)"/>
+                  <path d="M 178,12 Q 188,35 172,58" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#evo-arr-b)"/>
+                  <path d="M 126,86 Q 98,103 38,105" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#evo-arr-b)"/>
+                  <path d="M -38,105 Q -98,103 -126,86" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#evo-arr-b)"/>
+                  <path d="M -172,58 Q -188,35 -178,12" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#evo-arr-b)"/>
+                  <path d="M -178,-8 Q -188,-30 -172,-55" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#evo-arr-b)"/>
+                  <path d="M -126,-82 Q -98,-98 -38,-103" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#evo-arr-b)"/>
+                  <text x="0" y="-4" fill="rgba(96,165,250,0.4)" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">CONTINUOUS</text>
+                  <text x="0" y="10" fill="rgba(96,165,250,0.4)" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">LOOP</text>
+                </g>
+                <text x="350" y="290" fill="#60a5fa" text-anchor="middle" font-size="12" font-weight="600" font-family="system-ui">Days to weeks per change — feedback is continuous</text>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Era 3: Agentic DevOps -->
+          <div class="era-card bg-white/[0.02] border border-accent-green/10 rounded-2xl p-8 md:p-10 relative">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent-green/[0.03] to-transparent pointer-events-none"></div>
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="inline-block font-mono text-[10px] text-accent-green tracking-widest uppercase bg-accent-green/10 border border-accent-green/20 rounded-full px-3 py-1">Phase 3</span>
+                <h3 class="text-xl md:text-2xl font-heading font-semibold text-text-primary">The Collapsed Loop</h3>
+              </div>
+              <p class="text-text-secondary text-sm leading-relaxed max-w-2xl mb-3">
+                What a high-performing developer does in <strong class="text-text-primary">6 hours</strong>, an agentic workflow does in <strong class="text-accent-green">30 minutes</strong>.
+                The DevOps loop collapses into a tight core. Ideas flow in, tested artifacts flow out.
+              </p>
+              <p class="text-text-secondary text-sm leading-relaxed max-w-2xl mb-8">
+                Testing, security, and validation happen <em>inside</em> the agent's loop — not as separate stages.
+              </p>
+              <div class="overflow-x-auto">
+                <svg viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[800px] mx-auto">
+                  <defs>
+                    <marker id="evo-arr-gn" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#34d399"/>
+                    </marker>
+                    <marker id="evo-arr-y" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#fbbf24"/>
+                    </marker>
+                    <marker id="evo-arr-em" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#6ee7b7"/>
+                    </marker>
+                    <radialGradient id="evo-cg" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#34d399" stop-opacity="0.1"/>
+                      <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+                    </radialGradient>
+                  </defs>
+                  <!-- Ideas -->
+                  <text x="75" y="55" fill="#fbbf24" text-anchor="middle" font-size="13" font-weight="700" font-family="system-ui">💡 IDEAS</text>
+                  <rect x="15" y="68" width="120" height="26" rx="6" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.3)" stroke-width="1"/>
+                  <text x="75" y="86" fill="#fbbf24" text-anchor="middle" font-size="10" font-family="system-ui">"Refactor auth"</text>
+                  <rect x="15" y="100" width="120" height="26" rx="6" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.3)" stroke-width="1"/>
+                  <text x="75" y="118" fill="#fbbf24" text-anchor="middle" font-size="10" font-family="system-ui">"Add caching"</text>
+                  <rect x="15" y="132" width="120" height="26" rx="6" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.3)" stroke-width="1"/>
+                  <text x="75" y="150" fill="#fbbf24" text-anchor="middle" font-size="10" font-family="system-ui">"Fix perf issue"</text>
+                  <rect x="15" y="164" width="120" height="26" rx="6" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.3)" stroke-width="1"/>
+                  <text x="75" y="182" fill="#fbbf24" text-anchor="middle" font-size="10" font-family="system-ui">"New endpoints"</text>
+                  <!-- Arrows to core -->
+                  <line x1="140" y1="120" x2="278" y2="142" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#evo-arr-y)" opacity="0.4"/>
+                  <line x1="140" y1="145" x2="278" y2="152" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#evo-arr-y)" opacity="0.4"/>
+                  <line x1="140" y1="155" x2="278" y2="155" stroke="#fbbf24" stroke-width="2" marker-end="url(#evo-arr-y)"/>
+                  <line x1="140" y1="175" x2="278" y2="162" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#evo-arr-y)" opacity="0.4"/>
+                  <!-- Core -->
+                  <circle cx="400" cy="155" r="100" fill="url(#evo-cg)"/>
+                  <circle cx="400" cy="155" r="85" fill="none" stroke="rgba(52,211,153,0.3)" stroke-width="2"/>
+                  <g transform="translate(400, 155)">
+                    <g transform="translate(0, -52)">
+                      <rect x="-42" y="-14" width="84" height="28" rx="14" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.4)" stroke-width="1.5"/>
+                      <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">🔍 Research</text>
+                    </g>
+                    <g transform="translate(46, 26)">
+                      <rect x="-34" y="-14" width="68" height="28" rx="14" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.4)" stroke-width="1.5"/>
+                      <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">📋 Plan</text>
+                    </g>
+                    <g transform="translate(-46, 26)">
+                      <rect x="-44" y="-14" width="88" height="28" rx="14" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.4)" stroke-width="1.5"/>
+                      <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">⚡ Implement</text>
+                    </g>
+                    <path d="M 28,-40 Q 52,-16 48,10" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#evo-arr-gn)"/>
+                    <path d="M 28,40 Q 0,52 -28,40" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#evo-arr-gn)"/>
+                    <path d="M -48,10 Q -52,-16 -28,-40" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#evo-arr-gn)"/>
+                    <text x="0" y="-10" fill="rgba(52,211,153,0.3)" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">TIGHT</text>
+                    <text x="0" y="2" fill="rgba(52,211,153,0.3)" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">LOOP</text>
+                  </g>
+                  <!-- Arrows from core -->
+                  <line x1="522" y1="142" x2="640" y2="120" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#evo-arr-em)" opacity="0.4"/>
+                  <line x1="522" y1="152" x2="640" y2="145" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#evo-arr-em)" opacity="0.4"/>
+                  <line x1="522" y1="155" x2="640" y2="155" stroke="#6ee7b7" stroke-width="2" marker-end="url(#evo-arr-em)"/>
+                  <line x1="522" y1="162" x2="640" y2="175" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#evo-arr-em)" opacity="0.4"/>
+                  <!-- Artifacts -->
+                  <text x="715" y="55" fill="#6ee7b7" text-anchor="middle" font-size="13" font-weight="700" font-family="system-ui">📦 ARTIFACTS</text>
+                  <rect x="655" y="68" width="120" height="26" rx="6" fill="rgba(110,231,183,0.06)" stroke="rgba(110,231,183,0.3)" stroke-width="1"/>
+                  <text x="715" y="86" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Tested PR #142</text>
+                  <rect x="655" y="100" width="120" height="26" rx="6" fill="rgba(110,231,183,0.06)" stroke="rgba(110,231,183,0.3)" stroke-width="1"/>
+                  <text x="715" y="118" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Deployed v2.3.1</text>
+                  <rect x="655" y="132" width="120" height="26" rx="6" fill="rgba(110,231,183,0.06)" stroke="rgba(110,231,183,0.3)" stroke-width="1"/>
+                  <text x="715" y="150" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Perf fix shipped</text>
+                  <rect x="655" y="164" width="120" height="26" rx="6" fill="rgba(110,231,183,0.06)" stroke="rgba(110,231,183,0.3)" stroke-width="1"/>
+                  <text x="715" y="182" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Docs updated</text>
+                  <!-- Feedback -->
+                  <path d="M 660,230 Q 660,290 400,300 Q 140,290 135,230" fill="none" stroke="rgba(244,114,182,0.3)" stroke-width="1.5" stroke-dasharray="6,3"/>
+                  <text x="400" y="315" fill="rgba(244,114,182,0.5)" text-anchor="middle" font-size="10" font-weight="600" font-family="system-ui">Feedback feeds new ideas</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Era 4: Continuous AI -->
+          <div class="era-card bg-white/[0.02] border border-white/[0.06] rounded-2xl p-8 md:p-10">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="inline-block font-mono text-[10px] text-purple-400 tracking-widest uppercase bg-purple-400/10 border border-purple-400/20 rounded-full px-3 py-1">Phase 4</span>
+              <h3 class="text-xl md:text-2xl font-heading font-semibold text-text-primary">Continuous AI</h3>
+            </div>
+            <p class="text-text-secondary text-sm leading-relaxed max-w-2xl mb-3">
+              A separate autonomous loop that monitors your repository, reasons about what needs attention, and generates ideas
+              that feed the agentic core. Not replacing CI — expanding automation into judgment-heavy work CI was never designed for.
+            </p>
+            <p class="text-text-muted text-xs mb-8">
+              Source: <a href="https://github.blog/ai-and-ml/generative-ai/continuous-ai-in-practice-what-developers-can-automate-today-with-agentic-ci/" class="text-accent-green hover:underline" target="_blank" rel="noopener noreferrer">GitHub Next — Continuous AI in Practice (Feb 2026)</a>
+            </p>
+            <div class="overflow-x-auto">
+              <svg viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[800px] mx-auto">
+                <defs>
+                  <marker id="evo-arr-pp" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#c084fc"/>
+                  </marker>
+                  <marker id="evo-arr-gn2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#34d399"/>
+                  </marker>
+                  <marker id="evo-arr-y2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#fbbf24"/>
+                  </marker>
+                  <marker id="evo-arr-em2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#6ee7b7"/>
+                  </marker>
+                  <radialGradient id="evo-cai-g" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#c084fc" stop-opacity="0.08"/>
+                    <stop offset="100%" stop-color="#c084fc" stop-opacity="0"/>
+                  </radialGradient>
+                  <radialGradient id="evo-core-g" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#34d399" stop-opacity="0.08"/>
+                    <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+                  </radialGradient>
+                </defs>
+                <!-- CAI Loop -->
+                <circle cx="195" cy="160" r="120" fill="url(#evo-cai-g)"/>
+                <circle cx="195" cy="160" r="105" fill="none" stroke="rgba(192,132,252,0.18)" stroke-width="1.5"/>
+                <text x="195" y="52" fill="#c084fc" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="1" font-family="system-ui">CONTINUOUS AI</text>
+                <text x="195" y="68" fill="rgba(192,132,252,0.5)" text-anchor="middle" font-size="9" font-family="system-ui">Autonomous · Judgment-Based · Always Running</text>
+                <g transform="translate(195, 160)">
+                  <g transform="translate(0, -70)">
+                    <rect x="-40" y="-13" width="80" height="26" rx="13" fill="rgba(192,132,252,0.08)" stroke="rgba(192,132,252,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="2" fill="#c084fc" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">👁️ Monitor</text>
+                  </g>
+                  <g transform="translate(65, 22)">
+                    <rect x="-40" y="-13" width="80" height="26" rx="13" fill="rgba(192,132,252,0.08)" stroke="rgba(192,132,252,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="2" fill="#c084fc" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">🧠 Evaluate</text>
+                  </g>
+                  <g transform="translate(0, 70)">
+                    <rect x="-40" y="-13" width="80" height="26" rx="13" fill="rgba(192,132,252,0.08)" stroke="rgba(192,132,252,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="2" fill="#c084fc" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">💡 Reason</text>
+                  </g>
+                  <g transform="translate(-65, 22)">
+                    <rect x="-42" y="-13" width="84" height="26" rx="13" fill="rgba(192,132,252,0.08)" stroke="rgba(192,132,252,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="2" fill="#c084fc" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">📝 Generate</text>
+                  </g>
+                  <path d="M 30,-60 Q 62,-42 62,5" fill="none" stroke="rgba(192,132,252,0.5)" stroke-width="1.5" marker-end="url(#evo-arr-pp)"/>
+                  <path d="M 68,38 Q 52,65 30,66" fill="none" stroke="rgba(192,132,252,0.5)" stroke-width="1.5" marker-end="url(#evo-arr-pp)"/>
+                  <path d="M -30,66 Q -55,50 -62,38" fill="none" stroke="rgba(192,132,252,0.5)" stroke-width="1.5" marker-end="url(#evo-arr-pp)"/>
+                  <path d="M -65,5 Q -62,-42 -30,-60" fill="none" stroke="rgba(192,132,252,0.5)" stroke-width="1.5" marker-end="url(#evo-arr-pp)"/>
+                </g>
+                <!-- Ideas bridge -->
+                <line x1="305" y1="130" x2="420" y2="130" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#evo-arr-y2)" opacity="0.5"/>
+                <line x1="305" y1="160" x2="420" y2="160" stroke="#fbbf24" stroke-width="2" marker-end="url(#evo-arr-y2)"/>
+                <line x1="305" y1="190" x2="420" y2="190" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#evo-arr-y2)" opacity="0.5"/>
+                <text x="365" y="115" fill="#fbbf24" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">💡 Ideas</text>
+                <!-- Agentic Core -->
+                <circle cx="530" cy="160" r="82" fill="url(#evo-core-g)"/>
+                <circle cx="530" cy="160" r="70" fill="none" stroke="rgba(52,211,153,0.3)" stroke-width="2"/>
+                <text x="530" y="72" fill="#34d399" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="1" font-family="system-ui">AGENTIC CORE</text>
+                <g transform="translate(530, 160)">
+                  <g transform="translate(0, -40)">
+                    <rect x="-35" y="-11" width="70" height="22" rx="11" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">🔍 Research</text>
+                  </g>
+                  <g transform="translate(36, 20)">
+                    <rect x="-28" y="-11" width="56" height="22" rx="11" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">📋 Plan</text>
+                  </g>
+                  <g transform="translate(-36, 20)">
+                    <rect x="-36" y="-11" width="72" height="22" rx="11" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.4)" stroke-width="1.5"/>
+                    <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">⚡ Implement</text>
+                  </g>
+                  <path d="M 22,-30 Q 40,-14 38,6" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#evo-arr-gn2)"/>
+                  <path d="M 20,32 Q 0,42 -20,32" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#evo-arr-gn2)"/>
+                  <path d="M -38,6 Q -40,-14 -22,-30" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#evo-arr-gn2)"/>
+                </g>
+                <!-- Artifacts out -->
+                <line x1="605" y1="135" x2="690" y2="120" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#evo-arr-em2)" opacity="0.5"/>
+                <line x1="605" y1="160" x2="690" y2="160" stroke="#6ee7b7" stroke-width="2" marker-end="url(#evo-arr-em2)"/>
+                <line x1="605" y1="185" x2="690" y2="200" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#evo-arr-em2)" opacity="0.5"/>
+                <text x="745" y="115" fill="#6ee7b7" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">📦</text>
+                <text x="745" y="135" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">PRs</text>
+                <text x="745" y="152" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Issues</text>
+                <text x="745" y="169" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Patches</text>
+                <text x="745" y="186" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Reports</text>
+                <text x="745" y="203" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Deploys</text>
+                <!-- Feedback loop -->
+                <path d="M 720,230 Q 720,310 440,320 Q 160,310 90,240" fill="none" stroke="rgba(244,114,182,0.25)" stroke-width="1.5" stroke-dasharray="6,3"/>
+                <text x="420" y="340" fill="rgba(244,114,182,0.4)" text-anchor="middle" font-size="10" font-weight="600" font-family="system-ui">Artifacts feed back → Continuous AI detects patterns → generates new ideas</text>
+              </svg>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Summary: Loops Get Smaller -->
+        <div class="mt-16 text-center">
+          <div class="overflow-x-auto">
+            <svg viewBox="0 0 800 210" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[800px] mx-auto">
+              <circle cx="95" cy="100" r="75" fill="none" stroke="rgba(248,113,113,0.3)" stroke-width="2"/>
+              <text x="95" y="96" fill="#f87171" text-anchor="middle" font-size="14" font-weight="700" font-family="system-ui">Traditional</text>
+              <text x="95" y="114" fill="rgba(248,113,113,0.6)" text-anchor="middle" font-size="10" font-family="system-ui">6-12 months</text>
+              <circle cx="270" cy="100" r="52" fill="none" stroke="rgba(96,165,250,0.3)" stroke-width="2"/>
+              <text x="270" y="96" fill="#60a5fa" text-anchor="middle" font-size="14" font-weight="700" font-family="system-ui">DevOps</text>
+              <text x="270" y="114" fill="rgba(96,165,250,0.6)" text-anchor="middle" font-size="10" font-family="system-ui">Days</text>
+              <circle cx="405" cy="100" r="30" fill="none" stroke="rgba(52,211,153,0.5)" stroke-width="2.5"/>
+              <circle cx="405" cy="100" r="30" fill="rgba(52,211,153,0.05)"/>
+              <text x="405" y="97" fill="#34d399" text-anchor="middle" font-size="12" font-weight="700" font-family="system-ui">Agentic</text>
+              <text x="405" y="110" fill="rgba(52,211,153,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">Minutes</text>
+              <line x1="178" y1="100" x2="210" y2="100" stroke="rgba(255,255,255,0.15)" stroke-width="2" marker-end="url(#evo-arr-b)"/>
+              <line x1="330" y1="100" x2="368" y2="100" stroke="rgba(255,255,255,0.15)" stroke-width="2" marker-end="url(#evo-arr-gn)"/>
+              <text x="194" y="125" fill="rgba(255,255,255,0.2)" text-anchor="middle" font-size="9" font-family="system-ui">shift left</text>
+              <text x="350" y="125" fill="rgba(255,255,255,0.2)" text-anchor="middle" font-size="9" font-family="system-ui">collapse</text>
+              <text x="505" y="103" fill="rgba(255,255,255,0.15)" text-anchor="middle" font-size="22" font-weight="300" font-family="system-ui">+</text>
+              <circle cx="580" cy="100" r="38" fill="none" stroke="rgba(192,132,252,0.25)" stroke-width="1.5"/>
+              <text x="580" y="95" fill="#c084fc" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">Continuous</text>
+              <text x="580" y="107" fill="#c084fc" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">AI</text>
+              <line x1="620" y1="100" x2="645" y2="100" stroke="rgba(251,191,36,0.4)" stroke-width="1.5" marker-end="url(#evo-arr-y)"/>
+              <circle cx="672" cy="100" r="24" fill="none" stroke="rgba(52,211,153,0.4)" stroke-width="2"/>
+              <circle cx="672" cy="100" r="24" fill="rgba(52,211,153,0.04)"/>
+              <text x="672" y="97" fill="#34d399" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui">Agentic</text>
+              <text x="672" y="108" fill="#34d399" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui">Core</text>
+              <line x1="698" y1="100" x2="720" y2="100" stroke="rgba(110,231,183,0.4)" stroke-width="1.5" marker-end="url(#evo-arr-em)"/>
+              <path d="M 696,120 Q 696,148 628,150 Q 558,148 556,125" fill="none" stroke="rgba(244,114,182,0.2)" stroke-width="1" stroke-dasharray="4,3"/>
+              <text x="400" y="190" fill="rgba(255,255,255,0.3)" text-anchor="middle" font-size="11" font-family="system-ui">One big loop → one small loop → two coupled loops running autonomously</text>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- What IS Agentic DevOps -->
+    <section id="what-is" class="fade-in py-24 md:py-32 bg-bg-surface relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent-green/5 rounded-full blur-[100px]"></div>
+      </div>
+      <div class="relative max-w-5xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// the concept</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">
+          So What <em>Is</em> <span class="agentic-gradient">Agentic DevOps?</span>
+        </h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-6">
+          Traditional DevOps placed quality gates <strong class="text-text-primary">between</strong> each stage of a large loop — linters after code, tests after build, approvals before deploy. Those gates worked because humans moved at human speed.
+        </p>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          But the loop collapsed. Agents don't move through separate stages — they research, plan, and implement in one tight spin. <strong class="text-accent-green">Agentic DevOps is putting those same gates inside the tiny loop</strong> — enforcement, testing, and governance baked into the agent's own process, not bolted on after.
+        </p>
+
+        <!-- Side by side comparison diagram -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+
+          <!-- LEFT: Traditional DevOps with gates -->
+          <div class="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-6">
+              <span class="inline-block font-mono text-[10px] text-blue-400 tracking-widest uppercase bg-blue-400/10 border border-blue-400/20 rounded-full px-3 py-1">Before</span>
+              <h3 class="text-lg font-heading font-semibold text-text-primary">DevOps: Gates Between Stages</h3>
+            </div>
+            <div class="flex justify-center overflow-x-auto">
+              <svg viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[380px]">
+                <defs>
+                  <marker id="wg-arr-b" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                    <polygon points="0 0, 6 2.5, 0 5" fill="#60a5fa"/>
+                  </marker>
+                </defs>
+                <!-- Outer circle -->
+                <circle cx="190" cy="190" r="150" fill="none" stroke="rgba(96,165,250,0.12)" stroke-width="1.5"/>
+                <!-- Stages -->
+                <g transform="translate(190,190)">
+                  <!-- Plan (top) -->
+                  <g transform="translate(0,-130)">
+                    <rect x="-32" y="-14" width="64" height="28" rx="14" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="3" fill="#60a5fa" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">Plan</text>
+                  </g>
+                  <!-- Code (top-right) -->
+                  <g transform="translate(92,-92)">
+                    <rect x="-32" y="-14" width="64" height="28" rx="14" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="3" fill="#60a5fa" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">Code</text>
+                  </g>
+                  <!-- Build (right) -->
+                  <g transform="translate(130,0)">
+                    <rect x="-32" y="-14" width="64" height="28" rx="14" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="3" fill="#60a5fa" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">Build</text>
+                  </g>
+                  <!-- Test (bottom-right) -->
+                  <g transform="translate(92,92)">
+                    <rect x="-32" y="-14" width="64" height="28" rx="14" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="3" fill="#60a5fa" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">Test</text>
+                  </g>
+                  <!-- Deploy (bottom) -->
+                  <g transform="translate(0,130)">
+                    <rect x="-36" y="-14" width="72" height="28" rx="14" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="3" fill="#60a5fa" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">Deploy</text>
+                  </g>
+                  <!-- Monitor (bottom-left) -->
+                  <g transform="translate(-92,92)">
+                    <rect x="-36" y="-14" width="72" height="28" rx="14" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="3" fill="#60a5fa" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">Monitor</text>
+                  </g>
+                  <!-- Feedback (left) -->
+                  <g transform="translate(-130,0)">
+                    <rect x="-32" y="-14" width="64" height="28" rx="14" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="3" fill="#60a5fa" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">Review</text>
+                  </g>
+                  <!-- Operate (top-left) -->
+                  <g transform="translate(-92,-92)">
+                    <rect x="-36" y="-14" width="72" height="28" rx="14" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/>
+                    <text x="0" y="3" fill="#60a5fa" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">Operate</text>
+                  </g>
+
+                  <!-- Arrows between stages -->
+                  <path d="M 28,-126 Q 62,-118 78,-100" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#wg-arr-b)"/>
+                  <path d="M 118,-78 Q 128,-52 128,-18" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#wg-arr-b)"/>
+                  <path d="M 128,18 Q 128,52 118,78" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#wg-arr-b)"/>
+                  <path d="M 78,100 Q 62,118 28,126" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#wg-arr-b)"/>
+                  <path d="M -28,126 Q -62,118 -78,100" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#wg-arr-b)"/>
+                  <path d="M -118,78 Q -128,52 -128,18" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#wg-arr-b)"/>
+                  <path d="M -128,-18 Q -128,-52 -118,-78" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#wg-arr-b)"/>
+                  <path d="M -78,-100 Q -62,-118 -28,-126" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#wg-arr-b)"/>
+
+                  <!-- GATES (diamonds between stages) -->
+                  <!-- Gate: Plan → Code -->
+                  <g transform="translate(55,-115)">
+                    <rect x="-9" y="-9" width="18" height="18" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/>
+                    <text x="0" y="3" fill="#fbbf24" text-anchor="middle" font-size="7" font-weight="700" font-family="system-ui">⛊</text>
+                  </g>
+                  <!-- Gate: Code → Build -->
+                  <g transform="translate(118,-50)">
+                    <rect x="-9" y="-9" width="18" height="18" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/>
+                    <text x="0" y="3" fill="#fbbf24" text-anchor="middle" font-size="7" font-weight="700" font-family="system-ui">⛊</text>
+                  </g>
+                  <!-- Gate: Build → Test -->
+                  <g transform="translate(118,50)">
+                    <rect x="-9" y="-9" width="18" height="18" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/>
+                    <text x="0" y="3" fill="#fbbf24" text-anchor="middle" font-size="7" font-weight="700" font-family="system-ui">⛊</text>
+                  </g>
+                  <!-- Gate: Test → Deploy -->
+                  <g transform="translate(55,115)">
+                    <rect x="-9" y="-9" width="18" height="18" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/>
+                    <text x="0" y="3" fill="#fbbf24" text-anchor="middle" font-size="7" font-weight="700" font-family="system-ui">⛊</text>
+                  </g>
+                  <!-- Gate: Deploy → Monitor -->
+                  <g transform="translate(-55,115)">
+                    <rect x="-9" y="-9" width="18" height="18" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/>
+                    <text x="0" y="3" fill="#fbbf24" text-anchor="middle" font-size="7" font-weight="700" font-family="system-ui">⛊</text>
+                  </g>
+                  <!-- Gate: Monitor → Review -->
+                  <g transform="translate(-118,50)">
+                    <rect x="-9" y="-9" width="18" height="18" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/>
+                    <text x="0" y="3" fill="#fbbf24" text-anchor="middle" font-size="7" font-weight="700" font-family="system-ui">⛊</text>
+                  </g>
+                  <!-- Gate: Review → Operate -->
+                  <g transform="translate(-118,-50)">
+                    <rect x="-9" y="-9" width="18" height="18" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/>
+                    <text x="0" y="3" fill="#fbbf24" text-anchor="middle" font-size="7" font-weight="700" font-family="system-ui">⛊</text>
+                  </g>
+                  <!-- Gate: Operate → Plan -->
+                  <g transform="translate(-55,-115)">
+                    <rect x="-9" y="-9" width="18" height="18" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/>
+                    <text x="0" y="3" fill="#fbbf24" text-anchor="middle" font-size="7" font-weight="700" font-family="system-ui">⛊</text>
+                  </g>
+
+                  <!-- Center label -->
+                  <text x="0" y="-8" fill="rgba(96,165,250,0.3)" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">LARGE</text>
+                  <text x="0" y="5" fill="rgba(96,165,250,0.3)" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">LOOP</text>
+                </g>
+                <!-- Gate legend -->
+                <g transform="translate(190, 360)">
+                  <rect x="-7" y="-7" width="14" height="14" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/>
+                  <text x="18" y="4" fill="rgba(251,191,36,0.7)" text-anchor="start" font-size="9" font-family="system-ui">= Quality gate (lint, test, approval, security)</text>
+                </g>
+              </svg>
+            </div>
+          </div>
+
+          <!-- RIGHT: Agentic DevOps with gates inside -->
+          <div class="bg-white/[0.02] border border-accent-green/15 rounded-2xl p-6 md:p-8 relative">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent-green/[0.03] to-transparent pointer-events-none"></div>
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-6">
+                <span class="inline-block font-mono text-[10px] text-accent-green tracking-widest uppercase bg-accent-green/10 border border-accent-green/20 rounded-full px-3 py-1">Now</span>
+                <h3 class="text-lg font-heading font-semibold text-text-primary">Agentic DevOps: Gates Inside the Loop</h3>
+              </div>
+              <div class="flex justify-center overflow-x-auto">
+                <svg viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[380px]">
+                  <defs>
+                    <marker id="wg-arr-gn" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                      <polygon points="0 0, 6 2.5, 0 5" fill="#34d399"/>
+                    </marker>
+                    <radialGradient id="wg-glow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#34d399" stop-opacity="0.1"/>
+                      <stop offset="60%" stop-color="#34d399" stop-opacity="0.03"/>
+                      <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+                    </radialGradient>
+                  </defs>
+
+                  <!-- Outer glow -->
+                  <circle cx="190" cy="175" r="160" fill="url(#wg-glow)"/>
+
+                  <!-- The collapsed agentic circle -->
+                  <circle cx="190" cy="175" r="110" fill="none" stroke="rgba(52,211,153,0.3)" stroke-width="2.5"/>
+
+                  <g transform="translate(190, 175)">
+                    <!-- STAGE: Research (top) -->
+                    <g transform="translate(0, -72)">
+                      <rect x="-42" y="-16" width="84" height="32" rx="16" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/>
+                      <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">🔍 Research</text>
+                    </g>
+                    <!-- STAGE: Plan (bottom-right) -->
+                    <g transform="translate(62, 36)">
+                      <rect x="-34" y="-16" width="68" height="32" rx="16" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/>
+                      <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">📋 Plan</text>
+                    </g>
+                    <!-- STAGE: Implement (bottom-left) -->
+                    <g transform="translate(-62, 36)">
+                      <rect x="-46" y="-16" width="92" height="32" rx="16" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/>
+                      <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">⚡ Implement</text>
+                    </g>
+
+                    <!-- Arrows between stages -->
+                    <path d="M 35,-58 Q 66,-28 64,14" fill="none" stroke="rgba(52,211,153,0.5)" stroke-width="1.5" marker-end="url(#wg-arr-gn)"/>
+                    <path d="M 42,52 Q 0,68 -42,52" fill="none" stroke="rgba(52,211,153,0.5)" stroke-width="1.5" marker-end="url(#wg-arr-gn)"/>
+                    <path d="M -64,14 Q -66,-28 -35,-58" fill="none" stroke="rgba(52,211,153,0.5)" stroke-width="1.5" marker-end="url(#wg-arr-gn)"/>
+
+                    <!-- GATES INSIDE (along the arrows, between stages) -->
+                    <!-- Gate: Research → Plan (context validation, scope check) -->
+                    <g transform="translate(58,-22)">
+                      <rect x="-10" y="-10" width="20" height="20" rx="3" transform="rotate(45)" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/>
+                      <text x="0" y="3" fill="#34d399" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui">🛡️</text>
+                    </g>
+                    <text x="92" y="-16" fill="rgba(52,211,153,0.6)" text-anchor="start" font-size="8" font-family="system-ui">Context</text>
+                    <text x="92" y="-6" fill="rgba(52,211,153,0.6)" text-anchor="start" font-size="8" font-family="system-ui">validation</text>
+
+                    <!-- Gate: Plan → Implement (architecture hooks, scope guard) -->
+                    <g transform="translate(0,60)">
+                      <rect x="-10" y="-10" width="20" height="20" rx="3" transform="rotate(45)" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/>
+                      <text x="0" y="3" fill="#34d399" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui">🛡️</text>
+                    </g>
+                    <text x="0" y="88" fill="rgba(52,211,153,0.6)" text-anchor="middle" font-size="8" font-family="system-ui">Architecture hooks</text>
+
+                    <!-- Gate: Implement → Research (test enforcement, lint) -->
+                    <g transform="translate(-58,-22)">
+                      <rect x="-10" y="-10" width="20" height="20" rx="3" transform="rotate(45)" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/>
+                      <text x="0" y="3" fill="#34d399" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui">🛡️</text>
+                    </g>
+                    <text x="-92" y="-16" fill="rgba(52,211,153,0.6)" text-anchor="end" font-size="8" font-family="system-ui">Test</text>
+                    <text x="-92" y="-6" fill="rgba(52,211,153,0.6)" text-anchor="end" font-size="8" font-family="system-ui">enforcement</text>
+
+                    <!-- Center: AGENTIC DEVOPS label -->
+                    <text x="0" y="-18" fill="rgba(52,211,153,0.3)" text-anchor="middle" font-size="9" font-weight="800" letter-spacing="0.5" font-family="system-ui">AGENTIC</text>
+                    <text x="0" y="-5" fill="rgba(52,211,153,0.3)" text-anchor="middle" font-size="9" font-weight="800" letter-spacing="0.5" font-family="system-ui">DEVOPS</text>
+                  </g>
+
+                  <!-- Enablement labels around the outside -->
+                  <!-- Top: Copilot Instructions -->
+                  <g transform="translate(190, 30)">
+                    <rect x="-58" y="-11" width="116" height="22" rx="11" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+                    <text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="8" font-weight="600" font-family="system-ui">📄 Copilot Instructions</text>
+                  </g>
+                  <line x1="190" y1="42" x2="190" y2="88" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+
+                  <!-- Top-right: Agent Hooks -->
+                  <g transform="translate(325, 75)">
+                    <rect x="-44" y="-11" width="88" height="22" rx="11" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+                    <text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="8" font-weight="600" font-family="system-ui">🪝 Agent Hooks</text>
+                  </g>
+                  <line x1="300" y1="86" x2="260" y2="125" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+
+                  <!-- Right: MCP Servers -->
+                  <g transform="translate(340, 175)">
+                    <rect x="-44" y="-11" width="88" height="22" rx="11" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+                    <text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="8" font-weight="600" font-family="system-ui">🔌 MCP Servers</text>
+                  </g>
+                  <line x1="296" y1="175" x2="270" y2="190" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+
+                  <!-- Bottom: CI/CD Pipeline -->
+                  <g transform="translate(190, 330)">
+                    <rect x="-52" y="-11" width="104" height="22" rx="11" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+                    <text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="8" font-weight="600" font-family="system-ui">⚙️ CI/CD Pipeline</text>
+                  </g>
+                  <line x1="190" y1="318" x2="190" y2="270" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+
+                  <!-- Left: Hookflows -->
+                  <g transform="translate(42, 175)">
+                    <rect x="-40" y="-11" width="80" height="22" rx="11" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+                    <text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="8" font-weight="600" font-family="system-ui">🔄 Hookflows</text>
+                  </g>
+                  <line x1="82" y1="175" x2="110" y2="190" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+
+                  <!-- Top-left: Test Suites -->
+                  <g transform="translate(50, 75)">
+                    <rect x="-42" y="-11" width="84" height="22" rx="11" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/>
+                    <text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="8" font-weight="600" font-family="system-ui">🧪 Test Suites</text>
+                  </g>
+                  <line x1="78" y1="86" x2="118" y2="125" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+
+                  <!-- Legend -->
+                  <g transform="translate(190, 368)">
+                    <rect x="-7" y="-7" width="14" height="14" rx="2" transform="rotate(45)" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1"/>
+                    <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="6" font-weight="700" font-family="system-ui">🛡️</text>
+                    <text x="18" y="3" fill="rgba(52,211,153,0.6)" text-anchor="start" font-size="9" font-family="system-ui">= Gate inside the agent's own loop</text>
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Key insight -->
+        <div class="mt-12 bg-white/[0.02] border border-accent-green/15 rounded-2xl p-8 relative">
+          <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-accent-green/[0.03] to-transparent pointer-events-none"></div>
+          <div class="relative flex flex-col md:flex-row gap-6 items-start">
+            <span class="text-4xl shrink-0">💡</span>
+            <div>
+              <h3 class="text-lg font-heading font-semibold text-text-primary mb-2">The same gates, compressed into the agent's process</h3>
+              <p class="text-text-secondary text-sm leading-relaxed">
+                DevOps gates didn't disappear — they moved <em>inside</em>. When the agent researches, <strong class="text-text-primary">context validation</strong> ensures it has the right scope. When it plans, <strong class="text-text-primary">architecture hooks</strong> enforce structural boundaries. When it implements, <strong class="text-text-primary">test enforcement</strong> blocks shipping without coverage.
+                The enablement layer — Copilot instructions, agent hooks, hookflows, MCP servers, CI/CD — wraps the tiny loop and gives those gates teeth. That's Agentic DevOps.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Core Beliefs -->
     <section id="beliefs" class="fade-in py-24 md:py-32 bg-bg-void">
       <div class="max-w-6xl mx-auto px-6">
-        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// core beliefs</span>
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// principles</span>
         <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">
-          What I Believe About <span class="agentic-gradient">Agentic DevOps</span>
+          What I Believe
         </h2>
         <p class="text-text-secondary text-lg max-w-3xl mb-16">
-          These aren't predictions — they're principles I've built production systems around. Every belief has a corresponding implementation, article, and battle scar.
+          Five principles I've built real systems around. Each one has a corresponding article with the full implementation.
         </p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -221,44 +864,62 @@ const stackLayers = [
       </div>
     </section>
 
-    <!-- The Agentic DevOps Stack -->
+    <!-- How It's Built -->
     <section id="stack" class="fade-in py-24 md:py-32 bg-bg-surface relative overflow-hidden">
       <div class="absolute inset-0 pointer-events-none">
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent-green/5 rounded-full blur-[100px]"></div>
       </div>
       <div class="relative max-w-4xl mx-auto px-6">
-        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// architecture</span>
-        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">The Agentic DevOps Stack</h2>
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// how it's built</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">The Enablement Layer</h2>
         <p class="text-text-secondary text-lg max-w-3xl mb-16">
-          Four layers. Each one enforces the layer above. Agents get freedom at the top and constraints at the bottom.
+          These are the tools that wrap the agentic loop — giving the gates teeth and the agents context.
         </p>
 
-        <div class="space-y-4">
-          {stackLayers.map((layer, i) => (
-            <div class={`stack-layer group relative bg-gradient-to-r ${layer.gradient} border border-white/[0.08] rounded-xl p-6 transition-all duration-300 hover:border-${layer.color}/30`}>
-              <div class="flex flex-col md:flex-row md:items-center gap-4">
-                <div class="flex items-center gap-3 md:w-64 shrink-0">
-                  <span class={`font-mono text-xs text-${layer.color} opacity-60`}>0{i + 1}</span>
-                  <h3 class={`font-heading font-semibold text-${layer.color}`}>{layer.label}</h3>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  {layer.items.map((item: string) => (
-                    <span class="inline-block text-xs font-mono text-text-muted bg-white/[0.05] border border-white/[0.08] rounded-full px-3 py-1">{item}</span>
-                  ))}
-                </div>
-              </div>
-              {i < stackLayers.length - 1 && (
-                <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 text-text-muted/30">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
-                </div>
-              )}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
+            <span class="text-2xl shrink-0">📄</span>
+            <div>
+              <h3 class="font-heading font-semibold text-text-primary mb-1">Copilot Instructions</h3>
+              <p class="text-text-secondary text-sm">Tell agents what to do, how to do it, and what's off-limits — in plain language.</p>
             </div>
-          ))}
+          </div>
+          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
+            <span class="text-2xl shrink-0">🪝</span>
+            <div>
+              <h3 class="font-heading font-semibold text-text-primary mb-1">Agent Hooks</h3>
+              <p class="text-text-secondary text-sm">Pre-commit and pre-push checks that block agents from violating rules before code leaves the IDE.</p>
+            </div>
+          </div>
+          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
+            <span class="text-2xl shrink-0">🔄</span>
+            <div>
+              <h3 class="font-heading font-semibold text-text-primary mb-1">Hookflows</h3>
+              <p class="text-text-secondary text-sm">Agentic CI/CD defined in Markdown. Natural-language workflows that compile into GitHub Actions.</p>
+            </div>
+          </div>
+          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
+            <span class="text-2xl shrink-0">🧪</span>
+            <div>
+              <h3 class="font-heading font-semibold text-text-primary mb-1">Test Enforcement</h3>
+              <p class="text-text-secondary text-sm">Coverage gates that block commits if source files are modified without matching test updates.</p>
+            </div>
+          </div>
+          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
+            <span class="text-2xl shrink-0">🔌</span>
+            <div>
+              <h3 class="font-heading font-semibold text-text-primary mb-1">MCP Servers</h3>
+              <p class="text-text-secondary text-sm">Structured access to infrastructure — databases, APIs, Azure — through a standardized protocol.</p>
+            </div>
+          </div>
+          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
+            <span class="text-2xl shrink-0">⚙️</span>
+            <div>
+              <h3 class="font-heading font-semibold text-text-primary mb-1">CI/CD Pipeline</h3>
+              <p class="text-text-secondary text-sm">The existing automation backbone — now triggered by agents, validated by agents, and gated by agents.</p>
+            </div>
+          </div>
         </div>
-
-        <p class="text-text-muted text-sm mt-10 text-center font-mono">
-          ↑ Freedom &nbsp;&nbsp;|&nbsp;&nbsp; Constraints ↓
-        </p>
       </div>
     </section>
 
