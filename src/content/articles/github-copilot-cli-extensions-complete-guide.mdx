@@ -1,0 +1,358 @@
+---
+title: >-
+  GitHub Copilot CLI Extensions: The Most Powerful Feature Nobody's Talking
+  About
+description: >-
+  Copilot CLI extensions let you create custom tools, intercept every agent
+  action, and hot-reload governance logic — all from a single .mjs file. Here's
+  the complete guide.
+pubDate: 2026-03-14T00:00:00.000Z
+tags:
+  - GitHub Copilot
+  - AI
+  - Developer Experience
+  - Software Architecture
+  - DevOps
+draft: false
+devto_id: 3353461
+devto_hash: 1518e521b5b2ff64
+hashnode_id: 69b631b37795ceb8f8fbaa92
+hashnode_hash: 0520bf75b2d53619
+---
+
+## There's No Documentation on This
+
+I'm going to say something that sounds absurd: **GitHub Copilot CLI has a full extension system that lets you create custom tools, intercept every agent action, inject context, block dangerous operations, and auto-retry errors — and there's essentially zero public documentation about it.**
+
+I'm not talking about [MCP servers](https://docs.github.com/en/copilot/concepts/extensions). I'm not talking about [Copilot Extensions](https://docs.github.com/en/copilot/how-tos/use-copilot-extensions/set-up-copilot-extensions) (the GitHub App kind). I'm talking about `.github/extensions/` — a local extension system baked into the CLI agent harness that runs as a separate Node.js process, communicates over JSON-RPC, and gives you programmatic control over the entire agent lifecycle.
+
+You can literally tell the CLI "create me a tool that does X" and it will scaffold the extension file, hot-reload it, and the tool is available *in the same session*. No restart. No config. No marketplace. Just code.
+
+I had to extract this from the [Copilot SDK](https://github.com/github/copilot-sdk) source itself — the `.d.ts` type definitions, internal docs, and by building extensions hands-on. Here's everything I found.
+
+## How CLI Extensions Actually Work
+
+The architecture is elegant. Your extension runs as a separate child process that talks to the CLI over JSON-RPC via stdio:
+
+```
+┌─────────────────────┐      JSON-RPC / stdio       ┌──────────────────────┐
+│   Copilot CLI        │ ◄──────────────────────────► │  Extension Process   │
+│   (parent process)   │   tool calls, events, hooks  │  (forked child)      │
+│                      │                               │                      │
+│  • Discovers exts    │                               │  • Registers tools   │
+│  • Forks processes   │                               │  • Registers hooks   │
+│  • Routes tool calls │                               │  • Listens to events │
+│  • Manages lifecycle │                               │  • Uses SDK APIs     │
+└─────────────────────┘                               └──────────────────────┘
+```
+
+Here's the lifecycle:
+
+1. **Discovery** — The CLI scans `.github/extensions/` (project-scoped) and `~/.copilot/extensions/` (user-scoped) for subdirectories containing `extension.mjs`.
+2. **Launch** — Each extension is forked as a child process. The `@github/copilot-sdk` package is automatically resolved — you never install it.
+3. **Connection** — The extension calls `joinSession()`, which establishes the JSON-RPC link and attaches to the user's current session.
+4. **Registration** — Tools and hooks declared in the session options are registered with the CLI and become available to the agent immediately.
+5. **Lifecycle** — Extensions are reloaded on `/clear` and stopped on CLI exit (SIGTERM, then SIGKILL after 5 seconds).
+
+Project extensions in `.github/extensions/` shadow user extensions on name collision. Every extension lives in its own subdirectory, and the entry point *must* be named `extension.mjs` — only ES modules are supported.
+
+## The Minimal Extension
+
+Every extension starts the same way:
+
+```js
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  tools: [],
+  hooks: {},
+});
+```
+
+Three lines of meaningful code, and you have a running extension. The `session` object that comes back is the entire API surface — tools, hooks, events, messaging, logging, and RPC access to the CLI internals.
+
+## Why This Isn't "Just Hooks"
+
+If you've used [Claude Code hooks](https://claude.com/blog/how-to-configure-hooks), you might think this is the same concept. It's not. Claude Code hooks are shell commands defined in a JSON settings file. They fire at lifecycle points and execute commands. That's useful, but limited.
+
+Copilot CLI extensions are **full Node.js processes** with the complete SDK available. Here's what that difference means in practice:
+
+| Capability | Claude Code Hooks | Copilot CLI Extensions |
+|---|---|---|
+| **Runtime** | Shell commands | Full Node.js process |
+| **State** | Stateless between hooks | Persistent in-memory state |
+| **Tools** | Cannot register new tools | Register unlimited custom tools |
+| **Context injection** | stdout piped back (limited) | `additionalContext` injected directly into the conversation |
+| **Permission control** | Exit codes (0/1) | `allow`, `deny`, or `ask` with structured reasons |
+| **Argument modification** | Cannot modify tool args | `modifiedArgs` replaces args before execution |
+| **Result modification** | Cannot modify tool output | `modifiedResult` replaces output after execution |
+| **Prompt rewriting** | Limited to stdin/stdout | `modifiedPrompt` replaces user input |
+| **Event streaming** | No event access | Subscribe to all 10+ session event types |
+| **Programmatic messaging** | Cannot send messages | `session.send()` and `session.sendAndWait()` |
+| **Error recovery** | No error hooks | `onErrorOccurred` with retry/skip/abort control |
+| **Hot reload** | Requires restart | `/clear` or `extensions_reload` — mid-session |
+
+The fundamental difference: Claude Code hooks are **config-driven shell scripts**. Copilot CLI extensions are **programmable processes that participate in the agent loop**. You're not scripting around the agent — you're extending the agent harness itself.
+
+## The Six Hooks That Control Everything
+
+Extensions register hooks that intercept the agent at every lifecycle point. Each hook receives structured input and returns structured output — no shell exit codes, no stdout parsing.
+
+### onSessionStart — Set the Rules
+
+Fires when a session begins. Inject baseline context the agent sees on every interaction:
+
+```js
+hooks: {
+  onSessionStart: async (input) => {
+    // input.source: "startup" | "resume" | "new"
+    return {
+      additionalContext:
+        "Security extension active. Never hardcode secrets. " +
+        "Use environment variables for all credentials.",
+    };
+  },
+}
+```
+
+### onUserPromptSubmitted — Rewrite the Prompt
+
+Fires before the agent sees the user's message. You can rewrite it, augment it, or inject hidden context:
+
+```js
+hooks: {
+  onUserPromptSubmitted: async (input) => {
+    return {
+      additionalContext:
+        "Always write tests alongside source changes. " +
+        "Follow our team's 4-space indentation standard.",
+    };
+  },
+}
+```
+
+### onPreToolUse — Block or Modify Tool Calls
+
+This is the most powerful hook. It fires before every tool execution with the tool name, arguments, and lets you deny, allow, or modify:
+
+```js
+hooks: {
+  onPreToolUse: async (input) => {
+    if (input.toolName === "powershell") {
+      const cmd = String(input.toolArgs?.command || "");
+      if (/rm\s+-rf\s+\//i.test(cmd)) {
+        return {
+          permissionDecision: "deny",
+          permissionDecisionReason:
+            "Destructive commands are blocked by policy.",
+        };
+      }
+    }
+  },
+}
+```
+
+You can also **modify arguments** before they reach the tool:
+
+```js
+onPreToolUse: async (input) => {
+  if (input.toolName === "powershell") {
+    return {
+      modifiedArgs: {
+        ...input.toolArgs,
+        command: `${input.toolArgs.command} 2>&1`,
+      },
+    };
+  },
+}
+```
+
+### onPostToolUse — React After Execution
+
+Fires after every tool completes. Run linters, open files in your editor, inject feedback:
+
+```js
+hooks: {
+  onPostToolUse: async (input) => {
+    if (input.toolName === "edit" && input.toolArgs?.path?.endsWith(".ts")) {
+      const result = await runLinter(input.toolArgs.path);
+      if (result) {
+        return {
+          additionalContext: `Lint issues found:\n${result}\nFix before proceeding.`,
+        };
+      }
+    }
+  },
+}
+```
+
+### onErrorOccurred — Automatic Recovery
+
+This is the one that blows my mind. You can tell the agent to **automatically retry on failure**:
+
+```js
+hooks: {
+  onErrorOccurred: async (input) => {
+    if (input.recoverable && input.errorContext === "tool_execution") {
+      return { errorHandling: "retry", retryCount: 3 };
+    }
+    return {
+      errorHandling: "abort",
+      userNotification: `Fatal error: ${input.error}`,
+    };
+  },
+}
+```
+
+People have demoed agents that keep running tests, detect failures, fix them, and re-run — all without human intervention. The `onErrorOccurred` hook is what makes that possible. The agent doesn't stop on the first error — the extension decides whether to retry, skip, or abort.
+
+### onSessionEnd — Clean Up
+
+Fires when the session ends for any reason. Generate summaries, log metrics, clean up temp files:
+
+```js
+hooks: {
+  onSessionEnd: async (input) => {
+    // input.reason: "complete" | "error" | "abort" | "timeout" | "user_exit"
+    return {
+      sessionSummary: "Completed 3 file edits with full test coverage.",
+      cleanupActions: ["Removed temp build artifacts"],
+    };
+  },
+}
+```
+
+## Custom Tools: Give the Agent New Abilities
+
+Beyond hooks, extensions can register entirely new tools that the agent can call. This is where it gets wild — you're literally extending the agent's capabilities with a function definition.
+
+Here's a real extension I use that creates GitHub PRs with proper UTF-8 encoding on Windows (avoiding PowerShell's backtick-mangling issues):
+
+```js
+import { execFile } from "node:child_process";
+import { writeFileSync, unlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { randomBytes } from "node:crypto";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+function tempFile(content) {
+  const name = join(tmpdir(), `gh-pr-${randomBytes(6).toString("hex")}.md`);
+  writeFileSync(name, content, "utf-8");
+  return name;
+}
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  tools: [
+    {
+      name: "create_pr",
+      description: "Create a GitHub PR with proper UTF-8 encoding.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "PR title" },
+          body: { type: "string", description: "PR body in Markdown" },
+        },
+        required: ["title", "body"],
+      },
+      handler: async (args) => {
+        const bodyFile = tempFile(args.body);
+        try {
+          return await gh(["pr", "create", "--title", args.title,
+            "--body-file", bodyFile]);
+        } finally {
+          try { unlinkSync(bodyFile); } catch {}
+        }
+      },
+    },
+  ],
+});
+```
+
+The agent now has a `create_pr` tool. It shows up in the tool list. The agent decides when to use it. The JSON Schema parameters tell the LLM exactly what arguments are expected.
+
+You can build tools for anything: API calls, database queries, deployment triggers, clipboard operations, file watchers, CI status checks. If Node.js can do it, your extension can expose it as a tool.
+
+## The Session API: Events and Messaging
+
+The `session` object returned by `joinSession()` isn't just for registration — it's a live API into the session.
+
+**Log to the CLI timeline:**
+
+```js
+await session.log("Extension loaded and ready");
+await session.log("Rate limit approaching", { level: "warning" });
+```
+
+**Subscribe to events:**
+
+```js
+session.on("tool.execution_complete", (event) => {
+  // React when any tool finishes
+  // event.data.toolName, event.data.success, event.data.result
+});
+
+session.on("assistant.message", (event) => {
+  // Capture the agent's responses
+  // event.data.content, event.data.messageId
+});
+```
+
+**Send messages programmatically:**
+
+```js
+// Fire and forget
+await session.send({ prompt: "Run the test suite now." });
+
+// Send and wait for response
+const response = await session.sendAndWait(
+  { prompt: "What files did you change?" }
+);
+```
+
+This is what enables self-healing workflows. Your extension can watch for test failures, send the agent a message to fix them, wait for the response, and verify the fix — all programmatically.
+
+## The Hot Reload Workflow
+
+Here's the workflow that makes this feel like magic:
+
+1. **Tell the CLI to create an extension:** "Create me a tool that checks if my Docker containers are healthy."
+2. **The CLI scaffolds it:** Creates `.github/extensions/docker-health/extension.mjs` with the tool definition.
+3. **Hot reload:** The CLI calls `extensions_reload` — the new tool is available instantly.
+4. **Use it:** The agent now has a `check_docker_health` tool and will call it when relevant.
+
+No npm install. No restart. No configuration file. You went from "I wish the agent could check Docker" to "the agent checks Docker" in one conversational turn.
+
+The scaffolding command is `extensions_manage({ operation: "scaffold", name: "my-extension" })`. For user-scoped extensions that persist across all repos, add `location: "user"`. After editing, call `extensions_reload()` and verify with `extensions_manage({ operation: "list" })`.
+
+## What You Should Build
+
+After spending weeks with this system, here are the extensions I think every team should consider:
+
+1. **Test enforcer** — Track which source files are modified. Block `git commit` if corresponding test files weren't touched. The agent learns to write tests first.
+2. **Lint on edit** — Run ESLint, Ruff, or your project's linter after every file edit. Inject results as context so the agent self-corrects immediately.
+3. **Security shield** — Detect hardcoded secrets in file writes using regex patterns. Block `rm -rf /`, force pushes to main, and `DROP DATABASE`. Inject security context at session start.
+4. **Architecture enforcer** — Validate import boundaries on every file write. If you have [layer rules](/articles/agent-hooks-controlling-ai-codebase) or module boundaries, enforce them before code hits CI.
+5. **Auto-opener** — Use `onPostToolUse` to open every file the agent creates or edits in your IDE. Stay in sync without switching windows.
+
+## The Gotchas
+
+A few things I learned the hard way:
+
+- **stdout is reserved for JSON-RPC.** Use `session.log()` instead of `console.log()`. Writing to stdout corrupts the protocol and crashes the extension.
+- **Tool name collisions are fatal.** If two extensions register the same tool name, the second one fails to load entirely.
+- **Don't call `session.send()` synchronously from `onUserPromptSubmitted`.** You'll create an infinite loop. Use `setTimeout(() => session.send(...), 0)`.
+- **State resets on `/clear`.** Extensions are reloaded when the session clears. Any in-memory state (tracked files, counters) is lost.
+- **Only `.mjs` is supported.** No TypeScript yet. Write plain JavaScript with ES module syntax.
+
+## The Bottom Line
+
+[Agent harnesses](/articles/agent-harnesses-controlling-ai-agents-2026) are how you control AI agents in production. Copilot CLI extensions give you a harness-level control surface *inside the CLI itself* — custom tools, lifecycle hooks, event streams, and programmatic messaging, all in a single `.mjs` file that hot-reloads mid-session.
+
+Claude Code hooks are a great start — shell commands that fire at lifecycle points. But Copilot CLI extensions are playing a different game. You're not scripting around the agent. You're extending the agent harness with persistent processes that participate in the loop, modify arguments, rewrite prompts, and make permission decisions with structured data.
+
+The fact that this exists with essentially zero public documentation is genuinely shocking to me. This is the most powerful developer extensibility surface I've seen in any AI coding tool — and almost nobody knows it's there. Now you do.

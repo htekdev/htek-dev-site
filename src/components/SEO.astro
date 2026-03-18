@@ -10,6 +10,7 @@ interface Props {
   publishDate?: Date;
   modifiedDate?: Date;
   tags?: string[];
+  wordCount?: number;
 }
 
 const {
@@ -21,9 +22,10 @@ const {
   publishDate,
   modifiedDate,
   tags,
+  wordCount,
 } = Astro.props;
 
-const siteUrl = 'https://htek.dev';
+const siteUrl = (Astro.site ?? new URL('https://htek.dev')).origin;
 
 const person: WithContext<Person> = {
   '@context': 'https://schema.org',
@@ -59,6 +61,18 @@ const person: WithContext<Person> = {
   ],
 };
 
+const publisherOrg = {
+  '@type': 'Organization' as const,
+  name: 'htek.dev',
+  url: siteUrl,
+  logo: {
+    '@type': 'ImageObject' as const,
+    url: `${siteUrl}/hector-caricature.png`,
+    width: 160,
+    height: 160,
+  },
+};
+
 const schemas: object[] = [];
 
 if (type === 'website') {
@@ -68,6 +82,13 @@ if (type === 'website') {
     name: 'htek.dev',
     url: siteUrl,
     description,
+    publisher: publisherOrg,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteUrl}/articles?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    } as any,
+    inLanguage: 'en-US',
   };
   schemas.push(website, person);
 } else if (type === 'article') {
@@ -80,11 +101,15 @@ if (type === 'website') {
     ...(publishDate && { datePublished: publishDate.toISOString() }),
     ...(modifiedDate && { dateModified: modifiedDate.toISOString() }),
     ...(tags && tags.length > 0 && { keywords: tags.join(', ') }),
+    ...(url && { url, mainEntityOfPage: { '@type': 'WebPage', '@id': url } }),
+    ...(wordCount && { wordCount }),
+    inLanguage: 'en-US',
     author: {
       '@type': 'Person',
       name: 'Hector Flores',
       url: siteUrl,
     },
+    publisher: publisherOrg,
   };
 
   const breadcrumb: WithContext<BreadcrumbList> = {

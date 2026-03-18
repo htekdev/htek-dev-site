@@ -1,0 +1,110 @@
+---
+title: 'Azure Weekly: Fireworks AI Brings Open Models to Foundry, GPT-5.4 Ships'
+description: >-
+  Fireworks AI launches on Microsoft Foundry with high-performance open model
+  inference, GPT-5.4 GA brings agentic reliability, and instant-access snapshots
+  land for Premium SSDs.
+pubDate: 2026-03-11T00:00:00.000Z
+tags:
+  - Azure
+  - AI
+  - Developer Experience
+  - DevOps
+draft: false
+devto_id: 3340351
+devto_hash: 1f067a449aef35b8
+hashnode_id: 69b1a66a294f43295da5e69f
+hashnode_hash: 65f59fcd4266b230
+---
+
+## The Open Model Infrastructure Play Azure Just Made
+
+This week Microsoft made its clearest bet yet on open models as a production AI strategy. Fireworks AI—the company processing 13 trillion tokens daily—[landed on Microsoft Foundry](https://azure.microsoft.com/en-us/blog/introducing-fireworks-ai-on-microsoft-foundry-bringing-high-performance-low-latency-open-model-inference-to-azure/) with high-performance inference for DeepSeek V3.2, Kimi K2.5, OpenAI's gpt-oss-120b, and the newly launched MiniMax M2.5. This isn't Azure adding another model provider—it's Microsoft acknowledging that the best AI infrastructure is the one that doesn't lock you into a single model family.
+
+Here's what matters: you can now bring your own quantized or fine-tuned weights and run them at scale on Fireworks' inference stack through Azure. That's a direct challenge to closed-ecosystem AI platforms. You own the weights, you control the deployment, and you get the same governance and observability you'd expect from any Azure service.
+
+Combine this with [GPT-5.4 hitting general availability](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/introducing-gpt-5-4-in-microsoft-foundry/4499785) (built for agentic workflows and computer use capabilities), plus instant-access snapshots for Premium SSD v2 and Ultra Disk, and this week delivered some of the most developer-relevant Azure updates in months.
+
+## Fireworks AI: 1,000 Tokens Per Second, Azure Governance
+
+[Fireworks AI](https://artificialanalysis.ai/providers/fireworks) is already the market leader for open model inference performance—180,000 requests per second, over 1,000 tokens per second on large models. What Microsoft Foundry adds is the enterprise control plane: unified billing, RBAC, audit logs, network isolation, and the same compliance posture you expect from Azure services.
+
+You get two deployment modes:
+
+- **Serverless (pay-per-token)**: Available in Data Zone Standard (US regions: West US 3, West US, North Central US, Central US, East US 2, East US). You get 250K tokens per minute quota per region and model by default. Good for experimentation and spiky workloads.
+- **Provisioned Throughput Units (PTUs)**: Available globally for steady-state, predictable performance. Deploy base models or custom models with your own weights. This is where you land when you're done experimenting.
+
+The [bring-your-own-weights (BYOW)](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types) capability is the sleeper feature here. If you've fine-tuned Llama, Mistral, or DeepSeek elsewhere, you can upload the weights, register them in Foundry, and deploy them with Fireworks' inference stack. No need to rebuild your serving layer or switch tooling—just drop the weights in and deploy.
+
+This is Azure betting that the future of AI is multi-model, not single-vendor. Open models aren't a fallback—they're the architecture.
+
+## GPT-5.4: Built for Agentic Workflows, Shipped for Production
+
+[GPT-5.4 is now generally available](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/introducing-gpt-5-4-in-microsoft-foundry/4499785), and it's designed around a simple premise: AI agents need to reliably complete work, not just plan it. This model emphasizes consistency, instruction adherence, and sustained context over long interactions—specifically for agentic workflows where multi-step tool use and file operations are the norm.
+
+Key improvements over earlier GPT-5 models:
+
+- **Computer use capabilities**: Built-in support for UI interaction and automation scenarios, not bolted on via third-party tools
+- **Stronger reasoning over extended context**: Less instruction drift, fewer failures mid-workflow
+- **Tool and file handling reliability**: Better at maintaining state across multi-step operations
+
+This isn't a flashy "look how smart the model is" release. It's a production-focused update for teams running agents in environments where failure halfway through a 20-step workflow costs real money. If you've been waiting for OpenAI models that feel built for agent operations instead of demos, this is it.
+
+GPT-5.4 joins GPT-5.3-Codex, GPT-Realtime-1.5, and GPT-Audio-1.5 (all shipped in February) as part of Microsoft's push toward real-time, voice-first, and agentic AI experiences. The pattern is clear: OpenAI's new models prioritize continuity and reliability over raw intelligence, because that's what production AI systems actually need.
+
+## Instant-Access Snapshots: Zero-Wait Disk Restores for Premium SSDs
+
+Azure Storage shipped [instant-access support for incremental snapshots](https://azure.microsoft.com/en-us/blog/instant-access-incremental-snapshots-restore-without-waiting/) of Premium SSD v2 and Ultra Disk. This is one of those infrastructure updates that doesn't sound exciting until you've waited 30 minutes to restore a 2TB disk from a snapshot during an incident.
+
+Here's how it works: when you create an incremental snapshot with instant access enabled, the snapshot is immediately usable. You can restore disks from it without waiting for background data copy to complete, and those restored disks deliver near-full performance with single-digit millisecond read latencies from the start.
+
+Standard snapshots store data in Standard ZRS, which is durable and cheap but slow to restore from. Instant-access snapshots keep the point-in-time data in high-performance storage for a duration you specify (e.g., 5 hours), then automatically transition to Standard ZRS once that window expires. You get instant availability when you need it, durable long-term retention when you don't.
+
+This matters for:
+
+- **Fast rollback**: Take a snapshot before a risky deployment. If it fails, restore the disk in seconds and get back online.
+- **Rapid scale-out**: Clone production disks to spin up read replicas (e.g., SQL Server secondaries) without waiting for hydration.
+- **Environment refreshes**: Copy production to test environments instantly, with full performance from the start.
+
+Azure Database Services like PostgreSQL already use this under the hood for backup and scaling operations. Now you can use it directly for your own VMs and stateful workloads.
+
+Instant-access snapshots are available in all Azure regions where Premium SSD v2 and Ultra Disk are supported, with usage-based billing (pay for storage capacity consumed + per-restore operation). No need to pre-provision or manage separate snapshot tiers—just enable instant access when you create the snapshot.
+
+## Agentic Cloud Operations: Azure Copilot's Migration, Deployment, and Optimization Agents
+
+A few weeks ago, Microsoft [introduced agentic cloud operations](https://azure.microsoft.com/en-us/blog/agentic-cloud-operations-a-new-way-to-run-the-cloud/)—a new operating model where [Azure Copilot](https://azure.microsoft.com/en-us/products/copilot) acts as an agentic interface for the entire cloud lifecycle. This isn't a chatbot that answers questions. It's a system of context-aware agents that correlate signals, understand operational history, and take governed action across migration, deployment, optimization, observability, resiliency, and troubleshooting.
+
+Key agents:
+
+- **Migration agent**: Discovers environments, maps dependencies, and identifies modernization paths before workloads move
+- **Deployment agent**: Guides well-architected design and generates IaC artifacts that enforce operational best practices
+- **Optimization agent**: Identifies and executes improvements across cost, performance, and sustainability—comparing financial and carbon impact in real time
+- **Resiliency agent**: Continuously strengthens protection against risks like ransomware, moving from validation to proactive posture management
+- **Troubleshooting agent**: Diagnoses root causes, recommends fixes, and initiates support actions when needed
+
+This is Microsoft's answer to the operational complexity explosion caused by AI workloads. Instead of adding more dashboards, they're embedding intelligence into the workflow. Every agent-initiated action honors existing RBAC, policies, and security controls—governance isn't an add-on, it's the foundation.
+
+For teams running mission-critical workloads, the [Bring Your Own Storage (BYOS) feature](https://www.microsoft.com/en-us/ai/responsible-ai) gives you even more control by keeping conversation history in your own Azure environment for sovereignty and compliance.
+
+This is still early—most of these capabilities are in preview—but it signals where Azure is headed: operations that are dynamic, context-aware, and continuously optimized, not reactive and manual.
+
+## IaaS Isn't Dead—It's the Foundation for AI Infrastructure
+
+Last week Azure launched the [IaaS Resource Center](https://azure.microsoft.com/en-us/blog/azure-iaas-series-explore-new-resources-for-building-a-stronger-more-efficient-infrastructure/), a centralized hub for compute, storage, and networking guidance. This might sound like maintenance documentation, but it's actually Microsoft reinforcing that infrastructure fundamentals still matter—especially as AI workloads demand more from the stack.
+
+The resource center brings together:
+
+- VM sizing and selection guidance for AI training clusters vs. production databases
+- Storage performance optimization for data-intensive workloads
+- Networking patterns for low-latency, globally distributed applications
+- Resiliency and security best practices across the infrastructure layer
+
+Azure IaaS spans 70+ regions, integrates with hardware acceleration (GPUs, FPGAs), and supports zonal redundancy, regional redundancy, and globally distributed architectures. As AI adoption accelerates, infrastructure design is becoming more critical, not less. The bottleneck isn't usually the model—it's the storage throughput to feed training data, or the network latency between distributed workers.
+
+If you're building AI systems that need to scale, this resource center is worth bookmarking. It's not flashy, but neither is the infrastructure that keeps production AI running.
+
+## The Bottom Line
+
+This week's updates reveal Microsoft's multi-pronged AI infrastructure strategy: open models through Fireworks AI, agentic reliability through GPT-5.4, instant infrastructure recovery through snapshot improvements, and operational intelligence through Azure Copilot agents. Together, they're building toward a future where AI infrastructure is multi-model, agent-operated, and optimized for reliability over novelty.
+
+The Fireworks AI launch is the most significant signal here. Microsoft is betting that enterprises want the flexibility to run any model—proprietary or open—on infrastructure they control, with governance they trust. That's a departure from the closed-ecosystem playbook most cloud AI platforms have followed. If you've been waiting for Azure to meet you where the open-source AI community already is, this week delivered.

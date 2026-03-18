@@ -1,6 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import Navbar from '../components/Navbar.astro';
+import RelatedArticles from '../components/RelatedArticles.astro';
 
 interface Props {
   title: string;
@@ -10,9 +11,11 @@ interface Props {
   tags?: string[];
   heroImage?: string;
   readingTime?: string;
+  wordCount?: number;
+  slug?: string;
 }
 
-const { title, description, pubDate, updatedDate, tags, heroImage, readingTime } = Astro.props;
+const { title, description, pubDate, updatedDate, tags, heroImage, readingTime, wordCount, slug } = Astro.props;
 
 const formattedDate = pubDate.toLocaleDateString('en-US', {
   year: 'numeric',
@@ -35,10 +38,11 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
   modifiedDate={updatedDate}
   tags={tags}
   image={heroImage}
+  wordCount={wordCount}
 >
   <Navbar />
 
-  <main class="max-w-3xl mx-auto px-6 pt-32 pb-16">
+  <main id="main-content" class="max-w-3xl mx-auto px-6 pt-32 pb-16">
     <a href="/articles" class="text-accent-cyan text-sm hover:underline">
       ← Back to Articles
     </a>
@@ -76,6 +80,9 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
         <img
           src={heroImage}
           alt={title}
+          width="768"
+          height="432"
+          loading="eager"
           class="w-full rounded-lg mt-8"
         />
       )}
@@ -86,9 +93,16 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
     </article>
 
     <hr class="border-border-muted my-12" />
-    <a href="/articles" class="text-accent-cyan text-sm hover:underline">
-      ← All Articles
-    </a>
+
+    {slug && tags && tags.length > 0 && (
+      <RelatedArticles currentSlug={slug} currentTags={tags} />
+    )}
+
+    <div class="mt-8">
+      <a href="/articles" class="text-accent-cyan text-sm hover:underline">
+        ← All Articles
+      </a>
+    </div>
   </main>
 </BaseLayout>
 

@@ -2,11 +2,11 @@
   "channelId": "UClQ3i2ynrWV5tZJ6mHbVjWQ",
   "channelTitle": "htekdev",
   "channelUrl": "https://www.youtube.com/@htekdev",
-  "lastUpdated": "2026-03-08T09:03:27.490Z",
+  "lastUpdated": "2026-03-15T09:06:33.032Z",
   "stats": {
     "totalVideos": 17,
-    "totalViews": 4572,
-    "subscribers": 74
+    "totalViews": 4653,
+    "subscribers": 79
   },
   "topics": [
     {
@@ -21,8 +21,8 @@
           "thumbnail": "https://i.ytimg.com/vi/XDHQxOx1P38/mqdefault.jpg",
           "publishedAt": "2026-02-22T16:00:51Z",
           "stats": {
-            "viewCount": 29,
-            "likeCount": 1
+            "viewCount": 52,
+            "likeCount": 3
           },
           "duration": "PT24M17S",
           "durationSeconds": 1457,
@@ -37,7 +37,7 @@
           "thumbnail": "https://i.ytimg.com/vi/wjl1yWfQjmA/mqdefault.jpg",
           "publishedAt": "2026-02-19T00:32:15Z",
           "stats": {
-            "viewCount": 56,
+            "viewCount": 63,
             "likeCount": 3
           },
           "duration": "PT13M21S",
@@ -52,7 +52,7 @@
     {
       "id": "ai-agents",
       "title": "AI Agents & Architecture",
-      "description": "Videos about AI agent concepts, context engineering, and multi-agent systems",
+      "description": "Videos on agent concepts, context engineering, sub-agents, and team structures with AI",
       "icon": "🤖",
       "videos": [
         {
@@ -61,7 +61,7 @@
           "thumbnail": "https://i.ytimg.com/vi/mEVonTleU1Q/mqdefault.jpg",
           "publishedAt": "2026-02-18T19:03:04Z",
           "stats": {
-            "viewCount": 25,
+            "viewCount": 33,
             "likeCount": 1
           },
           "duration": "PT17M9S",
@@ -76,7 +76,7 @@
     {
       "id": "copilot-tools",
       "title": "GitHub Copilot & Tools",
-      "description": "Videos about GitHub Copilot features, custom agents, and AI development tools",
+      "description": "Videos about GitHub Copilot features, custom agents, memory systems, and agentic workflows",
       "icon": "⚡",
       "videos": [
         {
@@ -85,7 +85,7 @@
           "thumbnail": "https://i.ytimg.com/vi/yxLJFIIHq18/mqdefault.jpg",
           "publishedAt": "2026-02-19T09:57:27Z",
           "stats": {
-            "viewCount": 6,
+            "viewCount": 9,
             "likeCount": 0
           },
           "duration": "PT10M34S",
@@ -101,7 +101,7 @@
           "thumbnail": "https://i.ytimg.com/vi/5s1jZqNNVjM/mqdefault.jpg",
           "publishedAt": "2026-02-19T08:59:00Z",
           "stats": {
-            "viewCount": 12,
+            "viewCount": 18,
             "likeCount": 0
           },
           "duration": "PT18M8S",
@@ -109,7 +109,7 @@
           "lengthCategory": "deep-dive",
           "isNew": false,
           "isTrending": false,
-          "relatedArticle": null
+          "relatedArticle": "/articles/top-5-mistakes-creating-custom-github-copilot-agents"
         },
         {
           "videoId": "jGiLSGGqSmI",
@@ -117,7 +117,7 @@
           "thumbnail": "https://i.ytimg.com/vi/jGiLSGGqSmI/mqdefault.jpg",
           "publishedAt": "2026-02-18T19:02:30Z",
           "stats": {
-            "viewCount": 89,
+            "viewCount": 121,
             "likeCount": 1
           },
           "duration": "PT10M14S",
@@ -133,7 +133,7 @@
           "thumbnail": "https://i.ytimg.com/vi/Q_dc1zUIe3Y/mqdefault.jpg",
           "publishedAt": "2026-02-14T09:05:22Z",
           "stats": {
-            "viewCount": 6,
+            "viewCount": 8,
             "likeCount": 0
           },
           "duration": "PT14M20S",

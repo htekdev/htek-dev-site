@@ -1,0 +1,99 @@
+---
+title: 'Copilot CLI Weekly: PR Workflows, Extensions, and Multi-Turn Background Agents'
+description: >-
+  v1.0.5 ships native PR workflows with /pr, CLI extension management, and
+  multi-turn background agent conversations. The platform is maturing fast.
+pubDate: 2026-03-13T00:00:00.000Z
+tags:
+  - GitHub Copilot
+  - Developer Experience
+  - AI
+  - Open Source
+draft: false
+devto_id: 3349517
+devto_hash: 2da7f0a53fcd954e
+hashnode_id: 69b47cf72d863c7079837497
+hashnode_hash: 7185663e3512d8c0
+---
+
+## The 1.0 Era Accelerates
+
+One week after [the focus shifted to safety and hardening](/articles/copilot-cli-weekly-2026-03-06), GitHub dropped [v1.0.5](https://github.com/github/copilot-cli/releases/tag/v1.0.5) yesterday with a feature set that feels more like a major milestone than a point release. This update ships native PR workflows, CLI extension management, multi-turn background agents, and over a dozen quality-of-life fixes that smooth out rough edges across the entire platform.
+
+The velocity here is striking. We're one month into general availability and the team is shipping production-grade features weekly while simultaneously tightening security (blocking network paths to prevent credential leakage) and fixing platform-specific bugs (Windows diff rendering, Kitty terminal escape sequences). This is what sustained investment in developer tooling looks like.
+
+## Native Pull Request Workflows with /pr
+
+The marquee feature in v1.0.5 is **the new `/pr` command** for creating and managing pull requests directly from the CLI. The release notes promise it can "automatically fix CI failures, address review feedback, and resolve merge conflicts."
+
+This is a big deal. PR workflows have been a missing piece in the Copilot CLI story. You could generate code, run tests, and even execute builds—but actually shipping that work to GitHub required context-switching to the browser or running `gh pr create` separately. The `/pr` command closes that loop.
+
+I haven't tested it yet (the release landed hours ago), but if it's as integrated as the description suggests, this could change how I use the CLI entirely. Imagine debugging a failing test, having Copilot generate a fix, and then immediately creating a PR with context-aware descriptions—all without leaving the terminal. That's the promise here.
+
+The real test will be how well it handles the messy parts: merge conflicts with complex diffs, addressing review comments that require non-trivial refactoring, and fixing CI failures that need deeper investigation. If `/pr` can handle those scenarios autonomously or with minimal guidance, it becomes indispensable. If it struggles, it's still useful but more of a convenience feature than a workflow transformation.
+
+## Extension Management Comes to the CLI
+
+The second major addition is **the `/extensions` command** for viewing, enabling, and disabling CLI extensions without leaving the session. This addresses a real usability gap—previously, managing extensions meant editing config files or using external tooling.
+
+What makes this interesting is timing. CLI extensions are still relatively new (they were [introduced in February as part of the GA push](https://github.blog/changelog/2026-02-25-github-copilot-cli-is-now-generally-available/)), and the ecosystem is just starting to take shape. Shipping native management tooling this early signals that GitHub expects extension adoption to grow quickly.
+
+The `/extensions` command also fits into a broader pattern I've noticed: Copilot CLI is increasingly self-contained. You can now check versions with `/version`, browse changelogs with `/changelog`, toggle experimental features with `/experimental`, and manage extensions with `/extensions`—all from within the session. The tool is becoming its own platform, not just a wrapper around external commands.
+
+## Multi-Turn Background Agents
+
+Buried in the changelog is a feature that might be the most technically significant: **the ability to send follow-up messages to background agents with the `write_agent` tool**.
+
+Background agents are one of Copilot CLI's [more powerful but underutilized features](/articles/context-engineering-key-to-ai-development)—they let you run long-running tasks (builds, tests, complex refactoring) in parallel without blocking the main conversation. But up until now, they were fire-and-forget. You'd start an agent, get a result, and that was it. No follow-ups, no clarifications, no iterative refinement.
+
+Multi-turn conversations change that. Now you can send additional prompts to a running agent, effectively turning background tasks into persistent collaborators. This opens up workflows like:
+
+- Starting a test run in the background, seeing failures, and asking the agent to investigate specific cases without restarting
+- Kicking off a refactoring task, reviewing initial output, and refining the approach mid-execution
+- Running parallel research agents and asking follow-up questions as each returns results
+
+This is a subtle shift, but it fundamentally changes what background agents are good for. Instead of purely parallelizing independent tasks, you can now use them for exploratory workflows that need multiple rounds of iteration.
+
+## File Path Expansion Beyond the Project
+
+A smaller but surprisingly useful change: **`@` file mentions now support absolute paths (`@/usr/...`), home directory paths (`@~/...`), and relative parent paths (`@../...`)**.
+
+This sounds minor, but it removes a real constraint. Previously, Copilot CLI assumed all file references were within the current project. If you needed to reference a shared script in your home directory or a config file in a parent directory, you'd have to manually include the content or work around the limitation.
+
+Now you can just mention it: `@~/.bashrc`, `@/etc/hosts`, `@../shared-config/settings.json`. The CLI will pull in the content and treat it like any other file reference. For developers working across multiple projects or with system-level configuration, this makes the tool substantially more flexible.
+
+## The Quality-of-Life Sweep
+
+The rest of v1.0.5 is a laundry list of fixes and improvements that individually don't warrant headlines but collectively make the tool more reliable:
+
+- **Security hardening**: Network (UNC) paths are now blocked to prevent credential leakage via SMB authentication—a real vulnerability that could have bitten Windows users hard
+- **Better error messaging**: Memory storage errors now indicate when repositories don't exist or you lack write access; classic Personal Access Tokens (`ghp_*`) now show a clear error instead of silently failing
+- **Platform-specific fixes**: Diff view on Windows no longer shows corrupted text; Kitty terminal users won't see escape sequences at shutdown; backtick-formatted code in PR descriptions renders correctly on PowerShell
+- **Improved developer experience**: Experimental mode toggles with `/experimental on|off` now auto-restart the CLI to apply changes immediately; terminal titles reset to default after `/clear` or `/new`; the view tool handles large single-line files (minified JS, massive JSON blobs) gracefully
+- **Enhanced changelog navigation**: `/changelog` now supports `last <N>`, `since <version>`, and `summarize` for browsing and synthesizing release notes across multiple versions
+
+None of these will make headlines, but they're the kind of polish that separates tools you tolerate from tools you actively prefer.
+
+## Experimental: Embedding-Based Instruction Retrieval
+
+One item in the changelog deserves special attention: **experimental embedding-based dynamic retrieval of MCP and skill instructions per turn**.
+
+This is the kind of feature that gets buried in release notes but hints at architectural evolution. Right now, when Copilot CLI loads skills or MCP servers, it pulls in their full instruction sets upfront. That works fine with a handful of extensions, but as the ecosystem grows, that approach doesn't scale—context windows have limits, and irrelevant instructions just add noise.
+
+Embedding-based retrieval solves that by dynamically fetching only the instructions relevant to the current prompt. If you're working on a Python script, the CLI loads Python-related MCP tools and skills. If you switch to Kubernetes manifests, it swaps in the Kubernetes-related tooling. The context stays focused, the response quality improves, and the CLI can support a much larger extension ecosystem without degrading performance.
+
+This is still experimental, but it's worth watching. If it works well, it removes one of the major constraints on how extensible the CLI can become.
+
+## What This Signals
+
+v1.0.5 feels like a statement of intent. GitHub isn't treating general availability as a finish line—it's treating it as the start of serious platform investment. The combination of high-impact features (`/pr`, `/extensions`, multi-turn agents), security hardening (blocking UNC paths), and platform polish (Windows diff fixes, better error messages) suggests a team that's simultaneously shipping fast and taking production stability seriously.
+
+The PR workflow integration is particularly telling. GitHub could have left PR creation to the separate `gh` CLI and kept Copilot CLI focused purely on code generation and terminal assistance. Instead, they're pulling workflows that span code generation, CI, and review directly into the tool. That's a bet that Copilot CLI isn't just a coding assistant—it's becoming the control plane for the entire development loop.
+
+If `/pr` delivers on its promise and the multi-turn agent feature enables more sophisticated workflows, we're looking at a tool that's evolving from "useful autocomplete for the terminal" to "AI-native development environment." That's a much bigger ambition, and this release suggests GitHub is serious about getting there.
+
+## The Bottom Line
+
+One week, 20+ features and fixes, and a clear signal that the post-GA investment isn't slowing down. The `/pr` command has the potential to change daily workflows, multi-turn background agents unlock new interaction patterns, and the steady drumbeat of platform polish is making the tool genuinely reliable.
+
+This is what sustainable product development looks like when a company commits to a tool long-term. The features matter, but the velocity and quality of execution matter more. GitHub is showing both.
