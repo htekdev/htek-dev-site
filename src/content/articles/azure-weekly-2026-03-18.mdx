@@ -1,0 +1,79 @@
+---
+title: "Azure Weekly: Foundry Agent Service Hits GA and the Agentic DevOps Era Officially Arrives"
+description: "Microsoft ships production-grade agent infrastructure with private networking, Voice Live, and the REST APIs to build enterprise AI at scale."
+pubDate: 2026-03-18
+tags: ["Azure", "AI", "DevOps", "Developer Experience"]
+draft: false
+---
+
+## The Week Agentic Infrastructure Became Real
+
+This week marked the moment when Microsoft's agentic AI story moved from "impressive demos" to "here's the production infrastructure." The [Foundry Agent Service went GA on March 16](https://devblogs.microsoft.com/foundry/foundry-agent-service-ga/), and it shipped with the features enterprises actually need — private networking, enterprise-grade evaluations, and native voice channels. At the same time, the Foundry REST API graduated to general availability, locking down the contract that every SDK across Python, .NET, JavaScript, and Java is building on. If you've been waiting for the signal that Microsoft is serious about agents in production, this is it.
+
+Here's what shipped this week and what it means for teams building on Azure.
+
+## Foundry Agent Service Goes GA: The Features That Matter
+
+The GA announcement isn't just a status change — it's a comprehensive platform update targeting the gaps that kept prototypes from becoming production systems. Microsoft added six new Azure regions for hosted agents (East US, North Central US, Sweden Central, Southeast Asia, Japan East, and more), which means lower latency and better regional compliance options for most global deployments.
+
+**Private networking** is now end-to-end. You can deploy agents in your own VNet with zero public egress, and that isolation extends all the way through tool calls and MCP connections. For organizations with strict network policies, this was the blocker. It's gone.
+
+**Voice Live** landed in preview alongside the GA release. This isn't a bolt-on transcription service — it's native speech-to-speech integration wired directly to your agent's prompt, tools, and tracing. If you're building voice-first experiences (IVR deflection, customer support, field service), you now have a fully managed channel that doesn't require stitching together STT → agent → TTS pipelines.
+
+**Evaluations graduated to GA** with out-of-the-box evaluators, support for custom evaluation logic, and continuous monitoring piped into Azure Monitor. The key here is production monitoring — not just pre-deployment testing. You can track agent performance, tool call accuracy, and response quality in real time once your agent is live.
+
+## The REST API Foundation: Why GA Matters
+
+Buried in the [February Foundry update](https://devblogs.microsoft.com/foundry/whats-new-in-microsoft-foundry-feb-2026/) is something that might sound boring but is foundational: the **Foundry REST API is now GA**. Specifically, the `/openai/v1/` routes for chat completions, responses, embeddings, files, fine-tuning, models, and vector stores are production-ready with locked contracts and full SLAs.
+
+Why does this matter? Because every SDK across Python, .NET, JavaScript, and Java is building on this surface. Python hit `2.0.0b4`, .NET shipped `2.0.0-beta.1`, JavaScript landed at `2.0.0-beta.4`, and Java released `2.0.0-beta.1` — all in the past few weeks, all targeting the GA REST endpoints. The SDK GA announcements are imminent, but if you need production stability today, you can target the REST API directly. The contract is locked.
+
+This matters more than it sounds. In the past, Microsoft's AI SDK versioning was all over the map. Now there's a stable foundation, and everything builds on it. That's the kind of architectural maturity you need before putting agents in front of customers.
+
+## Microsoft Agent Framework Hits Release Candidate
+
+The [Microsoft Agent Framework reached 1.0.0rc1](https://devblogs.microsoft.com/foundry/whats-new-in-microsoft-foundry-feb-2026/) on February 19, which means the API surface is locked and GA is weeks away, not months. If you're building multi-agent systems or hosting agents on Azure Functions, this is the framework Microsoft is betting on.
+
+The RC ships with **AgentFunctionApp**, which gives you automatic endpoints for workflow runs, status checks, and human-in-the-loop (HITL) responses. You can now host agents on Azure Functions with first-class support — no custom routing logic required.
+
+The **Durable Agent Orchestration** pattern is new and worth understanding. It pairs Azure Durable Functions with the Agent Framework and SignalR to build agents that can pause indefinitely for human approval. Your agent does the analysis, drafts a plan, then calls `wait_for_external_event` and halts until a human approves. The orchestration survives process restarts and can wait for days. This is the architecture pattern for incident response, infrastructure provisioning, and document approval workflows where you need human judgment in the loop.
+
+Breaking changes landed in this RC — credential handling is now unified under Azure Identity, sessions replace threads, and response access patterns changed. If you've been tracking the beta releases, now is the time to migrate. The [migration guide](https://learn.microsoft.com/en-us/agent-framework/support/upgrade/python-2026-significant-changes) is thorough.
+
+## AI Models That Shipped: Claude, GPT Audio, Grok
+
+Microsoft Foundry added four significant models this month, and they're not all about chat. Here's what matters:
+
+**Claude Opus 4.6 and Sonnet 4.6** from Anthropic are now in preview with 1 million token context windows and 128K max output tokens. Opus is the reasoning powerhouse for when accuracy is everything. Sonnet delivers nearly the same intelligence at a substantially lower price point, optimized for coding, agentic workflows, and high-throughput production use. Both support adaptive thinking (the model decides how much reasoning a task needs) and context compaction (older context is automatically summarized so agents don't hit the wall mid-session). If you've been waiting for a model that can hold an entire codebase in context, this is it.
+
+**GPT-Realtime-1.5 and GPT-Audio-1.5** shipped with +7% instruction following, +10% alphanumeric transcription accuracy, and better multilingual support. These are drop-in replacements for their predecessors with no API changes. If you're building voice agents or live transcription pipelines, these are meaningful upgrades.
+
+**Grok 4.0** graduated to GA (the first xAI model to reach production status in Foundry), and **Grok 4.1 Fast** landed in preview as a high-throughput, non-reasoning variant priced at $0.20 per million input tokens. Use Grok 4.0 for complex reasoning and multi-step analysis. Use Grok 4.1 Fast for classification, extraction, and routing at scale.
+
+**FLUX.2 Flex** from Black Forest Labs is purpose-built for text-heavy design work — UI prototyping, infographics, typography. If you've tried generating images with text in them, you know most models fail badly. FLUX.2 Flex fixes that. At $0.05 per megapixel, it's a specialized tool for a specific use case.
+
+## Azure DevOps Remote MCP Server Enters Preview
+
+On March 13, Microsoft [shipped the Remote Azure DevOps MCP Server](https://devblogs.microsoft.com/devops/azure-devops-remote-mcp-server-public-preview/) in public preview. This is the hosted version of the local MCP server that launched earlier, and it removes the installation and setup overhead. You point Visual Studio or VS Code at `https://mcp.dev.azure.com/{organization}`, and you're connected.
+
+The key constraint right now: it only supports Visual Studio and VS Code with GitHub Copilot. Claude Desktop, GitHub Copilot CLI, and other MCP clients require dynamic OAuth client registration in Entra, which isn't live yet. Microsoft is working with the Entra team to enable that. For now, if you're in the VS/VSCode ecosystem, you're covered.
+
+This is part of a broader trend I wrote about in [Agentic DevOps: The Next Evolution of Shift-Left](/articles/agentic-devops-next-evolution-of-shift-left). Microsoft is wiring agents directly into the tools developers already use. The MCP protocol gives agents structured access to Azure DevOps work items, repos, and pipelines without custom API integrations. That's the kind of infrastructure that makes agentic workflows practical, not just possible.
+
+## AKS and Infrastructure Updates
+
+Azure Kubernetes Service [shipped GPU support expansion](https://newreleases.io/project/github/Azure/AKS/release/2026-03-05) for Azure Linux nodes on March 5. NVIDIA A100, H100, and H200 VMs are now supported. If you're running AI inference workloads on AKS, this opens up the latest GPU hardware for better performance and efficiency.
+
+One retirement notice worth flagging: **Flatcar Container Linux for AKS** will be retired on June 8, 2026. You can keep using it until then, but new node pools will be blocked after that date, and AKS will stop producing new node images. If you're on Flatcar, now is the time to plan your migration to a supported alternative. By September 8, 2026, existing code will be removed, and scaling/remediation operations will fail.
+
+## Foundry Local Goes Sovereign
+
+**Foundry Local** now supports large multimodal models in fully disconnected, sovereign environments. This was announced February 24 as part of Microsoft's broader Sovereign Cloud expansion. Previously, Foundry Local was limited to smaller language models. Now you can run advanced multimodal models (text, image, audio) on local NVIDIA GPU hardware with zero cloud connectivity.
+
+The APIs mirror the cloud surface — Responses API, function calling, agent services. Same code, different runtime. This targets government, defense, finance, healthcare, and telecom organizations with strict data sovereignty requirements. If your organization operates in a classified or air-gapped environment, this is the infrastructure that makes modern AI accessible without cloud connectivity.
+
+## What This Week Signals
+
+The thread connecting all of these updates is production readiness. Microsoft isn't shipping features for demos — they're shipping the infrastructure teams need to put agents in front of customers and keep them running. Private networking, enterprise evaluations, locked REST APIs, durable orchestration patterns, and sovereign deployment options are the features you need when "it works in the demo" isn't good enough anymore.
+
+The agentic DevOps era is here. The infrastructure to support it is going GA. If you've been waiting for the right time to move beyond prototypes, this is the week that unlocked it.
