@@ -5,81 +5,110 @@ import Footer from '../components/Footer.astro';
 ---
 
 <BaseLayout
-  title="Consulting — htek.dev"
-  description="Enterprise consulting for GitHub migrations, AI adoption, and cloud architecture. Book a free consultation with Hector Flores."
+  title="Agentic DevOps Consulting — htek.dev"
+  description="I help organizations control their AI agents. Agent governance, test enforcement architecture, and agentic workflow design — built for machine-speed development."
 >
   <Navbar />
   <main id="main-content">
 
     <!-- Hero -->
-    <section id="consulting-hero" class="relative min-h-[70vh] flex items-center bg-bg-void overflow-hidden">
-      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div class="w-[600px] h-[600px] bg-accent-cyan/5 rounded-full blur-3xl"></div>
+    <section id="consulting-hero" class="relative min-h-[85vh] flex items-center bg-bg-void overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-accent-green/8 rounded-full blur-[120px]"></div>
+        <div class="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-accent-cyan/5 rounded-full blur-[80px]"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-accent-rose/4 rounded-full blur-[80px]"></div>
       </div>
-      <div class="relative max-w-5xl mx-auto px-6 pt-32 pb-16 text-center">
-        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-6">// consulting</span>
-        <h1 class="text-4xl md:text-6xl font-heading font-bold text-text-primary mb-6">
-          Enterprise <span class="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">Consulting</span>
+      <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: linear-gradient(rgba(52,211,153,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(52,211,153,0.3) 1px, transparent 1px); background-size: 60px 60px;"></div>
+
+      <div class="relative max-w-5xl mx-auto px-6 pt-32 pb-20 text-center">
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-6 opacity-80">// consulting</span>
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-text-primary mb-8 leading-tight">
+          I Help Organizations
+          <span class="block mt-2 consulting-gradient">Control Their Agents.</span>
         </h1>
-        <p class="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-10">
-          I help engineering teams adopt AI, migrate to GitHub, and modernize their infrastructure — backed by 500+ enterprise migrations and deep expertise in developer productivity.
+        <p class="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-12 leading-relaxed">
+          AI agents move at machine speed. Without structural governance, they'll ship untested code,
+          violate architecture boundaries, and create technical debt faster than any human team ever could.
+          I build the enforcement layers that make agent safety structural — not aspirational.
         </p>
-        <a href="#book" class="inline-block bg-accent-cyan text-bg-void font-semibold px-8 py-3 rounded-lg hover:opacity-90 transition-opacity">
-          Book a Free Consultation
-        </a>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a href="#book" class="inline-flex items-center gap-2 bg-accent-green/15 border border-accent-green/30 text-accent-green font-semibold px-8 py-3 rounded-lg hover:bg-accent-green/25 transition-all">
+            Book a Consultation
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+          </a>
+          <a href="/agentic-devops" class="inline-flex items-center gap-2 text-text-muted hover:text-text-primary font-medium px-8 py-3 rounded-lg transition-colors">
+            See My Approach →
+          </a>
+        </div>
       </div>
     </section>
 
     <!-- Services -->
-    <section class="fade-in py-24 md:py-32 bg-bg-primary">
-      <div class="max-w-6xl mx-auto px-6">
-        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// services</span>
-        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-12">How I Can Help</h2>
+    <section class="fade-in py-24 md:py-32 bg-bg-surface relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 left-1/3 w-[400px] h-[400px] bg-accent-green/5 rounded-full blur-[100px]"></div>
+      </div>
+      <div class="relative max-w-6xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// what i do</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">What I Do</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          Every engagement is hands-on. I don't write slide decks about agent governance — I build the
+          hooks, harnesses, and enforcement architecture that make it real in your codebase.
+        </p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          <!-- Card 1 -->
-          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl p-6">
-            <span class="text-3xl mb-4 block">🔄</span>
-            <h3 class="text-xl font-heading font-semibold text-text-primary mb-3">GitHub Migrations &amp; DevOps</h3>
-            <p class="text-text-secondary text-sm mb-4">
-              End-to-end migration from Azure DevOps, BitBucket, SVN, and more — with automation that cuts migration time from hours to minutes.
+          <!-- Card 1: Agent Governance -->
+          <div class="group bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 hover:border-accent-green/20 hover:-translate-y-1">
+            <span class="text-3xl mb-5 block">🛡️</span>
+            <h3 class="text-xl font-heading font-semibold text-text-primary mb-3">Agent Governance &amp; Control</h3>
+            <p class="text-text-secondary text-sm mb-5 leading-relaxed">
+              Layered enforcement that makes agents structurally incapable of violating your architecture rules. Instructions are suggestions — enforcement is law.
             </p>
-            <ul class="space-y-2 text-sm text-text-muted">
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Migration planning &amp; execution</li>
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Custom automation frameworks</li>
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> CI/CD pipeline modernization</li>
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Repository strategy &amp; governance</li>
+            <ul class="space-y-2.5 text-sm text-text-muted mb-6">
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Enforcement layers: instructions → hooks → gates</li>
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Agent harnesses with budget &amp; tool allowlisting</li>
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Cryptographic approval gates for high-risk operations</li>
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Safe-output contracts that constrain agent writes</li>
             </ul>
+            <a href="/articles/agent-harnesses-controlling-ai-agents-2026" class="text-accent-green text-sm font-medium hover:underline transition-colors">
+              Read: Agent Harnesses →
+            </a>
           </div>
 
-          <!-- Card 2 -->
-          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl p-6">
-            <span class="text-3xl mb-4 block">🤖</span>
-            <h3 class="text-xl font-heading font-semibold text-text-primary mb-3">AI &amp; Developer Productivity</h3>
-            <p class="text-text-secondary text-sm mb-4">
-              Hands-on adoption strategy for GitHub Copilot and AI-powered development workflows that measurably boost developer output and satisfaction.
+          <!-- Card 2: Test Enforcement -->
+          <div class="group bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 hover:border-accent-green/20 hover:-translate-y-1">
+            <span class="text-3xl mb-5 block">🧪</span>
+            <h3 class="text-xl font-heading font-semibold text-text-primary mb-3">Test Enforcement Architecture</h3>
+            <p class="text-text-secondary text-sm mb-5 leading-relaxed">
+              AI-generated tests achieve only 20% mutation scores — 80% of bugs slip through. I build coverage gates that catch what agents miss.
             </p>
-            <ul class="space-y-2 text-sm text-text-muted">
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> GitHub Copilot rollout &amp; training</li>
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> AI workflow integration</li>
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Developer experience optimization</li>
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Productivity measurement &amp; ROI</li>
+            <ul class="space-y-2.5 text-sm text-text-muted mb-6">
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Line-level coverage verification at commit time</li>
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Layer-aware requirements (domain: 90%, infra: 70%)</li>
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Pre-tool-use hooks that block untested code</li>
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Mutation testing to catch false-positive coverage</li>
             </ul>
+            <a href="/articles/test-enforcement-architecture-ai-agents" class="text-accent-green text-sm font-medium hover:underline transition-colors">
+              Read: Test Enforcement Architecture →
+            </a>
           </div>
 
-          <!-- Card 3 -->
-          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-2xl p-6">
-            <span class="text-3xl mb-4 block">☁️</span>
-            <h3 class="text-xl font-heading font-semibold text-text-primary mb-3">Cloud Architecture &amp; Modernization</h3>
-            <p class="text-text-secondary text-sm mb-4">
-              Architecture reviews, cloud migrations, and platform engineering that scale with your team.
+          <!-- Card 3: Agentic Workflows -->
+          <div class="group bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 hover:border-accent-green/20 hover:-translate-y-1">
+            <span class="text-3xl mb-5 block">🔄</span>
+            <h3 class="text-xl font-heading font-semibold text-text-primary mb-3">Agentic Workflow Design</h3>
+            <p class="text-text-secondary text-sm mb-5 leading-relaxed">
+              CI/CD pipelines designed for agents, not humans. Markdown-defined workflows with governance baked into every step.
             </p>
-            <ul class="space-y-2 text-sm text-text-muted">
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Azure &amp; cloud architecture</li>
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Infrastructure as code</li>
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Platform engineering</li>
-              <li class="flex items-start gap-2"><span class="text-accent-cyan mt-0.5">▸</span> Technical debt reduction</li>
+            <ul class="space-y-2.5 text-sm text-text-muted mb-6">
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> CI/CD pipelines purpose-built for agent velocity</li>
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Hookflow-based pre/post-tool-use enforcement</li>
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Self-healing infrastructure with graduated privileges</li>
+              <li class="flex items-start gap-2"><span class="text-accent-green mt-0.5">▸</span> Human approval gates where they matter most</li>
             </ul>
+            <a href="/articles/agentic-ops-workflow-framework-for-ai-agents" class="text-accent-green text-sm font-medium hover:underline transition-colors">
+              Read: Agentic-Ops Framework →
+            </a>
           </div>
 
         </div>
@@ -89,56 +118,67 @@ import Footer from '../components/Footer.astro';
     <!-- Track Record -->
     <section class="fade-in py-24 md:py-32 bg-bg-void">
       <div class="max-w-5xl mx-auto px-6">
-        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// track record</span>
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// track record</span>
         <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-12">Why Work With Me</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
-            <span class="text-3xl md:text-4xl font-heading font-bold text-accent-cyan block mb-1">500+</span>
-            <span class="text-text-muted text-sm">Repos Migrated</span>
+          <div class="bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm rounded-xl p-8 text-center">
+            <span class="text-3xl md:text-4xl font-heading font-bold text-accent-green block mb-2">Zero</span>
+            <span class="text-text-muted text-sm">Production Rollbacks</span>
+            <p class="text-text-muted/60 text-xs mt-2">247 agent commits — all with enforced tests</p>
           </div>
-          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
-            <span class="text-3xl md:text-4xl font-heading font-bold text-accent-cyan block mb-1">Enterprise</span>
-            <span class="text-text-muted text-sm">Scale Experience</span>
+          <div class="bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm rounded-xl p-8 text-center">
+            <span class="text-3xl md:text-4xl font-heading font-bold text-accent-green block mb-2">4</span>
+            <span class="text-text-muted text-sm">Open-Source Agent Tools</span>
+            <p class="text-text-muted/60 text-xs mt-2">Harnesses, hookflows, signers, frameworks</p>
           </div>
-          <div class="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
-            <span class="text-3xl md:text-4xl font-heading font-bold text-accent-cyan block mb-1">10+</span>
-            <span class="text-text-muted text-sm">Years in Enterprise Tech</span>
+          <div class="bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm rounded-xl p-8 text-center">
+            <span class="text-3xl md:text-4xl font-heading font-bold text-accent-green block mb-2">14+</span>
+            <span class="text-text-muted text-sm">Articles on Agent Governance</span>
+            <p class="text-text-muted/60 text-xs mt-2">Deep technical writing, not thought-piece fluff</p>
           </div>
         </div>
 
-        <h3 class="text-lg font-heading font-semibold text-text-primary mb-4">Read my technical writing</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a href="/articles/lessons-from-500-github-migrations" class="block group bg-bg-surface border border-border-muted rounded-xl p-5 transition-all duration-300 hover:border-accent-cyan/30 hover:-translate-y-0.5">
-            <span class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors">Lessons from 500+ GitHub Migrations</span>
+        <h3 class="text-lg font-heading font-semibold text-text-primary mb-4">Read the technical deep-dives</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <a href="/articles/agent-proof-architecture-agentic-devops" class="block group bg-bg-surface border border-border-muted rounded-xl p-5 transition-all duration-300 hover:border-accent-green/30 hover:-translate-y-0.5">
+            <span class="text-text-primary font-heading font-semibold group-hover:text-accent-green transition-colors">Building Agent-Proof Architecture</span>
+            <p class="text-text-muted text-sm mt-1">Layered enforcement that makes agents structurally safe.</p>
           </a>
-          <a href="/articles/context-engineering-key-to-ai-development" class="block group bg-bg-surface border border-border-muted rounded-xl p-5 transition-all duration-300 hover:border-accent-cyan/30 hover:-translate-y-0.5">
-            <span class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors">Context Engineering: The Key to AI Development</span>
+          <a href="/articles/agent-hooks-controlling-ai-codebase" class="block group bg-bg-surface border border-border-muted rounded-xl p-5 transition-all duration-300 hover:border-accent-green/30 hover:-translate-y-0.5">
+            <span class="text-text-primary font-heading font-semibold group-hover:text-accent-green transition-colors">Agent Hooks: Controlling AI in Your Codebase</span>
+            <p class="text-text-muted text-sm mt-1">Hook-based enforcement for architecture rules.</p>
           </a>
-          <a href="/articles/stanford-study-ai-roi-in-engineering" class="block group bg-bg-surface border border-border-muted rounded-xl p-5 transition-all duration-300 hover:border-accent-cyan/30 hover:-translate-y-0.5">
-            <span class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors">Stanford Study: AI's Real ROI</span>
+          <a href="/articles/cryptographic-approval-gates-ai-agents" class="block group bg-bg-surface border border-border-muted rounded-xl p-5 transition-all duration-300 hover:border-accent-green/30 hover:-translate-y-0.5">
+            <span class="text-text-primary font-heading font-semibold group-hover:text-accent-green transition-colors">Cryptographic Approval Gates for AI Agents</span>
+            <p class="text-text-muted text-sm mt-1">Ed25519 signatures for high-risk agent operations.</p>
+          </a>
+          <a href="/articles/agentic-devops-next-evolution-of-shift-left" class="block group bg-bg-surface border border-border-muted rounded-xl p-5 transition-all duration-300 hover:border-accent-green/30 hover:-translate-y-0.5">
+            <span class="text-text-primary font-heading font-semibold group-hover:text-accent-green transition-colors">Agentic DevOps: The Next Evolution of Shift Left</span>
+            <p class="text-text-muted text-sm mt-1">DevOps redesigned for agent velocity.</p>
           </a>
         </div>
       </div>
     </section>
 
     <!-- Calendly Booking -->
-    <section id="book" class="fade-in py-24 md:py-32 bg-bg-primary relative overflow-hidden">
-      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div class="w-[600px] h-[600px] bg-accent-cyan/5 rounded-full blur-3xl"></div>
+    <section id="book" class="fade-in py-24 md:py-32 bg-bg-surface relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-green/5 rounded-full blur-[100px]"></div>
       </div>
       <div class="relative max-w-5xl mx-auto px-6">
-        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// let's talk</span>
+        <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// let's talk</span>
         <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">
-          Book a <span class="bg-gradient-to-r from-accent-cyan to-accent-purple bg-clip-text text-transparent">Free Consultation</span>
+          Let's Talk <span class="consulting-gradient">Agent Governance</span>
         </h2>
         <p class="text-text-secondary text-lg max-w-2xl mb-10">
-          Every engagement starts with a conversation. Let's discuss your challenges and explore how I can help.
+          Every engagement starts with understanding your agent landscape. Let's discuss where your
+          agents are, where they're going, and how to keep them in line.
         </p>
-        <div class="calendly-inline-widget" data-url="https://calendly.com/htekdev/free-consultation?background_color=0a0a0f&text_color=e2e8f0&primary_color=00e5ff" style="min-width:320px;height:700px;"></div>
+        <div class="calendly-inline-widget" data-url="https://calendly.com/htekdev/free-consultation?background_color=0a0a0f&text_color=e2e8f0&primary_color=34d399" style="min-width:320px;height:700px;"></div>
         <script is:inline type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
         <p class="text-text-muted text-sm mt-6">
-          Having trouble with the widget? <a href="https://calendly.com/htekdev/free-consultation" target="_blank" rel="noopener noreferrer" class="text-accent-cyan hover:underline">Book directly on Calendly →</a>
+          Having trouble with the widget? <a href="https://calendly.com/htekdev/free-consultation" target="_blank" rel="noopener noreferrer" class="text-accent-green hover:underline">Book directly on Calendly →</a>
         </p>
       </div>
     </section>
@@ -146,3 +186,12 @@ import Footer from '../components/Footer.astro';
   </main>
   <Footer />
 </BaseLayout>
+
+<style>
+  .consulting-gradient {
+    background: linear-gradient(135deg, #34d399, #58a6ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+</style>
