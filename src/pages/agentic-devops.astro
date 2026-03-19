@@ -5,29 +5,19 @@ import Footer from '../components/Footer.astro';
 
 const beliefs = [
   {
-    icon: '🛡️',
-    title: 'Set the Rules Before You Hit Go',
-    description: 'Agents move fast. Guardrails need to exist before they start — not after something breaks.',
+    icon: '⬅️',
+    title: 'Shift Left All the Way to the Agent',
+    description: 'The same principle that defined DevOps — move testing, validation, and enforcement as early as possible — now applies inside the agent\'s own loop. Don\'t wait for CI to catch what the agent should never have shipped. Detect and fix before anyone notices.',
   },
   {
-    icon: '🧪',
-    title: 'No Tests, No Ship',
-    description: 'If the agent can\'t prove its work with passing tests, it doesn\'t get committed. That\'s the line.',
+    icon: '🔒',
+    title: 'Deterministic Validation Over Agentic Validation',
+    description: 'AI judgment is enablement, not enforcement. Real gates need to be deterministic — linters, test suites, coverage thresholds, architecture rules. Things that pass or fail the same way every time, regardless of which model is running.',
   },
   {
-    icon: '🏗️',
-    title: 'Make Bad Changes Impossible',
-    description: 'Don\'t rely on agents following instructions. Build structural boundaries they literally can\'t cross.',
-  },
-  {
-    icon: '💡',
-    title: 'Empower the Developer, Not Just the Throughput',
-    description: 'More PRs per hour means nothing if developers feel like babysitters. The goal is creative control.',
-  },
-  {
-    icon: '🔄',
-    title: 'Detect and Fix Before Anyone Notices',
-    description: 'The real promise isn\'t autonomous deployment — it\'s autonomous detection and resolution of problems.',
+    icon: '🎯',
+    title: 'High-Quality Context',
+    description: 'Make the right thing the easy thing. Gates shouldn\'t just block — they should bring rich, relevant context to agents. Great instructions, great architecture, great test suites. The higher the context quality, the less the gates need to fire.',
   },
 ];
 
@@ -39,7 +29,7 @@ const tools = [
     link: 'https://github.com/features/copilot',
   },
   {
-    name: 'Agentic Workflows',
+    name: 'Hookflows',
     category: 'CI/CD Orchestration',
     description: 'GitHub Actions meets AI. Write CI/CD in Markdown, define safe-outputs, and let agents orchestrate multi-step pipelines with built-in governance.',
     link: '/articles/github-agentic-workflows-hands-on-guide',
@@ -147,7 +137,7 @@ const articles = [
         <h1 class="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-text-primary mb-8 leading-tight">
           DevOps Was Built for
           <span class="block mt-2">
-            <span class="agentic-gradient">Humans.</span>
+            <span class="agentic-gradient">Humans</span>
           </span>
           <span class="block text-3xl md:text-5xl lg:text-5xl mt-4 text-text-secondary font-medium">
             Agents Need Something New.
@@ -164,8 +154,9 @@ const articles = [
             See the Evolution
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
           </a>
-          <a href="#beliefs" class="inline-flex items-center gap-2 text-text-muted hover:text-text-primary font-medium px-8 py-3 rounded-lg transition-colors">
-            Core Beliefs →
+          <a href="/agentic-devops-deck" class="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-text-secondary hover:text-text-primary hover:border-accent-green/30 font-medium px-8 py-3 rounded-lg transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4V2m0 2a2 2 0 100 4m0-4a2 2 0 110 4m10-4V2m0 2a2 2 0 100 4m0-4a2 2 0 110 4M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+            Quick Slide Deck
           </a>
           <a href="#tooling" class="inline-flex items-center gap-2 text-text-muted hover:text-text-primary font-medium px-8 py-3 rounded-lg transition-colors">
             Explore the Stack →
@@ -849,12 +840,12 @@ const articles = [
           What I Believe
         </h2>
         <p class="text-text-secondary text-lg max-w-3xl mb-16">
-          Five principles I've built real systems around. Each one has a corresponding article with the full implementation.
+          Three principles that every decision in Agentic DevOps comes back to.
         </p>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           {beliefs.map((belief, i) => (
-            <div class={`belief-card group bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 transition-all duration-300 hover:border-accent-green/30 hover:bg-white/[0.05] ${i === beliefs.length - 1 && beliefs.length % 3 === 2 ? 'md:col-span-2 lg:col-span-1' : ''}`}>
+            <div class="belief-card group bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 transition-all duration-300 hover:border-accent-green/30 hover:bg-white/[0.05]">
               <span class="text-4xl mb-5 block">{belief.icon}</span>
               <h3 class="text-xl font-heading font-semibold text-text-primary mb-3 group-hover:text-accent-green transition-colors">{belief.title}</h3>
               <p class="text-text-secondary text-sm leading-relaxed">{belief.description}</p>
@@ -864,61 +855,168 @@ const articles = [
       </div>
     </section>
 
-    <!-- How It's Built -->
+    <!-- The Four Layers -->
     <section id="stack" class="fade-in py-24 md:py-32 bg-bg-surface relative overflow-hidden">
       <div class="absolute inset-0 pointer-events-none">
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent-green/5 rounded-full blur-[100px]"></div>
       </div>
-      <div class="relative max-w-4xl mx-auto px-6">
+      <div class="relative max-w-5xl mx-auto px-6">
         <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// how it's built</span>
-        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">The Enablement Layer</h2>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">Four Layers Around the Loop</h2>
         <p class="text-text-secondary text-lg max-w-3xl mb-16">
-          These are the tools that wrap the agentic loop — giving the gates teeth and the agents context.
+          Agentic DevOps isn't one layer — it's four, each with a distinct job. Together they wrap the agentic loop and keep quality structural.
         </p>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
-            <span class="text-2xl shrink-0">📄</span>
-            <div>
-              <h3 class="font-heading font-semibold text-text-primary mb-1">Copilot Instructions</h3>
-              <p class="text-text-secondary text-sm">Tell agents what to do, how to do it, and what's off-limits — in plain language.</p>
+        <div class="space-y-8">
+
+          <!-- Layer 1: Deterministic Gate Layer -->
+          <div class="layer-card bg-white/[0.02] border border-accent-green/15 rounded-2xl p-8 relative">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-accent-green/[0.03] to-transparent pointer-events-none"></div>
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="inline-block font-mono text-[10px] text-accent-green tracking-widest uppercase bg-accent-green/10 border border-accent-green/20 rounded-full px-3 py-1">Layer 1</span>
+                <h3 class="text-xl md:text-2xl font-heading font-semibold text-text-primary">The Deterministic Gate Layer</h3>
+              </div>
+              <p class="text-text-secondary text-sm leading-relaxed max-w-3xl mb-6">
+                Hard enforcement that fires inside the agent's loop. These gates are deterministic — they pass or fail the same way every time, regardless of which model is running. No AI judgment calls. No prompt sensitivity. Just rules.
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">🪝</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">Agent Hooks</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">Pre-commit and pre-push checks that block agents from violating architecture rules before code leaves the IDE.</p>
+                  </div>
+                </div>
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">🧪</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">Test Enforcement</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">Coverage gates that block commits if source files are modified without matching test updates. No tests, no ship.</p>
+                  </div>
+                </div>
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">🏗️</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">Structured Codebase</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">Linters, type systems, architecture boundaries, and import rules that make bad patterns structurally impossible.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
-            <span class="text-2xl shrink-0">🪝</span>
-            <div>
-              <h3 class="font-heading font-semibold text-text-primary mb-1">Agent Hooks</h3>
-              <p class="text-text-secondary text-sm">Pre-commit and pre-push checks that block agents from violating rules before code leaves the IDE.</p>
+
+          <!-- Layer 2: Enablement Layer -->
+          <div class="layer-card bg-white/[0.02] border border-accent-cyan/15 rounded-2xl p-8 relative">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-accent-cyan/[0.03] to-transparent pointer-events-none"></div>
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="inline-block font-mono text-[10px] text-accent-cyan tracking-widest uppercase bg-accent-cyan/10 border border-accent-cyan/20 rounded-full px-3 py-1">Layer 2</span>
+                <h3 class="text-xl md:text-2xl font-heading font-semibold text-text-primary">The Enablement Layer</h3>
+              </div>
+              <p class="text-text-secondary text-sm leading-relaxed max-w-3xl mb-6">
+                High-quality context that makes agents effective. This layer doesn't block — it empowers. The better the context, the less the deterministic gates need to fire.
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">📄</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">Copilot Instructions</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">Tell agents what to do, how to do it, and what's off-limits — in plain language that evolves with the project.</p>
+                  </div>
+                </div>
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">🔌</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">MCP Servers</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">Structured access to infrastructure — databases, APIs, Azure — through a standardized protocol with security boundaries.</p>
+                  </div>
+                </div>
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">📚</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">Custom Skills & Extensions</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">Domain-specific knowledge and tools that give agents expert context — not generic models guessing at your stack.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
-            <span class="text-2xl shrink-0">🔄</span>
-            <div>
-              <h3 class="font-heading font-semibold text-text-primary mb-1">Hookflows</h3>
-              <p class="text-text-secondary text-sm">Agentic CI/CD defined in Markdown. Natural-language workflows that compile into GitHub Actions.</p>
+
+          <!-- Layer 3: Final Gate Layer -->
+          <div class="layer-card bg-white/[0.02] border border-accent-violet/15 rounded-2xl p-8 relative">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-accent-violet/[0.03] to-transparent pointer-events-none"></div>
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="inline-block font-mono text-[10px] text-accent-violet tracking-widest uppercase bg-accent-violet/10 border border-accent-violet/20 rounded-full px-3 py-1">Layer 3</span>
+                <h3 class="text-xl md:text-2xl font-heading font-semibold text-text-primary">The Final Gate</h3>
+              </div>
+              <p class="text-text-secondary text-sm leading-relaxed max-w-3xl mb-6">
+                The normal DevOps process you already have. CI/CD pipelines, code review, branch protection, deployment gates. Agents don't bypass this — they feed into it. This is your safety net.
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">⚙️</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">CI/CD Pipeline</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">Your existing automation backbone. Build, test, security scan, deploy — now with agent-generated PRs flowing through it.</p>
+                  </div>
+                </div>
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">👀</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">Code Review</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">Human review of agent output. Branch protection rules, required approvals, and CODEOWNERS still apply.</p>
+                  </div>
+                </div>
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">🚀</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">Deployment Gates</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">Environment protections, approval workflows, and staged rollouts. The same gates you trust today.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
-            <span class="text-2xl shrink-0">🧪</span>
-            <div>
-              <h3 class="font-heading font-semibold text-text-primary mb-1">Test Enforcement</h3>
-              <p class="text-text-secondary text-sm">Coverage gates that block commits if source files are modified without matching test updates.</p>
+
+          <!-- Layer 4: Feedback Layer -->
+          <div class="layer-card bg-white/[0.02] border border-accent-rose/15 rounded-2xl p-8 relative">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-accent-rose/[0.03] to-transparent pointer-events-none"></div>
+            <div class="relative">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="inline-block font-mono text-[10px] text-accent-rose tracking-widest uppercase bg-accent-rose/10 border border-accent-rose/20 rounded-full px-3 py-1">Layer 4</span>
+                <h3 class="text-xl md:text-2xl font-heading font-semibold text-text-primary">The Feedback Layer</h3>
+              </div>
+              <p class="text-text-secondary text-sm leading-relaxed max-w-3xl mb-6">
+                Automatically consuming DevOps feedback and routing it back into the agentic loop. Failed builds, security alerts, performance regressions — the agent sees them and acts. This is Continuous AI.
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">🔄</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">Hookflows</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">CI/CD events trigger agent workflows. A failed build becomes an issue the agent investigates and fixes.</p>
+                  </div>
+                </div>
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">🩺</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">Self-Healing</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">Agents that monitor, detect anomalies, and execute remediation autonomously — with human approval gates where it matters.</p>
+                  </div>
+                </div>
+                <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 flex gap-3 items-start">
+                  <span class="text-xl shrink-0">📊</span>
+                  <div>
+                    <h4 class="font-heading font-semibold text-text-primary text-sm mb-0.5">Continuous AI</h4>
+                    <p class="text-text-muted text-xs leading-relaxed">An autonomous loop that monitors your repository, reasons about what needs attention, and generates ideas that feed the agentic core.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
-            <span class="text-2xl shrink-0">🔌</span>
-            <div>
-              <h3 class="font-heading font-semibold text-text-primary mb-1">MCP Servers</h3>
-              <p class="text-text-secondary text-sm">Structured access to infrastructure — databases, APIs, Azure — through a standardized protocol.</p>
-            </div>
-          </div>
-          <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-6 flex gap-4 items-start">
-            <span class="text-2xl shrink-0">⚙️</span>
-            <div>
-              <h3 class="font-heading font-semibold text-text-primary mb-1">CI/CD Pipeline</h3>
-              <p class="text-text-secondary text-sm">The existing automation backbone — now triggered by agents, validated by agents, and gated by agents.</p>
-            </div>
-          </div>
+
         </div>
       </div>
     </section>
@@ -953,7 +1051,7 @@ const articles = [
         <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-4">// deep dives</span>
         <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">Read the Full Arguments</h2>
         <p class="text-text-secondary text-lg max-w-3xl mb-16">
-          Every belief above has a detailed article behind it. Here's where the philosophy meets implementation.
+          Every principle above has detailed articles behind it. Here's where the philosophy meets implementation.
         </p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
