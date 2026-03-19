@@ -46,7 +46,7 @@ const slides = [
     id: 'layers',
     type: 'layers',
     label: '// how it\'s built',
-    heading: 'Four Layers Around the Loop',
+    heading: 'Five Layers Around the Loop',
   },
   {
     id: 'ecosystem',
@@ -67,6 +67,15 @@ const beliefs = [
 ];
 
 const layers = [
+  {
+    num: '0',
+    name: 'Sandbox Layer',
+    color: 'orange',
+    colorClass: 'text-accent-orange',
+    bgClass: 'bg-accent-orange/10 border-accent-orange/20',
+    desc: 'The execution boundary beneath everything. Kernel-level isolation that makes enforcement structural.',
+    items: ['📦 Agent Sandboxes', '🔒 Network Gating', '🛡️ Credential Isolation'],
+  },
   {
     num: '1',
     name: 'Deterministic Gate Layer',
@@ -112,6 +121,7 @@ const tools = [
   { name: 'Agent Hooks', cat: 'Governance', desc: 'Enforce architecture rules, mock policies, and test coverage before code leaves the IDE.' },
   { name: 'Model Context Protocol', cat: 'Infrastructure', desc: 'Structured access to Azure resources, databases, APIs with built-in security boundaries.' },
   { name: 'Self-Healing Infra', cat: 'Autonomous Ops', desc: 'Agents that monitor, detect anomalies, and execute remediation autonomously.' },
+  { name: 'Agent Sandboxes', cat: 'Execution Isolation', desc: 'Policy-governed sandbox environments with kernel-level filesystem, network, and process isolation.' },
 ];
 ---
 
@@ -394,7 +404,7 @@ const tools = [
                       <span class="text-text-secondary text-xs">Gates inside the loop</span>
                     </div>
                     <div class="flex justify-center overflow-x-auto">
-                      <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[260px]">
+                      <svg viewBox="0 0 300 320" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[260px]">
                         <defs>
                           <marker id="ci-arr-gn" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
                             <polygon points="0 0, 6 2.5, 0 5" fill="#34d399"/>
@@ -405,9 +415,20 @@ const tools = [
                             <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
                           </radialGradient>
                         </defs>
-                        <circle cx="150" cy="140" r="125" fill="url(#ci-glow)"/>
-                        <circle cx="150" cy="140" r="85" fill="none" stroke="rgba(52,211,153,0.3)" stroke-width="2.5"/>
-                        <g transform="translate(150, 140)">
+                        <circle cx="150" cy="148" r="130" fill="url(#ci-glow)"/>
+
+                        {/* Layer 0: Sandbox ring (orange, outermost) */}
+                        <circle cx="150" cy="148" r="115" fill="none" stroke="rgba(240,136,62,0.25)" stroke-width="18" stroke-dasharray="5,3" opacity="0.7"/>
+                        <circle cx="150" cy="148" r="115" fill="none" stroke="rgba(240,136,62,0.35)" stroke-width="1.2"/>
+
+                        {/* Layer 0 label */}
+                        <g transform="translate(150, 16)">
+                          <rect x="-50" y="-9" width="100" height="18" rx="9" fill="rgba(240,136,62,0.1)" stroke="rgba(240,136,62,0.35)" stroke-width="1"/>
+                          <text x="0" y="3" fill="rgba(240,136,62,0.9)" text-anchor="middle" font-size="7" font-weight="700" font-family="system-ui">📦 Layer 0 · Sandbox</text>
+                        </g>
+
+                        <circle cx="150" cy="148" r="85" fill="none" stroke="rgba(52,211,153,0.3)" stroke-width="2.5"/>
+                        <g transform="translate(150, 148)">
                           <g transform="translate(0, -55)"><rect x="-34" y="-13" width="68" height="26" rx="13" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/><text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">🔍 Research</text></g>
                           <g transform="translate(48, 28)"><rect x="-27" y="-13" width="54" height="26" rx="13" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/><text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">📋 Plan</text></g>
                           <g transform="translate(-48, 28)"><rect x="-36" y="-13" width="72" height="26" rx="13" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/><text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">⚡ Implement</text></g>
@@ -423,14 +444,24 @@ const tools = [
                           <text x="0" y="-3" fill="rgba(52,211,153,0.3)" text-anchor="middle" font-size="8" font-weight="800" font-family="system-ui">DEVOPS</text>
                         </g>
                         {/* Enablement labels */}
-                        <g transform="translate(150, 22)"><rect x="-48" y="-9" width="96" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">📄 Copilot Instructions</text></g>
-                        <line x1="150" y1="31" x2="150" y2="70" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
-                        <g transform="translate(265, 80)"><rect x="-36" y="-9" width="72" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">🪝 Agent Hooks</text></g>
-                        <line x1="235" y1="86" x2="205" y2="105" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
-                        <g transform="translate(150, 268)"><rect x="-42" y="-9" width="84" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">⚙️ CI/CD Pipeline</text></g>
-                        <line x1="150" y1="259" x2="150" y2="215" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
-                        <g transform="translate(35, 80)"><rect x="-33" y="-9" width="66" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">🧪 Test Suites</text></g>
-                        <line x1="65" y1="86" x2="95" y2="105" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+                        <g transform="translate(150, 36)"><rect x="-48" y="-9" width="96" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">📄 Copilot Instructions</text></g>
+                        <line x1="150" y1="45" x2="150" y2="75" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+                        <g transform="translate(265, 88)"><rect x="-36" y="-9" width="72" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">🪝 Agent Hooks</text></g>
+                        <line x1="235" y1="94" x2="205" y2="110" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+                        <g transform="translate(150, 278)"><rect x="-42" y="-9" width="84" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">⚙️ CI/CD Pipeline</text></g>
+                        <line x1="150" y1="269" x2="150" y2="225" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+                        <g transform="translate(35, 88)"><rect x="-33" y="-9" width="66" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">🧪 Test Suites</text></g>
+                        <line x1="65" y1="94" x2="95" y2="110" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+                        {/* Legend */}
+                        <g transform="translate(80, 305)">
+                          <circle cx="0" cy="0" r="5" fill="none" stroke="rgba(240,136,62,0.5)" stroke-width="1.5" stroke-dasharray="3,2"/>
+                          <text x="10" y="3" fill="rgba(240,136,62,0.7)" text-anchor="start" font-size="7" font-family="system-ui">Sandbox</text>
+                        </g>
+                        <g transform="translate(155, 305)">
+                          <rect x="-6" y="-6" width="12" height="12" rx="2" transform="rotate(45)" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1"/>
+                          <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="5" font-weight="700" font-family="system-ui">🛡️</text>
+                          <text x="14" y="3" fill="rgba(52,211,153,0.6)" text-anchor="start" font-size="7" font-family="system-ui">Gate inside loop</text>
+                        </g>
                       </svg>
                     </div>
                   </div>
@@ -462,7 +493,7 @@ const tools = [
             </div>
           )}
 
-          {/* Four Layers Slide */}
+          {/* Five Layers Slide */}
           {slide.type === 'layers' && (
             <div class="max-w-4xl mx-auto w-full">
               <span class="inline-block font-mono text-accent-green text-xs sm:text-sm tracking-wider mb-4 opacity-80">{slide.label}</span>

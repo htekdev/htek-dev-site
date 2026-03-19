@@ -73,7 +73,7 @@ Here's the vision that makes people uncomfortable: what if an agent could make c
 
 Before you dismiss it, consider this — GitHub already does it. They've been using [branch deployments](https://github.blog/2023-02-02-enabling-branch-deployments-through-issueops-with-github-actions/) for years, deploying PRs to production *before* they're merged. Feature flags gate the exposure, live production tests validate the changes, and only after passing do they get merged. The [branch-deploy GitHub Action](https://github.com/github/branch-deploy) makes this pattern available to any team.
 
-Now imagine giving that entire workflow to an agent. You express an idea — a requirement, a feature request, even a rough sketch. The agent implements it, writes tests, deploys to a branch environment, runs production validation, and reports back. You review results instead of code. You focus on *what* to build instead of *how* to build it.
+Now imagine giving that entire workflow to an agent. You express an idea — a requirement, a feature request, even a rough sketch. The agent implements it, writes tests, deploys to a branch environment, runs production validation, and reports back. You review results instead of code. You focus on *what* to build instead of *how* to build it. And the agent does all of this inside [a sandbox](/articles/sandboxes-missing-infrastructure-layer-agentic-devops) — an isolated execution environment with policy-governed filesystem, network, and process access that makes unauthorized actions structurally impossible.
 
 > You can just throw ideas because the validity of the implementation can be completely owned by the agent.
 
