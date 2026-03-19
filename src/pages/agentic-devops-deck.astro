@@ -1,0 +1,693 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const slides = [
+  {
+    id: 'title',
+    type: 'title',
+  },
+  {
+    id: 'problem',
+    type: 'content',
+    label: '// the problem',
+    heading: 'DevOps Was Designed for Human Speed',
+    bullets: [
+      'Traditional DevOps placed quality gates <strong>between</strong> each stage — linters after code, tests after build, approvals before deploy.',
+      'Those gates worked because humans moved at human speed.',
+      'But AI agents don\'t move through separate stages. They compress the entire development loop into minutes.',
+      '<strong class="text-accent-green">The gates need to move with them.</strong>',
+    ],
+  },
+  {
+    id: 'evolution',
+    type: 'evolution',
+    label: '// evolution',
+    heading: 'The Loop Keeps Shrinking',
+  },
+  {
+    id: 'collapse',
+    type: 'collapse',
+    label: '// the collapse',
+    heading: 'What Changed',
+  },
+  {
+    id: 'core-idea',
+    type: 'core-idea',
+    label: '// the core idea',
+    heading: 'Gates Moved Inside the Loop',
+  },
+  {
+    id: 'principles',
+    type: 'principles',
+    label: '// principles',
+    heading: '3 Core Beliefs',
+  },
+  {
+    id: 'layers',
+    type: 'layers',
+    label: '// how it\'s built',
+    heading: 'Four Layers Around the Loop',
+  },
+  {
+    id: 'ecosystem',
+    type: 'ecosystem',
+    label: '// tooling',
+    heading: 'The Ecosystem That Makes It Real',
+  },
+  {
+    id: 'cta',
+    type: 'cta',
+  },
+];
+
+const beliefs = [
+  { icon: '⬅️', title: 'Shift Left All the Way to the Agent', desc: 'Move testing, validation, and enforcement inside the agent\'s own loop. Don\'t wait for CI — detect and fix before anyone notices.' },
+  { icon: '🔒', title: 'Deterministic Validation Over Agentic', desc: 'AI judgment is enablement, not enforcement. Real gates are deterministic — linters, tests, coverage thresholds. Pass or fail, every time.' },
+  { icon: '🎯', title: 'High-Quality Context', desc: 'Make the right thing the easy thing. Gates should bring rich context to agents. Great instructions + great architecture = fewer fires.' },
+];
+
+const layers = [
+  {
+    num: '1',
+    name: 'Deterministic Gate Layer',
+    color: 'green',
+    colorClass: 'text-accent-green',
+    bgClass: 'bg-accent-green/10 border-accent-green/20',
+    desc: 'Hard enforcement inside the agent loop. Pass or fail — every time.',
+    items: ['🪝 Agent Hooks', '🧪 Test Enforcement', '🏗️ Structured Codebase'],
+  },
+  {
+    num: '2',
+    name: 'Enablement Layer',
+    color: 'cyan',
+    colorClass: 'text-accent-cyan',
+    bgClass: 'bg-accent-cyan/10 border-accent-cyan/20',
+    desc: 'High-quality context that makes agents effective.',
+    items: ['📄 Copilot Instructions', '🔌 MCP Servers', '📚 Custom Skills'],
+  },
+  {
+    num: '3',
+    name: 'Final Gate',
+    color: 'violet',
+    colorClass: 'text-accent-violet',
+    bgClass: 'bg-accent-violet/10 border-accent-violet/20',
+    desc: 'Your normal DevOps process. Agents feed into it, not around it.',
+    items: ['⚙️ CI/CD Pipeline', '👀 Code Review', '🚀 Deploy Gates'],
+  },
+  {
+    num: '4',
+    name: 'Feedback Layer',
+    color: 'rose',
+    colorClass: 'text-accent-rose',
+    bgClass: 'bg-accent-rose/10 border-accent-rose/20',
+    desc: 'DevOps feedback routed back into the agentic loop. Continuous AI.',
+    items: ['🔄 Hookflows', '🩺 Self-Healing', '📊 Continuous AI'],
+  },
+];
+
+const tools = [
+  { name: 'GitHub Copilot', cat: 'Agent Runtime', desc: 'AI pair programming evolved into a full agent runtime for your entire codebase.' },
+  { name: 'Hookflows', cat: 'CI/CD', desc: 'Write CI/CD in Markdown, define safe-outputs, let agents orchestrate pipelines.' },
+  { name: 'Copilot SDK', cat: 'Agent Dev', desc: 'Production-grade SDK for building custom agents with model routing and tool orchestration.' },
+  { name: 'Agent Hooks', cat: 'Governance', desc: 'Enforce architecture rules, mock policies, and test coverage before code leaves the IDE.' },
+  { name: 'Model Context Protocol', cat: 'Infrastructure', desc: 'Structured access to Azure resources, databases, APIs with built-in security boundaries.' },
+  { name: 'Self-Healing Infra', cat: 'Autonomous Ops', desc: 'Agents that monitor, detect anomalies, and execute remediation autonomously.' },
+];
+---
+
+<BaseLayout
+  title="What Is Agentic DevOps? — Slide Deck | htek.dev"
+  description="A quick visual overview of Agentic DevOps — what it is, why it matters, and how it works. Shareable slide deck by Hector Flores."
+>
+  <!-- Slideshow Container -->
+  <div id="slideshow" class="fixed inset-0 bg-bg-void overflow-hidden select-none">
+
+    <!-- Top Bar -->
+    <div class="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-6 py-3">
+      <a href="/agentic-devops" class="text-text-muted hover:text-accent-green text-xs font-mono transition-colors flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        Full Page
+      </a>
+      <div class="flex items-center gap-3">
+        <span id="slide-counter" class="text-text-muted text-xs font-mono">1 / {slides.length}</span>
+        <button id="btn-fullscreen" class="text-text-muted hover:text-accent-green transition-colors p-1" aria-label="Toggle fullscreen">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="absolute top-0 left-0 right-0 z-40 h-[2px] bg-white/5">
+      <div id="progress-bar" class="h-full bg-accent-green transition-all duration-300 ease-out" style="width: 11.11%"></div>
+    </div>
+
+    <!-- Slides -->
+    <div id="slides-container" class="h-full w-full relative">
+
+      {slides.map((slide, i) => (
+        <div
+          class={`slide absolute inset-0 flex items-center justify-center px-6 sm:px-10 md:px-16 transition-all duration-500 ease-out ${i === 0 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full pointer-events-none'}`}
+          data-index={i}
+        >
+          {/* Title Slide */}
+          {slide.type === 'title' && (
+            <div class="text-center max-w-4xl mx-auto">
+              <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-6 opacity-80">// agentic-devops</span>
+              <h1 class="text-4xl sm:text-5xl md:text-7xl font-heading font-bold text-text-primary mb-6 leading-tight">
+                DevOps Was Built for
+                <span class="block mt-2 deck-gradient">Humans</span>
+              </h1>
+              <p class="text-xl sm:text-2xl md:text-3xl text-text-secondary font-medium mb-10">
+                Agents Need Something New.
+              </p>
+              <p class="text-text-muted text-sm max-w-xl mx-auto mb-12">
+                Shift-left was about moving quality earlier. Agentic DevOps is about designing systems where AI agents operate at machine speed — with governance baked in.
+              </p>
+              <div class="flex items-center justify-center gap-2 text-text-muted text-xs font-mono animate-pulse">
+                <span>Press → or swipe to begin</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+              </div>
+              <p class="mt-8 text-text-muted/50 text-xs font-mono">by <a href="/" class="hover:text-accent-green transition-colors">@htekdev</a></p>
+            </div>
+          )}
+
+          {/* Content Slide (bullets) */}
+          {slide.type === 'content' && (
+            <div class="max-w-3xl mx-auto w-full">
+              <span class="inline-block font-mono text-accent-green text-xs sm:text-sm tracking-wider mb-4 opacity-80">{slide.label}</span>
+              <h2 class="text-2xl sm:text-3xl md:text-5xl font-heading font-bold text-text-primary mb-10 leading-tight">{slide.heading}</h2>
+              <ul class="space-y-5">
+                {slide.bullets?.map((bullet) => (
+                  <li class="flex items-start gap-3 text-text-secondary text-base sm:text-lg leading-relaxed">
+                    <span class="mt-1.5 shrink-0 w-2 h-2 rounded-full bg-accent-green/60"></span>
+                    <span set:html={bullet}></span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Evolution Slide */}
+          {slide.type === 'evolution' && (
+            <div class="max-w-4xl mx-auto w-full text-center">
+              <span class="inline-block font-mono text-accent-green text-xs sm:text-sm tracking-wider mb-4 opacity-80">{slide.label}</span>
+              <h2 class="text-2xl sm:text-3xl md:text-5xl font-heading font-bold text-text-primary mb-8 leading-tight">{slide.heading}</h2>
+
+              {/* Shrinking circles diagram from main page */}
+              <div class="overflow-x-auto mb-8">
+                <svg viewBox="0 0 800 210" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[700px] mx-auto">
+                  <defs>
+                    <marker id="deck-arr-b" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#60a5fa"/>
+                    </marker>
+                    <marker id="deck-arr-gn" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#34d399"/>
+                    </marker>
+                    <marker id="deck-arr-y" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#fbbf24"/>
+                    </marker>
+                    <marker id="deck-arr-em" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#6ee7b7"/>
+                    </marker>
+                  </defs>
+                  <circle cx="95" cy="100" r="75" fill="none" stroke="rgba(248,113,113,0.3)" stroke-width="2"/>
+                  <text x="95" y="96" fill="#f87171" text-anchor="middle" font-size="14" font-weight="700" font-family="system-ui">Traditional</text>
+                  <text x="95" y="114" fill="rgba(248,113,113,0.6)" text-anchor="middle" font-size="10" font-family="system-ui">6-12 months</text>
+                  <circle cx="270" cy="100" r="52" fill="none" stroke="rgba(96,165,250,0.3)" stroke-width="2"/>
+                  <text x="270" y="96" fill="#60a5fa" text-anchor="middle" font-size="14" font-weight="700" font-family="system-ui">DevOps</text>
+                  <text x="270" y="114" fill="rgba(96,165,250,0.6)" text-anchor="middle" font-size="10" font-family="system-ui">Days</text>
+                  <circle cx="405" cy="100" r="30" fill="none" stroke="rgba(52,211,153,0.5)" stroke-width="2.5"/>
+                  <circle cx="405" cy="100" r="30" fill="rgba(52,211,153,0.05)"/>
+                  <text x="405" y="97" fill="#34d399" text-anchor="middle" font-size="12" font-weight="700" font-family="system-ui">Agentic</text>
+                  <text x="405" y="110" fill="rgba(52,211,153,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">Minutes</text>
+                  <line x1="178" y1="100" x2="210" y2="100" stroke="rgba(255,255,255,0.15)" stroke-width="2" marker-end="url(#deck-arr-b)"/>
+                  <line x1="330" y1="100" x2="368" y2="100" stroke="rgba(255,255,255,0.15)" stroke-width="2" marker-end="url(#deck-arr-gn)"/>
+                  <text x="194" y="125" fill="rgba(255,255,255,0.2)" text-anchor="middle" font-size="9" font-family="system-ui">shift left</text>
+                  <text x="350" y="125" fill="rgba(255,255,255,0.2)" text-anchor="middle" font-size="9" font-family="system-ui">collapse</text>
+                  <text x="505" y="103" fill="rgba(255,255,255,0.15)" text-anchor="middle" font-size="22" font-weight="300" font-family="system-ui">+</text>
+                  <circle cx="580" cy="100" r="38" fill="none" stroke="rgba(192,132,252,0.25)" stroke-width="1.5"/>
+                  <text x="580" y="95" fill="#c084fc" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">Continuous</text>
+                  <text x="580" y="107" fill="#c084fc" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">AI</text>
+                  <line x1="620" y1="100" x2="645" y2="100" stroke="rgba(251,191,36,0.4)" stroke-width="1.5" marker-end="url(#deck-arr-y)"/>
+                  <circle cx="672" cy="100" r="24" fill="none" stroke="rgba(52,211,153,0.4)" stroke-width="2"/>
+                  <circle cx="672" cy="100" r="24" fill="rgba(52,211,153,0.04)"/>
+                  <text x="672" y="97" fill="#34d399" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui">Agentic</text>
+                  <text x="672" y="108" fill="#34d399" text-anchor="middle" font-size="8" font-weight="700" font-family="system-ui">Core</text>
+                  <line x1="698" y1="100" x2="720" y2="100" stroke="rgba(110,231,183,0.4)" stroke-width="1.5" marker-end="url(#deck-arr-em)"/>
+                  <path d="M 696,120 Q 696,148 628,150 Q 558,148 556,125" fill="none" stroke="rgba(244,114,182,0.2)" stroke-width="1" stroke-dasharray="4,3"/>
+                  <text x="400" y="190" fill="rgba(255,255,255,0.3)" text-anchor="middle" font-size="11" font-family="system-ui">One big loop → one small loop → two coupled loops running autonomously</text>
+                </svg>
+              </div>
+
+              <p class="text-text-muted text-sm max-w-xl mx-auto">
+                Every era compresses the feedback loop. Agentic DevOps collapses it into a tight core where research, planning, and implementation happen in one spin — with Continuous AI feeding it ideas.
+              </p>
+            </div>
+          )}
+
+          {/* Collapse Slide — with the collapsed loop SVG */}
+          {slide.type === 'collapse' && (
+            <div class="max-w-4xl mx-auto w-full">
+              <span class="inline-block font-mono text-accent-green text-xs sm:text-sm tracking-wider mb-4 opacity-80">{slide.label}</span>
+              <h2 class="text-2xl sm:text-3xl md:text-5xl font-heading font-bold text-text-primary mb-3 leading-tight">{slide.heading}</h2>
+              <p class="text-text-secondary text-sm sm:text-base mb-6 max-w-2xl">
+                What a high-performing developer does in <strong class="text-text-primary">6 hours</strong>, an agentic workflow does in <strong class="text-accent-green">30 minutes</strong>.
+                The DevOps loop collapses into a tight core. Ideas flow in, tested artifacts flow out.
+              </p>
+              <div class="overflow-x-auto">
+                <svg viewBox="0 0 800 280" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[700px] mx-auto">
+                  <defs>
+                    <marker id="col-arr-gn" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#34d399"/>
+                    </marker>
+                    <marker id="col-arr-y" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#fbbf24"/>
+                    </marker>
+                    <marker id="col-arr-em" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#6ee7b7"/>
+                    </marker>
+                    <radialGradient id="col-cg" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#34d399" stop-opacity="0.1"/>
+                      <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+                    </radialGradient>
+                  </defs>
+                  {/* Ideas */}
+                  <text x="75" y="35" fill="#fbbf24" text-anchor="middle" font-size="13" font-weight="700" font-family="system-ui">💡 IDEAS</text>
+                  <rect x="15" y="48" width="120" height="26" rx="6" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.3)" stroke-width="1"/>
+                  <text x="75" y="66" fill="#fbbf24" text-anchor="middle" font-size="10" font-family="system-ui">"Refactor auth"</text>
+                  <rect x="15" y="80" width="120" height="26" rx="6" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.3)" stroke-width="1"/>
+                  <text x="75" y="98" fill="#fbbf24" text-anchor="middle" font-size="10" font-family="system-ui">"Add caching"</text>
+                  <rect x="15" y="112" width="120" height="26" rx="6" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.3)" stroke-width="1"/>
+                  <text x="75" y="130" fill="#fbbf24" text-anchor="middle" font-size="10" font-family="system-ui">"Fix perf issue"</text>
+                  <rect x="15" y="144" width="120" height="26" rx="6" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.3)" stroke-width="1"/>
+                  <text x="75" y="162" fill="#fbbf24" text-anchor="middle" font-size="10" font-family="system-ui">"New endpoints"</text>
+                  {/* Arrows to core */}
+                  <line x1="140" y1="100" x2="278" y2="122" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#col-arr-y)" opacity="0.4"/>
+                  <line x1="140" y1="125" x2="278" y2="132" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#col-arr-y)" opacity="0.4"/>
+                  <line x1="140" y1="135" x2="278" y2="135" stroke="#fbbf24" stroke-width="2" marker-end="url(#col-arr-y)"/>
+                  <line x1="140" y1="155" x2="278" y2="142" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#col-arr-y)" opacity="0.4"/>
+                  {/* Core */}
+                  <circle cx="400" cy="135" r="100" fill="url(#col-cg)"/>
+                  <circle cx="400" cy="135" r="85" fill="none" stroke="rgba(52,211,153,0.3)" stroke-width="2"/>
+                  <g transform="translate(400, 135)">
+                    <g transform="translate(0, -52)">
+                      <rect x="-42" y="-14" width="84" height="28" rx="14" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.4)" stroke-width="1.5"/>
+                      <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">🔍 Research</text>
+                    </g>
+                    <g transform="translate(46, 26)">
+                      <rect x="-34" y="-14" width="68" height="28" rx="14" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.4)" stroke-width="1.5"/>
+                      <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">📋 Plan</text>
+                    </g>
+                    <g transform="translate(-46, 26)">
+                      <rect x="-44" y="-14" width="88" height="28" rx="14" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.4)" stroke-width="1.5"/>
+                      <text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">⚡ Implement</text>
+                    </g>
+                    <path d="M 28,-40 Q 52,-16 48,10" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#col-arr-gn)"/>
+                    <path d="M 28,40 Q 0,52 -28,40" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#col-arr-gn)"/>
+                    <path d="M -48,10 Q -52,-16 -28,-40" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#col-arr-gn)"/>
+                    <text x="0" y="-10" fill="rgba(52,211,153,0.3)" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">TIGHT</text>
+                    <text x="0" y="2" fill="rgba(52,211,153,0.3)" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">LOOP</text>
+                  </g>
+                  {/* Arrows from core */}
+                  <line x1="522" y1="122" x2="640" y2="100" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#col-arr-em)" opacity="0.4"/>
+                  <line x1="522" y1="132" x2="640" y2="125" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#col-arr-em)" opacity="0.4"/>
+                  <line x1="522" y1="135" x2="640" y2="135" stroke="#6ee7b7" stroke-width="2" marker-end="url(#col-arr-em)"/>
+                  <line x1="522" y1="142" x2="640" y2="155" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#col-arr-em)" opacity="0.4"/>
+                  {/* Artifacts */}
+                  <text x="715" y="35" fill="#6ee7b7" text-anchor="middle" font-size="13" font-weight="700" font-family="system-ui">📦 ARTIFACTS</text>
+                  <rect x="655" y="48" width="120" height="26" rx="6" fill="rgba(110,231,183,0.06)" stroke="rgba(110,231,183,0.3)" stroke-width="1"/>
+                  <text x="715" y="66" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Tested PR #142</text>
+                  <rect x="655" y="80" width="120" height="26" rx="6" fill="rgba(110,231,183,0.06)" stroke="rgba(110,231,183,0.3)" stroke-width="1"/>
+                  <text x="715" y="98" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Deployed v2.3.1</text>
+                  <rect x="655" y="112" width="120" height="26" rx="6" fill="rgba(110,231,183,0.06)" stroke="rgba(110,231,183,0.3)" stroke-width="1"/>
+                  <text x="715" y="130" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Perf fix shipped</text>
+                  <rect x="655" y="144" width="120" height="26" rx="6" fill="rgba(110,231,183,0.06)" stroke="rgba(110,231,183,0.3)" stroke-width="1"/>
+                  <text x="715" y="162" fill="#6ee7b7" text-anchor="middle" font-size="10" font-family="system-ui">Docs updated</text>
+                  {/* Feedback */}
+                  <path d="M 660,210 Q 660,260 400,270 Q 140,260 135,210" fill="none" stroke="rgba(244,114,182,0.3)" stroke-width="1.5" stroke-dasharray="6,3"/>
+                  <text x="400" y="278" fill="rgba(244,114,182,0.5)" text-anchor="middle" font-size="10" font-weight="600" font-family="system-ui">Feedback feeds new ideas</text>
+                </svg>
+              </div>
+            </div>
+          )}
+
+          {/* Core Idea Slide — with SVG diagrams */}
+          {slide.type === 'core-idea' && (
+            <div class="max-w-5xl mx-auto w-full">
+              <span class="inline-block font-mono text-accent-green text-xs sm:text-sm tracking-wider mb-4 opacity-80">{slide.label}</span>
+              <h2 class="text-2xl sm:text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6 leading-tight">{slide.heading}</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                {/* Before — Large Loop with Gates Between */}
+                <div class="bg-white/[0.02] border border-blue-400/15 rounded-xl p-4 sm:p-6">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="font-mono text-[10px] text-blue-400 tracking-widest uppercase bg-blue-400/10 border border-blue-400/20 rounded-full px-3 py-1">Before</span>
+                    <span class="text-text-secondary text-xs">Gates between stages</span>
+                  </div>
+                  <div class="flex justify-center overflow-x-auto">
+                    <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[260px]">
+                      <defs>
+                        <marker id="ci-arr-b" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                          <polygon points="0 0, 6 2.5, 0 5" fill="#60a5fa"/>
+                        </marker>
+                      </defs>
+                      <circle cx="150" cy="150" r="115" fill="none" stroke="rgba(96,165,250,0.12)" stroke-width="1.5"/>
+                      <g transform="translate(150,150)">
+                        <g transform="translate(0,-100)"><rect x="-28" y="-12" width="56" height="24" rx="12" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/><text x="0" y="2" fill="#60a5fa" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">Plan</text></g>
+                        <g transform="translate(71,-71)"><rect x="-28" y="-12" width="56" height="24" rx="12" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/><text x="0" y="2" fill="#60a5fa" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">Code</text></g>
+                        <g transform="translate(100,0)"><rect x="-28" y="-12" width="56" height="24" rx="12" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/><text x="0" y="2" fill="#60a5fa" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">Build</text></g>
+                        <g transform="translate(71,71)"><rect x="-28" y="-12" width="56" height="24" rx="12" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/><text x="0" y="2" fill="#60a5fa" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">Test</text></g>
+                        <g transform="translate(0,100)"><rect x="-30" y="-12" width="60" height="24" rx="12" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/><text x="0" y="2" fill="#60a5fa" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">Deploy</text></g>
+                        <g transform="translate(-71,71)"><rect x="-30" y="-12" width="60" height="24" rx="12" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/><text x="0" y="2" fill="#60a5fa" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">Monitor</text></g>
+                        <g transform="translate(-100,0)"><rect x="-28" y="-12" width="56" height="24" rx="12" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/><text x="0" y="2" fill="#60a5fa" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">Review</text></g>
+                        <g transform="translate(-71,-71)"><rect x="-32" y="-12" width="64" height="24" rx="12" fill="rgba(96,165,250,0.08)" stroke="rgba(96,165,250,0.35)" stroke-width="1.5"/><text x="0" y="2" fill="#60a5fa" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">Operate</text></g>
+                        {/* Arrows */}
+                        <path d="M 22,-96 Q 48,-90 60,-78" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#ci-arr-b)"/>
+                        <path d="M 90,-60 Q 98,-38 98,-14" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#ci-arr-b)"/>
+                        <path d="M 98,14 Q 98,38 90,60" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#ci-arr-b)"/>
+                        <path d="M 60,78 Q 48,90 22,96" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#ci-arr-b)"/>
+                        <path d="M -22,96 Q -48,90 -60,78" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#ci-arr-b)"/>
+                        <path d="M -90,60 Q -98,38 -98,14" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#ci-arr-b)"/>
+                        <path d="M -98,-14 Q -98,-38 -90,-60" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#ci-arr-b)"/>
+                        <path d="M -60,-78 Q -48,-90 -22,-96" fill="none" stroke="rgba(96,165,250,0.4)" stroke-width="1.2" marker-end="url(#ci-arr-b)"/>
+                        {/* Gates (diamonds) */}
+                        <g transform="translate(42,-88)"><rect x="-7" y="-7" width="14" height="14" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/></g>
+                        <g transform="translate(90,-38)"><rect x="-7" y="-7" width="14" height="14" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/></g>
+                        <g transform="translate(90,38)"><rect x="-7" y="-7" width="14" height="14" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/></g>
+                        <g transform="translate(42,88)"><rect x="-7" y="-7" width="14" height="14" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/></g>
+                        <g transform="translate(-42,88)"><rect x="-7" y="-7" width="14" height="14" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/></g>
+                        <g transform="translate(-90,38)"><rect x="-7" y="-7" width="14" height="14" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/></g>
+                        <g transform="translate(-90,-38)"><rect x="-7" y="-7" width="14" height="14" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/></g>
+                        <g transform="translate(-42,-88)"><rect x="-7" y="-7" width="14" height="14" rx="2" transform="rotate(45)" fill="#fbbf24" opacity="0.25" stroke="#fbbf24" stroke-width="1"/></g>
+                        <text x="0" y="-4" fill="rgba(96,165,250,0.3)" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">LARGE</text>
+                        <text x="0" y="8" fill="rgba(96,165,250,0.3)" text-anchor="middle" font-size="9" font-weight="700" font-family="system-ui">LOOP</text>
+                      </g>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* After — Agentic DevOps with Gates Inside */}
+                <div class="bg-white/[0.02] border border-accent-green/20 rounded-xl p-4 sm:p-6 relative">
+                  <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-accent-green/[0.03] to-transparent pointer-events-none"></div>
+                  <div class="relative">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="font-mono text-[10px] text-accent-green tracking-widest uppercase bg-accent-green/10 border border-accent-green/20 rounded-full px-3 py-1">Now</span>
+                      <span class="text-text-secondary text-xs">Gates inside the loop</span>
+                    </div>
+                    <div class="flex justify-center overflow-x-auto">
+                      <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[260px]">
+                        <defs>
+                          <marker id="ci-arr-gn" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                            <polygon points="0 0, 6 2.5, 0 5" fill="#34d399"/>
+                          </marker>
+                          <radialGradient id="ci-glow" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#34d399" stop-opacity="0.1"/>
+                            <stop offset="60%" stop-color="#34d399" stop-opacity="0.03"/>
+                            <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+                          </radialGradient>
+                        </defs>
+                        <circle cx="150" cy="140" r="125" fill="url(#ci-glow)"/>
+                        <circle cx="150" cy="140" r="85" fill="none" stroke="rgba(52,211,153,0.3)" stroke-width="2.5"/>
+                        <g transform="translate(150, 140)">
+                          <g transform="translate(0, -55)"><rect x="-34" y="-13" width="68" height="26" rx="13" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/><text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">🔍 Research</text></g>
+                          <g transform="translate(48, 28)"><rect x="-27" y="-13" width="54" height="26" rx="13" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/><text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">📋 Plan</text></g>
+                          <g transform="translate(-48, 28)"><rect x="-36" y="-13" width="72" height="26" rx="13" fill="rgba(52,211,153,0.1)" stroke="rgba(52,211,153,0.45)" stroke-width="1.5"/><text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="10" font-weight="700" font-family="system-ui">⚡ Implement</text></g>
+                          {/* Arrows */}
+                          <path d="M 28,-44 Q 52,-22 50,10" fill="none" stroke="rgba(52,211,153,0.5)" stroke-width="1.5" marker-end="url(#ci-arr-gn)"/>
+                          <path d="M 32,42 Q 0,56 -32,42" fill="none" stroke="rgba(52,211,153,0.5)" stroke-width="1.5" marker-end="url(#ci-arr-gn)"/>
+                          <path d="M -50,10 Q -52,-22 -28,-44" fill="none" stroke="rgba(52,211,153,0.5)" stroke-width="1.5" marker-end="url(#ci-arr-gn)"/>
+                          {/* Gates INSIDE */}
+                          <g transform="translate(46,-18)"><rect x="-8" y="-8" width="16" height="16" rx="2" transform="rotate(45)" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/><text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="6" font-weight="700" font-family="system-ui">🛡️</text></g>
+                          <g transform="translate(0,50)"><rect x="-8" y="-8" width="16" height="16" rx="2" transform="rotate(45)" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/><text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="6" font-weight="700" font-family="system-ui">🛡️</text></g>
+                          <g transform="translate(-46,-18)"><rect x="-8" y="-8" width="16" height="16" rx="2" transform="rotate(45)" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/><text x="0" y="2" fill="#34d399" text-anchor="middle" font-size="6" font-weight="700" font-family="system-ui">🛡️</text></g>
+                          <text x="0" y="-14" fill="rgba(52,211,153,0.3)" text-anchor="middle" font-size="8" font-weight="800" font-family="system-ui">AGENTIC</text>
+                          <text x="0" y="-3" fill="rgba(52,211,153,0.3)" text-anchor="middle" font-size="8" font-weight="800" font-family="system-ui">DEVOPS</text>
+                        </g>
+                        {/* Enablement labels */}
+                        <g transform="translate(150, 22)"><rect x="-48" y="-9" width="96" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">📄 Copilot Instructions</text></g>
+                        <line x1="150" y1="31" x2="150" y2="70" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+                        <g transform="translate(265, 80)"><rect x="-36" y="-9" width="72" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">🪝 Agent Hooks</text></g>
+                        <line x1="235" y1="86" x2="205" y2="105" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+                        <g transform="translate(150, 268)"><rect x="-42" y="-9" width="84" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">⚙️ CI/CD Pipeline</text></g>
+                        <line x1="150" y1="259" x2="150" y2="215" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+                        <g transform="translate(35, 80)"><rect x="-33" y="-9" width="66" height="18" rx="9" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.2)" stroke-width="1"/><text x="0" y="3" fill="rgba(52,211,153,0.7)" text-anchor="middle" font-size="7" font-weight="600" font-family="system-ui">🧪 Test Suites</text></g>
+                        <line x1="65" y1="86" x2="95" y2="105" stroke="rgba(52,211,153,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-5 flex items-start gap-3 bg-white/[0.02] border border-accent-green/10 rounded-xl p-4">
+                <span class="text-xl shrink-0">💡</span>
+                <p class="text-text-secondary text-sm leading-relaxed">
+                  The gates didn't disappear — they moved <em>inside</em>. The enablement layer wraps the tiny loop and gives those gates teeth. That's Agentic DevOps.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Principles Slide */}
+          {slide.type === 'principles' && (
+            <div class="max-w-4xl mx-auto w-full">
+              <span class="inline-block font-mono text-accent-green text-xs sm:text-sm tracking-wider mb-4 opacity-80">{slide.label}</span>
+              <h2 class="text-2xl sm:text-3xl md:text-5xl font-heading font-bold text-text-primary mb-8 leading-tight">{slide.heading}</h2>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {beliefs.map((b) => (
+                  <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-5 sm:p-6">
+                    <span class="text-2xl mb-2 block">{b.icon}</span>
+                    <h3 class="text-sm sm:text-base font-heading font-semibold text-text-primary mb-1">{b.title}</h3>
+                    <p class="text-text-muted text-xs sm:text-sm leading-relaxed">{b.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Four Layers Slide */}
+          {slide.type === 'layers' && (
+            <div class="max-w-4xl mx-auto w-full">
+              <span class="inline-block font-mono text-accent-green text-xs sm:text-sm tracking-wider mb-4 opacity-80">{slide.label}</span>
+              <h2 class="text-2xl sm:text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6 leading-tight">{slide.heading}</h2>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {layers.map((l) => (
+                  <div class="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-5">
+                    <div class="flex items-center gap-2 mb-2">
+                      <span class={`font-mono text-[10px] tracking-widest uppercase border rounded-full px-2.5 py-0.5 ${l.bgClass} ${l.colorClass}`}>Layer {l.num}</span>
+                      <h3 class={`font-heading font-semibold text-sm ${l.colorClass}`}>{l.name}</h3>
+                    </div>
+                    <p class="text-text-muted text-xs leading-relaxed mb-3">{l.desc}</p>
+                    <div class="flex flex-wrap gap-1.5">
+                      {l.items.map((item) => (
+                        <span class="text-xs text-text-secondary bg-white/[0.04] border border-white/[0.06] rounded-md px-2 py-0.5">{item}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Ecosystem Slide */}
+          {slide.type === 'ecosystem' && (
+            <div class="max-w-4xl mx-auto w-full">
+              <span class="inline-block font-mono text-accent-green text-xs sm:text-sm tracking-wider mb-4 opacity-80">{slide.label}</span>
+              <h2 class="text-2xl sm:text-3xl md:text-5xl font-heading font-bold text-text-primary mb-4 leading-tight">{slide.heading}</h2>
+              <p class="text-text-secondary text-sm sm:text-base mb-8">Real tools used daily to build, govern, and ship with AI agents.</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {tools.map((t) => (
+                  <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
+                    <span class="font-mono text-[10px] text-accent-green/70 tracking-widest uppercase">{t.cat}</span>
+                    <h3 class="font-heading font-semibold text-text-primary text-sm mt-1 mb-1">{t.name}</h3>
+                    <p class="text-text-muted text-xs leading-relaxed">{t.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* CTA Slide */}
+          {slide.type === 'cta' && (
+            <div class="text-center max-w-3xl mx-auto">
+              <span class="inline-block font-mono text-accent-green text-sm tracking-wider mb-6 opacity-80">// let's build</span>
+              <h2 class="text-3xl sm:text-4xl md:text-6xl font-heading font-bold text-text-primary mb-6">
+                Ready to Go <span class="deck-gradient">Agentic?</span>
+              </h2>
+              <p class="text-text-secondary text-base sm:text-lg mb-10 leading-relaxed max-w-xl mx-auto">
+                I help engineering teams adopt agentic practices — from GitHub Copilot rollouts to custom agent architectures with production-grade governance.
+              </p>
+              <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="/consulting#book" class="inline-block bg-accent-green text-bg-void font-semibold px-8 py-3 rounded-lg hover:opacity-90 transition-opacity text-sm sm:text-base">
+                  Book a Free Consultation
+                </a>
+                <a href="/agentic-devops" class="inline-flex items-center gap-2 text-text-muted hover:text-accent-green text-sm font-mono transition-colors">
+                  Explore the full page →
+                </a>
+              </div>
+              <p class="mt-12 text-text-muted/50 text-xs font-mono">
+                <a href="/" class="hover:text-accent-green transition-colors">htek.dev</a> · <a href="https://github.com/htekdev" class="hover:text-accent-green transition-colors" target="_blank" rel="noopener noreferrer">@htekdev</a>
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+
+    <!-- Navigation Arrows -->
+    <button
+      id="btn-prev"
+      class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-50 p-2 sm:p-3 rounded-full bg-white/5 border border-white/10 text-text-muted hover:text-accent-green hover:border-accent-green/30 transition-all opacity-0 pointer-events-none"
+      aria-label="Previous slide"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+    </button>
+    <button
+      id="btn-next"
+      class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-50 p-2 sm:p-3 rounded-full bg-white/5 border border-white/10 text-text-muted hover:text-accent-green hover:border-accent-green/30 transition-all"
+      aria-label="Next slide"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+    </button>
+
+    <!-- Dot Navigation -->
+    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
+      {slides.map((_, i) => (
+        <button
+          class={`dot w-2 h-2 rounded-full transition-all duration-300 ${i === 0 ? 'bg-accent-green w-6' : 'bg-white/20 hover:bg-white/40'}`}
+          data-dot={i}
+          aria-label={`Go to slide ${i + 1}`}
+        ></button>
+      ))}
+    </div>
+  </div>
+
+  <script is:inline define:vars={{ totalSlides: slides.length }}>
+    (function() {
+      let current = 0;
+      const total = totalSlides;
+      const container = document.getElementById('slides-container');
+      const allSlides = container.querySelectorAll('.slide');
+      const dots = document.querySelectorAll('.dot');
+      const progress = document.getElementById('progress-bar');
+      const counter = document.getElementById('slide-counter');
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      const btnFs = document.getElementById('btn-fullscreen');
+
+      function goTo(index) {
+        if (index < 0 || index >= total) return;
+        const dir = index > current ? 1 : -1;
+
+        allSlides.forEach((slide, i) => {
+          slide.classList.remove('opacity-100', 'translate-x-0', 'opacity-0', 'translate-x-full', '-translate-x-full', 'pointer-events-none');
+          if (i === index) {
+            slide.classList.add('opacity-100', 'translate-x-0');
+            slide.classList.remove('pointer-events-none');
+          } else if (i < index) {
+            slide.classList.add('opacity-0', '-translate-x-full', 'pointer-events-none');
+          } else {
+            slide.classList.add('opacity-0', 'translate-x-full', 'pointer-events-none');
+          }
+        });
+
+        dots.forEach((dot, i) => {
+          if (i === index) {
+            dot.classList.remove('bg-white/20', 'hover:bg-white/40', 'w-2');
+            dot.classList.add('bg-accent-green', 'w-6');
+          } else {
+            dot.classList.remove('bg-accent-green', 'w-6');
+            dot.classList.add('bg-white/20', 'hover:bg-white/40', 'w-2');
+          }
+        });
+
+        progress.style.width = ((index + 1) / total * 100) + '%';
+        counter.textContent = (index + 1) + ' / ' + total;
+
+        btnPrev.classList.toggle('opacity-0', index === 0);
+        btnPrev.classList.toggle('pointer-events-none', index === 0);
+        btnNext.classList.toggle('opacity-0', index === total - 1);
+        btnNext.classList.toggle('pointer-events-none', index === total - 1);
+
+        current = index;
+      }
+
+      // Keyboard
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+        else if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+        else if (e.key === 'End') { e.preventDefault(); goTo(total - 1); }
+      });
+
+      // Buttons
+      btnPrev.addEventListener('click', () => goTo(current - 1));
+      btnNext.addEventListener('click', () => goTo(current + 1));
+
+      // Dots
+      dots.forEach((dot) => {
+        dot.addEventListener('click', () => goTo(parseInt(dot.dataset.dot)));
+      });
+
+      // Touch / Swipe
+      let touchStartX = 0;
+      let touchStartY = 0;
+      document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, { passive: true });
+      document.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        const dy = e.changedTouches[0].screenY - touchStartY;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+          if (dx < 0) goTo(current + 1);
+          else goTo(current - 1);
+        }
+      }, { passive: true });
+
+      // Fullscreen
+      btnFs.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen();
+        }
+      });
+
+      // Init
+      goTo(0);
+    })();
+  </script>
+</BaseLayout>
+
+<style>
+  .deck-gradient {
+    background: linear-gradient(135deg, #34d399, #22d3ee);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .slide {
+    will-change: transform, opacity;
+  }
+
+  /* Override body scroll since this is fullscreen */
+  html, body {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  /* Slight padding on slides for the nav bar */
+  .slide {
+    padding-top: 3.5rem;
+    padding-bottom: 3rem;
+  }
+
+  @media (max-width: 640px) {
+    .slide {
+      padding-top: 3rem;
+      padding-bottom: 2.5rem;
+      overflow-y: auto;
+      align-items: flex-start;
+    }
+  }
+</style>
