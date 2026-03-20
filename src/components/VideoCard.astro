@@ -42,11 +42,18 @@ const formattedDuration = formatDuration(durationSeconds);
 const lengthLabel = durationSeconds < 60 ? 'Short' : durationSeconds < 600 ? '' : 'Deep Dive';
 ---
 
-<a
-  href={`https://www.youtube.com/watch?v=${videoId}`}
-  target="_blank"
-  rel="noopener noreferrer"
-  class="block group"
+<button
+  type="button"
+  class="block group w-full text-left"
+  data-video-id={videoId}
+  data-title={title}
+  data-thumbnail={thumbnail}
+  data-views={formattedViews}
+  data-date={formattedDate}
+  data-duration={formattedDuration}
+  data-published-at={publishedAt}
+  data-related-article={relatedArticle || ''}
+  aria-label={`Play ${title}`}
 >
   <div class="bg-bg-surface border border-border-muted rounded-xl overflow-hidden transition-all duration-300 hover:border-accent-cyan/30 hover:-translate-y-1">
     <!-- Thumbnail -->
@@ -110,4 +117,4 @@ const lengthLabel = durationSeconds < 60 ? 'Short' : durationSeconds < 600 ? '' 
       )}
     </div>
   </div>
-</a>
+</button>

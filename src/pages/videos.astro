@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import VideoPlayerModal from '../components/VideoPlayerModal.astro';
 import VideoHero from '../components/VideoHero.astro';
 import VideoSection from '../components/VideoSection.astro';
 import videoData from '../data/youtube-videos.json';
@@ -87,6 +88,7 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
     </div>
   </main>
   <Footer />
+  <VideoPlayerModal />
 </BaseLayout>
 
 <script>
@@ -205,4 +207,188 @@ const deepDiveCount = allVideos.filter(v => v.durationSeconds >= 600).length;
 
     applyFilters();
   });
+
+  // ================================================================
+  // VIDEO PLAYER MODAL
+  // ================================================================
+
+  const modal = document.getElementById('video-modal')!;
+  const modalBackdrop = document.getElementById('modal-backdrop')!;
+  const modalClose = document.getElementById('modal-close')!;
+  const modalPrev = document.getElementById('modal-prev')!;
+  const modalNext = document.getElementById('modal-next')!;
+  const modalFacade = document.getElementById('modal-facade')!;
+  const modalThumbnail = document.getElementById('modal-thumbnail') as HTMLImageElement;
+  const modalIframeContainer = document.getElementById('modal-iframe-container')!;
+  const modalTitle = document.getElementById('modal-title')!;
+  const modalDate = document.getElementById('modal-date')!;
+  const modalViews = document.getElementById('modal-views')!;
+  const modalDuration = document.getElementById('modal-duration')!;
+  const modalCounter = document.getElementById('modal-counter')!;
+  const modalYtLink = document.getElementById('modal-yt-link') as HTMLAnchorElement;
+  const modalArticleLink = document.getElementById('modal-article-link') as HTMLAnchorElement;
+
+  let currentVideoIndex = 0;
+  let filteredVideos: HTMLButtonElement[] = [];
+  let triggerButton: HTMLButtonElement | null = null;
+
+  function getFilteredVideos(): HTMLButtonElement[] {
+    const visible: HTMLButtonElement[] = [];
+    document.querySelectorAll<HTMLElement>('#topics-root .video-card-wrapper').forEach(card => {
+      if (card.style.display === 'none') return;
+      const section = card.closest('.topic-section') as HTMLElement | null;
+      if (section && section.style.display === 'none') return;
+      const btn = card.querySelector<HTMLButtonElement>('button[data-video-id]');
+      if (btn) visible.push(btn);
+    });
+    return visible;
+  }
+
+  function populateModal(btn: HTMLButtonElement) {
+    const videoId = btn.dataset.videoId ?? '';
+    const title = btn.dataset.title ?? '';
+    const views = btn.dataset.views ?? '';
+    const date = btn.dataset.date ?? '';
+    const duration = btn.dataset.duration ?? '';
+    const relatedArticle = btn.dataset.relatedArticle ?? '';
+
+    modalTitle.textContent = title;
+    modalDate.textContent = date;
+    modalViews.textContent = `${views} views`;
+    modalDuration.textContent = duration;
+    modalCounter.textContent = `${currentVideoIndex + 1} of ${filteredVideos.length}`;
+
+    // Use HD thumbnail for the modal facade, fall back to card thumbnail
+    const hdThumb = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+    const fallbackThumb = btn.dataset.thumbnail ?? '';
+    modalThumbnail.onerror = () => { modalThumbnail.onerror = null; modalThumbnail.src = fallbackThumb; };
+    modalThumbnail.src = hdThumb;
+    modalThumbnail.alt = title;
+
+    modalYtLink.href = `https://www.youtube.com/watch?v=${videoId}`;
+
+    if (relatedArticle) {
+      modalArticleLink.href = relatedArticle;
+      modalArticleLink.classList.remove('hidden');
+    } else {
+      modalArticleLink.classList.add('hidden');
+    }
+
+    // Reset to facade (remove any playing iframe)
+    modalFacade.classList.remove('hidden');
+    modalIframeContainer.classList.add('hidden');
+    modalIframeContainer.innerHTML = '';
+
+    // Update URL hash for deep linking
+    history.replaceState(null, '', `#video=${videoId}`);
+
+    // Show/hide nav arrows
+    const hasMultiple = filteredVideos.length > 1;
+    modalPrev.style.display = hasMultiple ? '' : 'none';
+    modalNext.style.display = hasMultiple ? '' : 'none';
+  }
+
+  function playVideo() {
+    const btn = filteredVideos[currentVideoIndex];
+    if (!btn) return;
+    const videoId = btn.dataset.videoId ?? '';
+    const title = btn.dataset.title ?? '';
+
+    modalFacade.classList.add('hidden');
+    modalIframeContainer.classList.remove('hidden');
+    modalIframeContainer.innerHTML = `<iframe
+      src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1"
+      class="w-full h-full"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen
+      title="${title.replace(/"/g, '&quot;')}"
+    ></iframe>`;
+  }
+
+  function openModal(btn: HTMLButtonElement) {
+    filteredVideos = getFilteredVideos();
+    currentVideoIndex = filteredVideos.indexOf(btn);
+    if (currentVideoIndex === -1) currentVideoIndex = 0;
+    triggerButton = btn;
+
+    populateModal(btn);
+    playVideo();
+
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    modalClose.focus();
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+
+    // Stop any playing video
+    modalIframeContainer.innerHTML = '';
+    modalIframeContainer.classList.add('hidden');
+    modalFacade.classList.remove('hidden');
+
+    // Clear URL hash
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+
+    // Return focus to the card that opened the modal
+    triggerButton?.focus();
+    triggerButton = null;
+  }
+
+  function navigateVideo(direction: number) {
+    if (filteredVideos.length <= 1) return;
+    // Rebuild list in case filters changed while modal was open
+    filteredVideos = getFilteredVideos();
+    if (filteredVideos.length === 0) { closeModal(); return; }
+    currentVideoIndex = (currentVideoIndex + direction + filteredVideos.length) % filteredVideos.length;
+    populateModal(filteredVideos[currentVideoIndex]);
+    playVideo();
+  }
+
+  // Card click → open modal (event delegation on the video grid)
+  document.getElementById('topics-root')?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-video-id]');
+    if (btn) openModal(btn);
+  });
+
+  // Facade play button → load iframe
+  modalFacade.addEventListener('click', playVideo);
+
+  // Close triggers
+  modalClose.addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', closeModal);
+
+  // Prev / Next navigation
+  modalPrev.addEventListener('click', () => navigateVideo(-1));
+  modalNext.addEventListener('click', () => navigateVideo(1));
+
+  // Keyboard shortcuts (only when modal is open)
+  document.addEventListener('keydown', (e) => {
+    if (!modal.classList.contains('open')) return;
+    switch (e.key) {
+      case 'Escape':
+        closeModal();
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        navigateVideo(-1);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        navigateVideo(1);
+        break;
+    }
+  });
+
+  // Deep link: open modal if URL has #video=VIDEO_ID
+  (function checkDeepLink() {
+    const hash = window.location.hash;
+    const match = hash.match(/^#video=(.+)$/);
+    if (!match) return;
+    const videoId = match[1];
+    const btn = document.querySelector<HTMLButtonElement>(`button[data-video-id="${videoId.replace(/"/g, '\\"')}"]`);
+    if (btn) openModal(btn);
+  })();
 </script>
