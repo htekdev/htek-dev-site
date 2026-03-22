@@ -2,11 +2,11 @@
   "channelId": "UClQ3i2ynrWV5tZJ6mHbVjWQ",
   "channelTitle": "htekdev",
   "channelUrl": "https://www.youtube.com/@htekdev",
-  "lastUpdated": "2026-03-15T09:06:33.032Z",
+  "lastUpdated": "2026-03-22T09:05:55.308Z",
   "stats": {
-    "totalVideos": 96,
-    "totalViews": 25653,
-    "subscribers": 79
+    "totalVideos": 118,
+    "totalViews": 32821,
+    "subscribers": 88
   },
   "topics": [
     {
@@ -16,18 +16,50 @@
       "icon": "🛡️",
       "videos": [
         {
+          "videoId": "D0N1WngYvk0",
+          "title": "What Is Agentic DevOps and Why It Matters | Scaling to 100+ Developers Without Risk",
+          "thumbnail": "https://i.ytimg.com/vi/D0N1WngYvk0/mqdefault.jpg",
+          "publishedAt": "2026-03-19T21:00:13Z",
+          "stats": {
+            "viewCount": 1,
+            "likeCount": 0
+          },
+          "duration": "PT2M44S",
+          "durationSeconds": 164,
+          "lengthCategory": "standard",
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": "/articles/agentic-devops-next-evolution-of-shift-left"
+        },
+        {
+          "videoId": "8LJJS415TfU",
+          "title": "Agentic DevOps: Building Agent-Proof Architecture That Lets You Sleep at Night",
+          "thumbnail": "https://i.ytimg.com/vi/8LJJS415TfU/mqdefault.jpg",
+          "publishedAt": "2026-03-15T15:00:22Z",
+          "stats": {
+            "viewCount": 7,
+            "likeCount": 1
+          },
+          "duration": "PT25M44S",
+          "durationSeconds": 1544,
+          "lengthCategory": "deep-dive",
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": "/articles/agentic-devops-next-evolution-of-shift-left"
+        },
+        {
           "videoId": "8PeesNZR58o",
           "title": "The Two Pillars of Agentic DevOps Explained | Why DevOps for Agents is the Missing Piece",
           "thumbnail": "https://i.ytimg.com/vi/8PeesNZR58o/mqdefault.jpg",
           "publishedAt": "2026-03-10T21:00:09Z",
           "stats": {
-            "viewCount": 4,
+            "viewCount": 8,
             "likeCount": 0
           },
           "duration": "PT2M8S",
           "durationSeconds": 128,
           "lengthCategory": "standard",
-          "isNew": true,
+          "isNew": false,
           "isTrending": false,
           "relatedArticle": "/articles/agentic-devops-next-evolution-of-shift-left"
         },
@@ -37,7 +69,7 @@
           "thumbnail": "https://i.ytimg.com/vi/0WUvkBqs368/mqdefault.jpg",
           "publishedAt": "2026-03-08T00:00:01Z",
           "stats": {
-            "viewCount": 274,
+            "viewCount": 278,
             "likeCount": 2
           },
           "duration": "PT33S",
@@ -69,7 +101,7 @@
           "thumbnail": "https://i.ytimg.com/vi/xunAvT_0F4A/mqdefault.jpg",
           "publishedAt": "2026-03-07T20:59:37Z",
           "stats": {
-            "viewCount": 679,
+            "viewCount": 682,
             "likeCount": 5
           },
           "duration": "PT54S",
@@ -85,7 +117,7 @@
           "thumbnail": "https://i.ytimg.com/vi/de-IOKrD630/mqdefault.jpg",
           "publishedAt": "2026-03-07T19:00:40Z",
           "stats": {
-            "viewCount": 708,
+            "viewCount": 709,
             "likeCount": 0
           },
           "duration": "PT38S",
@@ -101,7 +133,7 @@
           "thumbnail": "https://i.ytimg.com/vi/Pz-rx3ppq1w/mqdefault.jpg",
           "publishedAt": "2026-03-07T00:00:33Z",
           "stats": {
-            "viewCount": 743,
+            "viewCount": 754,
             "likeCount": 5
           },
           "duration": "PT24S",
@@ -117,7 +149,7 @@
           "thumbnail": "https://i.ytimg.com/vi/J8yjFXULBms/mqdefault.jpg",
           "publishedAt": "2026-03-06T19:00:18Z",
           "stats": {
-            "viewCount": 699,
+            "viewCount": 702,
             "likeCount": 6
           },
           "duration": "PT33S",
@@ -149,7 +181,7 @@
           "thumbnail": "https://i.ytimg.com/vi/Lx2vejBZQx0/mqdefault.jpg",
           "publishedAt": "2026-03-05T19:00:18Z",
           "stats": {
-            "viewCount": 847,
+            "viewCount": 848,
             "likeCount": 3
           },
           "duration": "PT33S",
@@ -181,7 +213,7 @@
           "thumbnail": "https://i.ytimg.com/vi/CX8b-qQTmc8/mqdefault.jpg",
           "publishedAt": "2026-03-02T22:00:19Z",
           "stats": {
-            "viewCount": 34,
+            "viewCount": 36,
             "likeCount": 2
           },
           "duration": "PT1M51S",
@@ -213,7 +245,7 @@
           "thumbnail": "https://i.ytimg.com/vi/WoY4QNV_iQE/mqdefault.jpg",
           "publishedAt": "2026-02-28T22:59:29Z",
           "stats": {
-            "viewCount": 3,
+            "viewCount": 4,
             "likeCount": 0
           },
           "duration": "PT1M59S",
@@ -229,7 +261,7 @@
           "thumbnail": "https://i.ytimg.com/vi/DEgqowwib7Q/mqdefault.jpg",
           "publishedAt": "2026-02-28T22:58:31Z",
           "stats": {
-            "viewCount": 657,
+            "viewCount": 665,
             "likeCount": 10
           },
           "duration": "PT56S",
@@ -293,7 +325,7 @@
           "thumbnail": "https://i.ytimg.com/vi/wQXd0exiqrs/mqdefault.jpg",
           "publishedAt": "2026-02-27T14:01:41Z",
           "stats": {
-            "viewCount": 578,
+            "viewCount": 579,
             "likeCount": 3
           },
           "duration": "PT1M12S",
@@ -309,8 +341,8 @@
           "thumbnail": "https://i.ytimg.com/vi/XDHQxOx1P38/mqdefault.jpg",
           "publishedAt": "2026-02-22T16:00:51Z",
           "stats": {
-            "viewCount": 52,
-            "likeCount": 3
+            "viewCount": 67,
+            "likeCount": 4
           },
           "duration": "PT24M17S",
           "durationSeconds": 1457,
@@ -325,7 +357,7 @@
           "thumbnail": "https://i.ytimg.com/vi/wjl1yWfQjmA/mqdefault.jpg",
           "publishedAt": "2026-02-19T00:32:15Z",
           "stats": {
-            "viewCount": 63,
+            "viewCount": 73,
             "likeCount": 3
           },
           "duration": "PT13M21S",
@@ -341,7 +373,7 @@
           "thumbnail": "https://i.ytimg.com/vi/CEwE7Xt-pGE/mqdefault.jpg",
           "publishedAt": "2026-02-19T00:00:11Z",
           "stats": {
-            "viewCount": 48,
+            "viewCount": 55,
             "likeCount": 1
           },
           "duration": "PT2M3S",
@@ -357,7 +389,7 @@
           "thumbnail": "https://i.ytimg.com/vi/025XGaW_ywA/mqdefault.jpg",
           "publishedAt": "2026-02-18T14:20:01Z",
           "stats": {
-            "viewCount": 1126,
+            "viewCount": 1127,
             "likeCount": 7
           },
           "duration": "PT36S",
@@ -373,7 +405,7 @@
           "thumbnail": "https://i.ytimg.com/vi/wRpV5KOjZEk/mqdefault.jpg",
           "publishedAt": "2026-02-17T21:01:03Z",
           "stats": {
-            "viewCount": 69,
+            "viewCount": 87,
             "likeCount": 1
           },
           "duration": "PT2M1S",
@@ -404,9 +436,41 @@
     {
       "id": "testing-quality",
       "title": "Testing & Quality",
-      "description": "Videos on testing practices, code quality, and test coverage for AI-assisted development",
+      "description": "Test coverage, specs, and quality gates for AI-generated code",
       "icon": "🧪",
       "videos": [
+        {
+          "videoId": "FRdWYfWwSO4",
+          "title": "Tests Are the Missing Middle Layer | The Key to Spec-Driven Development",
+          "thumbnail": "https://i.ytimg.com/vi/FRdWYfWwSO4/mqdefault.jpg",
+          "publishedAt": "2026-03-03T00:00:26Z",
+          "stats": {
+            "viewCount": 760,
+            "likeCount": 3
+          },
+          "duration": "PT35S",
+          "durationSeconds": 35,
+          "lengthCategory": "short",
+          "isNew": false,
+          "isTrending": true,
+          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
+        },
+        {
+          "videoId": "O90-xoLBNO8",
+          "title": "It All Starts at Tests—The Mind-Blowing DevOps Revelation 🤯",
+          "thumbnail": "https://i.ytimg.com/vi/O90-xoLBNO8/mqdefault.jpg",
+          "publishedAt": "2026-03-01T19:00:19Z",
+          "stats": {
+            "viewCount": 1354,
+            "likeCount": 3
+          },
+          "duration": "PT10S",
+          "durationSeconds": 10,
+          "lengthCategory": "short",
+          "isNew": false,
+          "isTrending": true,
+          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
+        },
         {
           "videoId": "Mb70ikOLr4c",
           "title": "Why Test Coverage is Non-Negotiable for Agentic AI Development",
@@ -437,7 +501,7 @@
           "lengthCategory": "standard",
           "isNew": false,
           "isTrending": false,
-          "relatedArticle": null
+          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
         },
         {
           "videoId": "lBPOqt84Tq0",
@@ -445,7 +509,7 @@
           "thumbnail": "https://i.ytimg.com/vi/lBPOqt84Tq0/mqdefault.jpg",
           "publishedAt": "2026-02-23T22:00:47Z",
           "stats": {
-            "viewCount": 4,
+            "viewCount": 6,
             "likeCount": 0
           },
           "duration": "PT1M35S",
@@ -461,7 +525,7 @@
           "thumbnail": "https://i.ytimg.com/vi/N-8jEhLz7MA/mqdefault.jpg",
           "publishedAt": "2026-02-22T19:00:17Z",
           "stats": {
-            "viewCount": 43,
+            "viewCount": 44,
             "likeCount": 0
           },
           "duration": "PT53S",
@@ -469,7 +533,39 @@
           "lengthCategory": "short",
           "isNew": false,
           "isTrending": false,
-          "relatedArticle": "/articles/agent-hooks-controlling-ai-codebase"
+          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
+        },
+        {
+          "videoId": "nYeplBqlMzc",
+          "title": "Why Sub-Agents Produce Higher Quality AI Output | Context Window Secrets Explained",
+          "thumbnail": "https://i.ytimg.com/vi/nYeplBqlMzc/mqdefault.jpg",
+          "publishedAt": "2026-02-19T02:20:01Z",
+          "stats": {
+            "viewCount": 3,
+            "likeCount": 0
+          },
+          "duration": "PT1M31S",
+          "durationSeconds": 91,
+          "lengthCategory": "standard",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
+        },
+        {
+          "videoId": "wPUGlp6tdHg",
+          "title": "GitHub Already Tests in Production Before Merge - Here's How",
+          "thumbnail": "https://i.ytimg.com/vi/wPUGlp6tdHg/mqdefault.jpg",
+          "publishedAt": "2026-02-17T15:01:40Z",
+          "stats": {
+            "viewCount": 42,
+            "likeCount": 0
+          },
+          "duration": "PT40S",
+          "durationSeconds": 40,
+          "lengthCategory": "short",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
         },
         {
           "videoId": "NEgY8SjQjts",
@@ -477,7 +573,7 @@
           "thumbnail": "https://i.ytimg.com/vi/NEgY8SjQjts/mqdefault.jpg",
           "publishedAt": "2026-02-16T15:00:46Z",
           "stats": {
-            "viewCount": 145,
+            "viewCount": 146,
             "likeCount": 3
           },
           "duration": "PT43S",
@@ -509,7 +605,7 @@
           "thumbnail": "https://i.ytimg.com/vi/YQ8xzNJ0kOU/mqdefault.jpg",
           "publishedAt": "2026-02-08T12:04:24Z",
           "stats": {
-            "viewCount": 5,
+            "viewCount": 6,
             "likeCount": 0
           },
           "duration": "PT27S",
@@ -517,61 +613,173 @@
           "lengthCategory": "short",
           "isNew": false,
           "isTrending": false,
-          "relatedArticle": null
+          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
+        },
+        {
+          "videoId": "pDWFzp7eYVA",
+          "title": "Coding Workflow: From Spec to Implementation Explained! #shorts",
+          "thumbnail": "https://i.ytimg.com/vi/pDWFzp7eYVA/mqdefault.jpg",
+          "publishedAt": "2026-02-08T08:03:25Z",
+          "stats": {
+            "viewCount": 8,
+            "likeCount": 0
+          },
+          "duration": "PT25S",
+          "durationSeconds": 25,
+          "lengthCategory": "short",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
+        },
+        {
+          "videoId": "Ji75MllgWaU",
+          "title": "Coder's Patience Tested: Will the App FINALLY Open? #shorts",
+          "thumbnail": "https://i.ytimg.com/vi/Ji75MllgWaU/mqdefault.jpg",
+          "publishedAt": "2026-02-06T10:04:24Z",
+          "stats": {
+            "viewCount": 8,
+            "likeCount": 0
+          },
+          "duration": "PT17S",
+          "durationSeconds": 17,
+          "lengthCategory": "short",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
         }
       ]
     },
     {
       "id": "ai-agents",
       "title": "AI Agents & Architecture",
-      "description": "Videos on agent concepts, context engineering, sub-agents, and team structures with AI",
+      "description": "Agent concepts, context engineering, sub-agents, and agent harnesses",
       "icon": "🤖",
       "videos": [
         {
-          "videoId": "OowjgdhOCFs",
-          "title": "The Spider-Man Rule of AI Development: With Great Power Comes Great Responsibility",
-          "thumbnail": "https://i.ytimg.com/vi/OowjgdhOCFs/mqdefault.jpg",
-          "publishedAt": "2026-03-14T18:00:20Z",
+          "videoId": "2oVMb8P1mJY",
+          "title": "The Most Annoying AI Coding Prompt Is Finally Dead",
+          "thumbnail": "https://i.ytimg.com/vi/2oVMb8P1mJY/mqdefault.jpg",
+          "publishedAt": "2026-03-21T23:00:03Z",
           "stats": {
-            "viewCount": 43,
-            "likeCount": 0
+            "viewCount": 333,
+            "likeCount": 5
           },
-          "duration": "PT42S",
-          "durationSeconds": 42,
+          "duration": "PT27S",
+          "durationSeconds": 27,
           "lengthCategory": "short",
           "isNew": true,
           "isTrending": false,
           "relatedArticle": null
         },
         {
-          "videoId": "PiL5i_AoRFA",
-          "title": "Technical Debt Is Actually Gaps in Your DevOps Process (Mind-Blowing Reframe)",
-          "thumbnail": "https://i.ytimg.com/vi/PiL5i_AoRFA/mqdefault.jpg",
-          "publishedAt": "2026-03-13T21:00:34Z",
+          "videoId": "eW5RWijuBgU",
+          "title": "Your Agent Hooks Are Completely Bypassable - Here's The Fix",
+          "thumbnail": "https://i.ytimg.com/vi/eW5RWijuBgU/mqdefault.jpg",
+          "publishedAt": "2026-03-21T13:01:11Z",
           "stats": {
-            "viewCount": 2,
+            "viewCount": 51,
             "likeCount": 0
           },
-          "duration": "PT2M5S",
-          "durationSeconds": 125,
+          "duration": "PT49S",
+          "durationSeconds": 49,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": "/articles/agent-hooks-controlling-ai-codebase"
+        },
+        {
+          "videoId": "0DCtQIQecNM",
+          "title": "VS Code Now Releases WEEKLY, Not Monthly - The Agentic AI Revolution Changes Everything",
+          "thumbnail": "https://i.ytimg.com/vi/0DCtQIQecNM/mqdefault.jpg",
+          "publishedAt": "2026-03-20T23:00:00Z",
+          "stats": {
+            "viewCount": 191,
+            "likeCount": 3
+          },
+          "duration": "PT41S",
+          "durationSeconds": 41,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "7sTtGs8-Uyo",
+          "title": "Why Your Agent Hooks Can Be Bypassed (And the OS-Level Fix)",
+          "thumbnail": "https://i.ytimg.com/vi/7sTtGs8-Uyo/mqdefault.jpg",
+          "publishedAt": "2026-03-20T20:41:45Z",
+          "stats": {
+            "viewCount": 5,
+            "likeCount": 0
+          },
+          "duration": "PT1M42S",
+          "durationSeconds": 102,
+          "lengthCategory": "standard",
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": "/articles/agent-hooks-controlling-ai-codebase"
+        },
+        {
+          "videoId": "GbJj9hAh8Ag",
+          "title": "VS Code Goes Weekly: The Agentic AI Revolution is Here",
+          "thumbnail": "https://i.ytimg.com/vi/GbJj9hAh8Ag/mqdefault.jpg",
+          "publishedAt": "2026-03-20T15:00:23Z",
+          "stats": {
+            "viewCount": 8,
+            "likeCount": 0
+          },
+          "duration": "PT3M39S",
+          "durationSeconds": 219,
           "lengthCategory": "standard",
           "isNew": true,
           "isTrending": false,
           "relatedArticle": null
         },
         {
-          "videoId": "roC7zjBleFk",
-          "title": "How to Modernize a 30-Year-Old Legacy System (Without Breaking Everything)",
-          "thumbnail": "https://i.ytimg.com/vi/roC7zjBleFk/mqdefault.jpg",
-          "publishedAt": "2026-03-12T21:00:54Z",
+          "videoId": "TWYQQv3ictU",
+          "title": "Agentic AI Velocity Changes Everything: Why Your DevOps Process Needs to Evolve NOW",
+          "thumbnail": "https://i.ytimg.com/vi/TWYQQv3ictU/mqdefault.jpg",
+          "publishedAt": "2026-03-17T23:00:41Z",
           "stats": {
-            "viewCount": 6,
+            "viewCount": 180,
             "likeCount": 1
           },
-          "duration": "PT2M1S",
-          "durationSeconds": 121,
+          "duration": "PT1M8S",
+          "durationSeconds": 68,
           "lengthCategory": "standard",
           "isNew": true,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "M3ez4X1YsSw",
+          "title": "Git Hooks Were the Original DevOps | Before Cloud CI/CD Existed",
+          "thumbnail": "https://i.ytimg.com/vi/M3ez4X1YsSw/mqdefault.jpg",
+          "publishedAt": "2026-03-16T18:00:21Z",
+          "stats": {
+            "viewCount": 587,
+            "likeCount": 2
+          },
+          "duration": "PT52S",
+          "durationSeconds": 52,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": true,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "OowjgdhOCFs",
+          "title": "The Spider-Man Rule of AI Development: With Great Power Comes Great Responsibility",
+          "thumbnail": "https://i.ytimg.com/vi/OowjgdhOCFs/mqdefault.jpg",
+          "publishedAt": "2026-03-14T18:00:20Z",
+          "stats": {
+            "viewCount": 419,
+            "likeCount": 0
+          },
+          "duration": "PT42S",
+          "durationSeconds": 42,
+          "lengthCategory": "short",
+          "isNew": false,
           "isTrending": false,
           "relatedArticle": null
         },
@@ -581,13 +789,13 @@
           "thumbnail": "https://i.ytimg.com/vi/qSUjwDncPwg/mqdefault.jpg",
           "publishedAt": "2026-03-11T21:00:53Z",
           "stats": {
-            "viewCount": 9,
+            "viewCount": 18,
             "likeCount": 2
           },
           "duration": "PT1M48S",
           "durationSeconds": 108,
           "lengthCategory": "standard",
-          "isNew": true,
+          "isNew": false,
           "isTrending": false,
           "relatedArticle": "/articles/agent-hooks-controlling-ai-codebase"
         },
@@ -597,31 +805,15 @@
           "thumbnail": "https://i.ytimg.com/vi/4oEeUhG6bDI/mqdefault.jpg",
           "publishedAt": "2026-03-09T21:00:05Z",
           "stats": {
-            "viewCount": 29,
+            "viewCount": 31,
             "likeCount": 0
           },
           "duration": "PT2M50S",
           "durationSeconds": 170,
           "lengthCategory": "standard",
-          "isNew": true,
+          "isNew": false,
           "isTrending": false,
           "relatedArticle": null
-        },
-        {
-          "videoId": "FRdWYfWwSO4",
-          "title": "Tests Are the Missing Middle Layer | The Key to Spec-Driven Development",
-          "thumbnail": "https://i.ytimg.com/vi/FRdWYfWwSO4/mqdefault.jpg",
-          "publishedAt": "2026-03-03T00:00:26Z",
-          "stats": {
-            "viewCount": 760,
-            "likeCount": 3
-          },
-          "duration": "PT35S",
-          "durationSeconds": 35,
-          "lengthCategory": "short",
-          "isNew": false,
-          "isTrending": true,
-          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
         },
         {
           "videoId": "x9I5EzvAQ7A",
@@ -629,7 +821,7 @@
           "thumbnail": "https://i.ytimg.com/vi/x9I5EzvAQ7A/mqdefault.jpg",
           "publishedAt": "2026-03-02T14:01:33Z",
           "stats": {
-            "viewCount": 690,
+            "viewCount": 692,
             "likeCount": 4
           },
           "duration": "PT35S",
@@ -638,22 +830,6 @@
           "isNew": false,
           "isTrending": true,
           "relatedArticle": null
-        },
-        {
-          "videoId": "O90-xoLBNO8",
-          "title": "It All Starts at Tests—The Mind-Blowing DevOps Revelation 🤯",
-          "thumbnail": "https://i.ytimg.com/vi/O90-xoLBNO8/mqdefault.jpg",
-          "publishedAt": "2026-03-01T19:00:19Z",
-          "stats": {
-            "viewCount": 1354,
-            "likeCount": 3
-          },
-          "duration": "PT10S",
-          "durationSeconds": 10,
-          "lengthCategory": "short",
-          "isNew": false,
-          "isTrending": true,
-          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
         },
         {
           "videoId": "FO9FuOgbQvo",
@@ -672,33 +848,33 @@
           "relatedArticle": null
         },
         {
-          "videoId": "nfY498xaUH8",
-          "title": "Three Prompts to Harden Your Repo for Agentic AI Development | Avoid Technical Debt Collapse",
-          "thumbnail": "https://i.ytimg.com/vi/nfY498xaUH8/mqdefault.jpg",
-          "publishedAt": "2026-02-24T22:00:58Z",
+          "videoId": "sPCHtptMj-g",
+          "title": "3 AI Prompts Every Developer MUST Run Right Now (Stop What You're Doing!)",
+          "thumbnail": "https://i.ytimg.com/vi/sPCHtptMj-g/mqdefault.jpg",
+          "publishedAt": "2026-02-23T19:01:00Z",
           "stats": {
-            "viewCount": 6,
+            "viewCount": 54,
             "likeCount": 0
           },
-          "duration": "PT3M51S",
-          "durationSeconds": 231,
+          "duration": "PT1M29S",
+          "durationSeconds": 89,
           "lengthCategory": "standard",
           "isNew": false,
           "isTrending": false,
           "relatedArticle": null
         },
         {
-          "videoId": "sPCHtptMj-g",
-          "title": "3 AI Prompts Every Developer MUST Run Right Now (Stop What You're Doing!)",
-          "thumbnail": "https://i.ytimg.com/vi/sPCHtptMj-g/mqdefault.jpg",
-          "publishedAt": "2026-02-23T19:01:00Z",
+          "videoId": "wN92UNpqsis",
+          "title": "My Push Script Tells the Agent What to Fix Next | Automated GitHub PR Reviews & CI/CD Feedback Loop",
+          "thumbnail": "https://i.ytimg.com/vi/wN92UNpqsis/mqdefault.jpg",
+          "publishedAt": "2026-02-22T00:01:03Z",
           "stats": {
-            "viewCount": 53,
-            "likeCount": 0
+            "viewCount": 119,
+            "likeCount": 1
           },
-          "duration": "PT1M29S",
-          "durationSeconds": 89,
-          "lengthCategory": "standard",
+          "duration": "PT54S",
+          "durationSeconds": 54,
+          "lengthCategory": "short",
           "isNew": false,
           "isTrending": false,
           "relatedArticle": null
@@ -725,7 +901,7 @@
           "thumbnail": "https://i.ytimg.com/vi/ZPJve2W1ZUo/mqdefault.jpg",
           "publishedAt": "2026-02-19T22:00:37Z",
           "stats": {
-            "viewCount": 15,
+            "viewCount": 16,
             "likeCount": 1
           },
           "duration": "PT1M36S",
@@ -733,23 +909,7 @@
           "lengthCategory": "standard",
           "isNew": false,
           "isTrending": false,
-          "relatedArticle": "/articles/agent-hooks-controlling-ai-codebase"
-        },
-        {
-          "videoId": "nYeplBqlMzc",
-          "title": "Why Sub-Agents Produce Higher Quality AI Output | Context Window Secrets Explained",
-          "thumbnail": "https://i.ytimg.com/vi/nYeplBqlMzc/mqdefault.jpg",
-          "publishedAt": "2026-02-19T02:20:01Z",
-          "stats": {
-            "viewCount": 2,
-            "likeCount": 0
-          },
-          "duration": "PT1M31S",
-          "durationSeconds": 91,
-          "lengthCategory": "standard",
-          "isNew": false,
-          "isTrending": false,
-          "relatedArticle": "/articles/context-engineering-key-to-ai-development"
+          "relatedArticle": null
         },
         {
           "videoId": "HVoHq_MKlMs",
@@ -789,7 +949,7 @@
           "thumbnail": "https://i.ytimg.com/vi/mEVonTleU1Q/mqdefault.jpg",
           "publishedAt": "2026-02-18T19:03:04Z",
           "stats": {
-            "viewCount": 33,
+            "viewCount": 41,
             "likeCount": 1
           },
           "duration": "PT17M9S",
@@ -829,22 +989,6 @@
           "lengthCategory": "short",
           "isNew": false,
           "isTrending": false,
-          "relatedArticle": null
-        },
-        {
-          "videoId": "4bHy6It7sb0",
-          "title": "Out-of-the-Box Copilot Beat My Custom AI Agent | The Over-Engineering Trap",
-          "thumbnail": "https://i.ytimg.com/vi/4bHy6It7sb0/mqdefault.jpg",
-          "publishedAt": "2026-02-18T14:00:12Z",
-          "stats": {
-            "viewCount": 821,
-            "likeCount": 1
-          },
-          "duration": "PT22S",
-          "durationSeconds": 22,
-          "lengthCategory": "short",
-          "isNew": false,
-          "isTrending": true,
           "relatedArticle": null
         },
         {
@@ -896,38 +1040,6 @@
           "relatedArticle": "/articles/context-engineering-key-to-ai-development"
         },
         {
-          "videoId": "TuOajbSOw_Y",
-          "title": "Building AI Apps: Fixes & New Creations in Video Editor #shorts",
-          "thumbnail": "https://i.ytimg.com/vi/TuOajbSOw_Y/mqdefault.jpg",
-          "publishedAt": "2026-02-10T02:03:29Z",
-          "stats": {
-            "viewCount": 89,
-            "likeCount": 0
-          },
-          "duration": "PT1M",
-          "durationSeconds": 60,
-          "lengthCategory": "standard",
-          "isNew": false,
-          "isTrending": false,
-          "relatedArticle": null
-        },
-        {
-          "videoId": "pDWFzp7eYVA",
-          "title": "Coding Workflow: From Spec to Implementation Explained! #shorts",
-          "thumbnail": "https://i.ytimg.com/vi/pDWFzp7eYVA/mqdefault.jpg",
-          "publishedAt": "2026-02-08T08:03:25Z",
-          "stats": {
-            "viewCount": 8,
-            "likeCount": 0
-          },
-          "duration": "PT25S",
-          "durationSeconds": 25,
-          "lengthCategory": "short",
-          "isNew": false,
-          "isTrending": false,
-          "relatedArticle": null
-        },
-        {
           "videoId": "8E4yzilhp5Y",
           "title": "AI Coder Finishes Project & Runs It Again! 🤯 #shorts",
           "thumbnail": "https://i.ytimg.com/vi/8E4yzilhp5Y/mqdefault.jpg",
@@ -944,38 +1056,6 @@
           "relatedArticle": null
         },
         {
-          "videoId": "xFOg8ywjHEw",
-          "title": "AI Extracts Audio, Transcribes Video Instantly! (See This!) #shorts",
-          "thumbnail": "https://i.ytimg.com/vi/xFOg8ywjHEw/mqdefault.jpg",
-          "publishedAt": "2026-02-08T01:56:30Z",
-          "stats": {
-            "viewCount": 28,
-            "likeCount": 0
-          },
-          "duration": "PT38S",
-          "durationSeconds": 38,
-          "lengthCategory": "short",
-          "isNew": false,
-          "isTrending": false,
-          "relatedArticle": null
-        },
-        {
-          "videoId": "Ji75MllgWaU",
-          "title": "Coder's Patience Tested: Will the App FINALLY Open? #shorts",
-          "thumbnail": "https://i.ytimg.com/vi/Ji75MllgWaU/mqdefault.jpg",
-          "publishedAt": "2026-02-06T10:04:24Z",
-          "stats": {
-            "viewCount": 8,
-            "likeCount": 0
-          },
-          "duration": "PT17S",
-          "durationSeconds": 17,
-          "lengthCategory": "short",
-          "isNew": false,
-          "isTrending": false,
-          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
-        },
-        {
           "videoId": "51VfNhjU38M",
           "title": "Build AMAZING Apps with AI Agents: Developer Reveals Secrets! #shorts",
           "thumbnail": "https://i.ytimg.com/vi/51VfNhjU38M/mqdefault.jpg",
@@ -987,38 +1067,6 @@
           "duration": "PT54S",
           "durationSeconds": 54,
           "lengthCategory": "short",
-          "isNew": false,
-          "isTrending": false,
-          "relatedArticle": null
-        },
-        {
-          "videoId": "ofMB_VjpmPU",
-          "title": "AI Creates TikToks? Proving the Agentic Video Editor Concept! #shorts",
-          "thumbnail": "https://i.ytimg.com/vi/ofMB_VjpmPU/mqdefault.jpg",
-          "publishedAt": "2026-02-06T06:03:20Z",
-          "stats": {
-            "viewCount": 101,
-            "likeCount": 0
-          },
-          "duration": "PT26S",
-          "durationSeconds": 26,
-          "lengthCategory": "short",
-          "isNew": false,
-          "isTrending": false,
-          "relatedArticle": null
-        },
-        {
-          "videoId": "irjjZ8AOg7c",
-          "title": "AI Codes a Video Editor in Minutes, Beats $200/Month App! #shorts",
-          "thumbnail": "https://i.ytimg.com/vi/irjjZ8AOg7c/mqdefault.jpg",
-          "publishedAt": "2026-02-06T02:03:30Z",
-          "stats": {
-            "viewCount": 26,
-            "likeCount": 0
-          },
-          "duration": "PT1M18S",
-          "durationSeconds": 78,
-          "lengthCategory": "standard",
           "isNew": false,
           "isTrending": false,
           "relatedArticle": null
@@ -1056,22 +1104,6 @@
           "relatedArticle": null
         },
         {
-          "videoId": "McECTbnS978",
-          "title": "Legal App in 5 Min with Copilot #shorts",
-          "thumbnail": "https://i.ytimg.com/vi/McECTbnS978/mqdefault.jpg",
-          "publishedAt": "2026-02-05T20:09:31Z",
-          "stats": {
-            "viewCount": 141,
-            "likeCount": 0
-          },
-          "duration": "PT1M2S",
-          "durationSeconds": 62,
-          "lengthCategory": "standard",
-          "isNew": false,
-          "isTrending": false,
-          "relatedArticle": null
-        },
-        {
           "videoId": "7BJ-oXMONqc",
           "title": "Gen AI: The Revolutionary Self-Teaching Tool Explained #shorts",
           "thumbnail": "https://i.ytimg.com/vi/7BJ-oXMONqc/mqdefault.jpg",
@@ -1092,22 +1124,198 @@
     {
       "id": "copilot-tools",
       "title": "GitHub Copilot & Tools",
-      "description": "Videos about GitHub Copilot features, custom agents, memory systems, and agentic workflows",
+      "description": "GitHub Copilot features, agentic workflows, memory, custom agents, and CLI",
       "icon": "⚡",
       "videos": [
         {
-          "videoId": "wN92UNpqsis",
-          "title": "My Push Script Tells the Agent What to Fix Next | Automated GitHub PR Reviews & CI/CD Feedback Loop",
-          "thumbnail": "https://i.ytimg.com/vi/wN92UNpqsis/mqdefault.jpg",
-          "publishedAt": "2026-02-22T00:01:03Z",
+          "videoId": "o6EVAjlYmWM",
+          "title": "VS Code Autopilot Explained: The Feature That Ends Approval Fatigue",
+          "thumbnail": "https://i.ytimg.com/vi/o6EVAjlYmWM/mqdefault.jpg",
+          "publishedAt": "2026-03-21T21:00:45Z",
           "stats": {
-            "viewCount": 119,
-            "likeCount": 1
+            "viewCount": 3,
+            "likeCount": 0
           },
-          "duration": "PT54S",
-          "durationSeconds": 54,
+          "duration": "PT2M17S",
+          "durationSeconds": 137,
+          "lengthCategory": "standard",
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "ZejEPgKm1V4",
+          "title": "Copilot Isn't Autocomplete Anymore - It's an Agentic Platform 🚀",
+          "thumbnail": "https://i.ytimg.com/vi/ZejEPgKm1V4/mqdefault.jpg",
+          "publishedAt": "2026-03-21T18:00:35Z",
+          "stats": {
+            "viewCount": 261,
+            "likeCount": 2
+          },
+          "duration": "PT32S",
+          "durationSeconds": 32,
           "lengthCategory": "short",
-          "isNew": false,
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "cNzlEDXWb6Q",
+          "title": "GitHub Copilot is NOT Autocomplete Anymore | The Agentic AI Revolution",
+          "thumbnail": "https://i.ytimg.com/vi/cNzlEDXWb6Q/mqdefault.jpg",
+          "publishedAt": "2026-03-20T18:00:45Z",
+          "stats": {
+            "viewCount": 856,
+            "likeCount": 4
+          },
+          "duration": "PT15S",
+          "durationSeconds": 15,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": true,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "7EpVYySt7xg",
+          "title": "VS Code Just KILLED Edit Mode Forever - The Agentic AI Revolution",
+          "thumbnail": "https://i.ytimg.com/vi/7EpVYySt7xg/mqdefault.jpg",
+          "publishedAt": "2026-03-20T13:00:25Z",
+          "stats": {
+            "viewCount": 721,
+            "likeCount": 6
+          },
+          "duration": "PT30S",
+          "durationSeconds": 30,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": true,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "h7uKTxOMz8w",
+          "title": "I Built Snake That Pauses For My AI - And It Works | GitHub Copilot CLI Extensions Demo",
+          "thumbnail": "https://i.ytimg.com/vi/h7uKTxOMz8w/mqdefault.jpg",
+          "publishedAt": "2026-03-19T23:00:55Z",
+          "stats": {
+            "viewCount": 141,
+            "likeCount": 0
+          },
+          "duration": "PT43S",
+          "durationSeconds": 43,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "BoccxNyjV7c",
+          "title": "GitHub Copilot Is No Longer Autocomplete — It's an Agentic Platform",
+          "thumbnail": "https://i.ytimg.com/vi/BoccxNyjV7c/mqdefault.jpg",
+          "publishedAt": "2026-03-19T21:00:21Z",
+          "stats": {
+            "viewCount": 1,
+            "likeCount": 0
+          },
+          "duration": "PT1M10S",
+          "durationSeconds": 70,
+          "lengthCategory": "standard",
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "Jd4M7OnpNv0",
+          "title": "GitHub Copilot CLI Extensions: Build Custom Tools That Run IN the AI Loop",
+          "thumbnail": "https://i.ytimg.com/vi/Jd4M7OnpNv0/mqdefault.jpg",
+          "publishedAt": "2026-03-19T18:00:19Z",
+          "stats": {
+            "viewCount": 1040,
+            "likeCount": 5
+          },
+          "duration": "PT15S",
+          "durationSeconds": 15,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": true,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "ECUt3jSMq1c",
+          "title": "GitHub Copilot's New Skip Approvals Feature: Convenience vs. Security Risk Explained",
+          "thumbnail": "https://i.ytimg.com/vi/ECUt3jSMq1c/mqdefault.jpg",
+          "publishedAt": "2026-03-18T13:00:22Z",
+          "stats": {
+            "viewCount": 100,
+            "likeCount": 0
+          },
+          "duration": "PT37S",
+          "durationSeconds": 37,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "8ux4cZ3LDgg",
+          "title": "GitHub Copilot CLI Extensions: Build Custom Tools That Run IN the AI Loop",
+          "thumbnail": "https://i.ytimg.com/vi/8ux4cZ3LDgg/mqdefault.jpg",
+          "publishedAt": "2026-03-17T18:49:23Z",
+          "stats": {
+            "viewCount": 18,
+            "likeCount": 0
+          },
+          "duration": "PT9M54S",
+          "durationSeconds": 594,
+          "lengthCategory": "standard",
+          "isNew": true,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "J1GFbqWtCpU",
+          "title": "The Copilot vs Claude Code Debate is Over | GitHub's Multi-Agent Future",
+          "thumbnail": "https://i.ytimg.com/vi/J1GFbqWtCpU/mqdefault.jpg",
+          "publishedAt": "2026-03-17T18:00:31Z",
+          "stats": {
+            "viewCount": 655,
+            "likeCount": 4
+          },
+          "duration": "PT28S",
+          "durationSeconds": 28,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": true,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "ne9cU2CtIi4",
+          "title": "GitHub Copilot Just Got Claude Code (Here's How)",
+          "thumbnail": "https://i.ytimg.com/vi/ne9cU2CtIi4/mqdefault.jpg",
+          "publishedAt": "2026-03-16T18:00:49Z",
+          "stats": {
+            "viewCount": 750,
+            "likeCount": 3
+          },
+          "duration": "PT31S",
+          "durationSeconds": 31,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": true,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "SmzXFHZhz9c",
+          "title": "GitHub Copilot's Third-Party Agents: Claude Code & Codex Integration Explained",
+          "thumbnail": "https://i.ytimg.com/vi/SmzXFHZhz9c/mqdefault.jpg",
+          "publishedAt": "2026-03-15T15:00:46Z",
+          "stats": {
+            "viewCount": 64,
+            "likeCount": 0
+          },
+          "duration": "PT3M51S",
+          "durationSeconds": 231,
+          "lengthCategory": "standard",
+          "isNew": true,
           "isTrending": false,
           "relatedArticle": null
         },
@@ -1117,8 +1325,8 @@
           "thumbnail": "https://i.ytimg.com/vi/jD0jutp_qtA/mqdefault.jpg",
           "publishedAt": "2026-02-19T10:30:34Z",
           "stats": {
-            "viewCount": 74,
-            "likeCount": 0
+            "viewCount": 86,
+            "likeCount": 1
           },
           "duration": "PT1M40S",
           "durationSeconds": 100,
@@ -1149,7 +1357,7 @@
           "thumbnail": "https://i.ytimg.com/vi/5s1jZqNNVjM/mqdefault.jpg",
           "publishedAt": "2026-02-19T08:59:00Z",
           "stats": {
-            "viewCount": 18,
+            "viewCount": 20,
             "likeCount": 0
           },
           "duration": "PT18M8S",
@@ -1165,7 +1373,7 @@
           "thumbnail": "https://i.ytimg.com/vi/R2b1JSKgdgo/mqdefault.jpg",
           "publishedAt": "2026-02-19T01:45:06Z",
           "stats": {
-            "viewCount": 28,
+            "viewCount": 46,
             "likeCount": 0
           },
           "duration": "PT1M19S",
@@ -1197,7 +1405,7 @@
           "thumbnail": "https://i.ytimg.com/vi/jGiLSGGqSmI/mqdefault.jpg",
           "publishedAt": "2026-02-18T19:02:30Z",
           "stats": {
-            "viewCount": 121,
+            "viewCount": 142,
             "likeCount": 1
           },
           "duration": "PT10M14S",
@@ -1221,23 +1429,23 @@
           "lengthCategory": "short",
           "isNew": false,
           "isTrending": false,
-          "relatedArticle": null
+          "relatedArticle": "/articles/top-5-mistakes-creating-custom-github-copilot-agents"
         },
         {
-          "videoId": "wPUGlp6tdHg",
-          "title": "GitHub Already Tests in Production Before Merge - Here's How",
-          "thumbnail": "https://i.ytimg.com/vi/wPUGlp6tdHg/mqdefault.jpg",
-          "publishedAt": "2026-02-17T15:01:40Z",
+          "videoId": "4bHy6It7sb0",
+          "title": "Out-of-the-Box Copilot Beat My Custom AI Agent | The Over-Engineering Trap",
+          "thumbnail": "https://i.ytimg.com/vi/4bHy6It7sb0/mqdefault.jpg",
+          "publishedAt": "2026-02-18T14:00:12Z",
           "stats": {
-            "viewCount": 42,
-            "likeCount": 0
+            "viewCount": 821,
+            "likeCount": 1
           },
-          "duration": "PT40S",
-          "durationSeconds": 40,
+          "duration": "PT22S",
+          "durationSeconds": 22,
           "lengthCategory": "short",
           "isNew": false,
-          "isTrending": false,
-          "relatedArticle": "/articles/tests-are-everything-agentic-ai"
+          "isTrending": true,
+          "relatedArticle": null
         },
         {
           "videoId": "ZWPd7gSDdyA",
@@ -1261,12 +1469,44 @@
           "thumbnail": "https://i.ytimg.com/vi/Q_dc1zUIe3Y/mqdefault.jpg",
           "publishedAt": "2026-02-14T09:05:22Z",
           "stats": {
-            "viewCount": 8,
+            "viewCount": 10,
             "likeCount": 0
           },
           "duration": "PT14M20S",
           "durationSeconds": 860,
           "lengthCategory": "deep-dive",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "4L8R0sPNQQM",
+          "title": "AI Video Editor Bugs? Copilot Chat & Processing Issues Fixed! #shorts",
+          "thumbnail": "https://i.ytimg.com/vi/4L8R0sPNQQM/mqdefault.jpg",
+          "publishedAt": "2026-02-08T06:04:38Z",
+          "stats": {
+            "viewCount": 111,
+            "likeCount": 0
+          },
+          "duration": "PT1M4S",
+          "durationSeconds": 64,
+          "lengthCategory": "standard",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "McECTbnS978",
+          "title": "Legal App in 5 Min with Copilot #shorts",
+          "thumbnail": "https://i.ytimg.com/vi/McECTbnS978/mqdefault.jpg",
+          "publishedAt": "2026-02-05T20:09:31Z",
+          "stats": {
+            "viewCount": 141,
+            "likeCount": 0
+          },
+          "duration": "PT1M2S",
+          "durationSeconds": 62,
+          "lengthCategory": "standard",
           "isNew": false,
           "isTrending": false,
           "relatedArticle": null
@@ -1276,7 +1516,7 @@
     {
       "id": "content-creation",
       "title": "Content Creation & VidPipe",
-      "description": "Videos about video editing, VidPipe, content studio, and AI video tools",
+      "description": "Video editing, VidPipe, content studio, and AI video tools",
       "icon": "🎬",
       "videos": [
         {
@@ -1285,7 +1525,7 @@
           "thumbnail": "https://i.ytimg.com/vi/ESzej015TaE/mqdefault.jpg",
           "publishedAt": "2026-02-15T14:25:54Z",
           "stats": {
-            "viewCount": 52,
+            "viewCount": 58,
             "likeCount": 2
           },
           "duration": "PT3M34S",
@@ -1312,17 +1552,49 @@
           "relatedArticle": "/articles/introducing-vidpipe-ai-video-pipeline"
         },
         {
-          "videoId": "4L8R0sPNQQM",
-          "title": "AI Video Editor Bugs? Copilot Chat & Processing Issues Fixed! #shorts",
-          "thumbnail": "https://i.ytimg.com/vi/4L8R0sPNQQM/mqdefault.jpg",
-          "publishedAt": "2026-02-08T06:04:38Z",
+          "videoId": "TuOajbSOw_Y",
+          "title": "Building AI Apps: Fixes & New Creations in Video Editor #shorts",
+          "thumbnail": "https://i.ytimg.com/vi/TuOajbSOw_Y/mqdefault.jpg",
+          "publishedAt": "2026-02-10T02:03:29Z",
           "stats": {
-            "viewCount": 111,
+            "viewCount": 89,
             "likeCount": 0
           },
-          "duration": "PT1M4S",
-          "durationSeconds": 64,
+          "duration": "PT1M",
+          "durationSeconds": 60,
           "lengthCategory": "standard",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "xFOg8ywjHEw",
+          "title": "AI Extracts Audio, Transcribes Video Instantly! (See This!) #shorts",
+          "thumbnail": "https://i.ytimg.com/vi/xFOg8ywjHEw/mqdefault.jpg",
+          "publishedAt": "2026-02-08T01:56:30Z",
+          "stats": {
+            "viewCount": 28,
+            "likeCount": 0
+          },
+          "duration": "PT38S",
+          "durationSeconds": 38,
+          "lengthCategory": "short",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "ofMB_VjpmPU",
+          "title": "AI Creates TikToks? Proving the Agentic Video Editor Concept! #shorts",
+          "thumbnail": "https://i.ytimg.com/vi/ofMB_VjpmPU/mqdefault.jpg",
+          "publishedAt": "2026-02-06T06:03:20Z",
+          "stats": {
+            "viewCount": 101,
+            "likeCount": 0
+          },
+          "duration": "PT26S",
+          "durationSeconds": 26,
+          "lengthCategory": "short",
           "isNew": false,
           "isTrending": false,
           "relatedArticle": null
@@ -1339,6 +1611,22 @@
           "duration": "PT15S",
           "durationSeconds": 15,
           "lengthCategory": "short",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "irjjZ8AOg7c",
+          "title": "AI Codes a Video Editor in Minutes, Beats $200/Month App! #shorts",
+          "thumbnail": "https://i.ytimg.com/vi/irjjZ8AOg7c/mqdefault.jpg",
+          "publishedAt": "2026-02-06T02:03:30Z",
+          "stats": {
+            "viewCount": 26,
+            "likeCount": 0
+          },
+          "duration": "PT1M18S",
+          "durationSeconds": 78,
+          "lengthCategory": "standard",
           "isNew": false,
           "isTrending": false,
           "relatedArticle": null
@@ -1364,9 +1652,57 @@
     {
       "id": "architecture",
       "title": "Software Architecture",
-      "description": "Videos on domain-aligned design, clean architecture, modular systems, and repo quality",
+      "description": "Domain-aligned architecture, clean code, and repo quality",
       "icon": "🏗️",
       "videos": [
+        {
+          "videoId": "8EYpDr0SqJw",
+          "title": "Technical Debt is Actually DevOps Failures (Mind-Blowing Realization)",
+          "thumbnail": "https://i.ytimg.com/vi/8EYpDr0SqJw/mqdefault.jpg",
+          "publishedAt": "2026-03-17T18:00:08Z",
+          "stats": {
+            "viewCount": 596,
+            "likeCount": 3
+          },
+          "duration": "PT52S",
+          "durationSeconds": 52,
+          "lengthCategory": "short",
+          "isNew": true,
+          "isTrending": true,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "PiL5i_AoRFA",
+          "title": "Technical Debt Is Actually Gaps in Your DevOps Process (Mind-Blowing Reframe)",
+          "thumbnail": "https://i.ytimg.com/vi/PiL5i_AoRFA/mqdefault.jpg",
+          "publishedAt": "2026-03-13T21:00:34Z",
+          "stats": {
+            "viewCount": 5,
+            "likeCount": 0
+          },
+          "duration": "PT2M5S",
+          "durationSeconds": 125,
+          "lengthCategory": "standard",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
+          "videoId": "roC7zjBleFk",
+          "title": "How to Modernize a 30-Year-Old Legacy System (Without Breaking Everything)",
+          "thumbnail": "https://i.ytimg.com/vi/roC7zjBleFk/mqdefault.jpg",
+          "publishedAt": "2026-03-12T21:00:54Z",
+          "stats": {
+            "viewCount": 43,
+            "likeCount": 2
+          },
+          "duration": "PT2M1S",
+          "durationSeconds": 121,
+          "lengthCategory": "standard",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": null
+        },
         {
           "videoId": "vF0_IePpPaU",
           "title": "Forget Modular - Make Your App Domain Aligned | Software Architecture Tips",
@@ -1384,6 +1720,22 @@
           "relatedArticle": "/articles/agent-proof-architecture-agentic-devops"
         },
         {
+          "videoId": "nfY498xaUH8",
+          "title": "Three Prompts to Harden Your Repo for Agentic AI Development | Avoid Technical Debt Collapse",
+          "thumbnail": "https://i.ytimg.com/vi/nfY498xaUH8/mqdefault.jpg",
+          "publishedAt": "2026-02-24T22:00:58Z",
+          "stats": {
+            "viewCount": 7,
+            "likeCount": 0
+          },
+          "duration": "PT3M51S",
+          "durationSeconds": 231,
+          "lengthCategory": "standard",
+          "isNew": false,
+          "isTrending": false,
+          "relatedArticle": null
+        },
+        {
           "videoId": "mbVtHUyu2uM",
           "title": "Enforce Clean Architecture with Hooks to Stop AI Code Rot",
           "thumbnail": "https://i.ytimg.com/vi/mbVtHUyu2uM/mqdefault.jpg",
@@ -1397,14 +1749,14 @@
           "lengthCategory": "standard",
           "isNew": false,
           "isTrending": false,
-          "relatedArticle": null
+          "relatedArticle": "/articles/agent-proof-architecture-agentic-devops"
         }
       ]
     },
     {
       "id": "career",
       "title": "Career & Journey",
-      "description": "Videos about career development, personal journey, and DevOps engineering careers",
+      "description": "Career path, personal journey, and DevOps engineering career",
       "icon": "🚀",
       "videos": [
         {
@@ -1413,7 +1765,7 @@
           "thumbnail": "https://i.ytimg.com/vi/szUrYj-kAvI/mqdefault.jpg",
           "publishedAt": "2026-02-20T13:35:21Z",
           "stats": {
-            "viewCount": 801,
+            "viewCount": 802,
             "likeCount": 6
           },
           "duration": "PT29S",
@@ -1444,7 +1796,7 @@
     {
       "id": "azure-devops",
       "title": "Azure DevOps Streams",
-      "description": "Legacy Azure DevOps Extension Development streams from 2022",
+      "description": "Azure DevOps Extension Development (legacy 2022 streams)",
       "icon": "☁️",
       "videos": [
         {
@@ -1549,7 +1901,7 @@
           "thumbnail": "https://i.ytimg.com/vi/_znBmxU7DhQ/mqdefault.jpg",
           "publishedAt": "2022-10-08T10:02:11Z",
           "stats": {
-            "viewCount": 52,
+            "viewCount": 53,
             "likeCount": 0
           },
           "duration": "PT57M18S",
