@@ -1,0 +1,768 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const isolationLevels = [
+  {
+    level: 'L1',
+    label: 'Process',
+    tech: 'seccomp-bpf, Landlock',
+    how: 'Syscall filtering and filesystem restrictions on a single process',
+    kernelShared: 'Yes',
+    escapeRisk: 'Medium',
+    overhead: 'Near-zero',
+    os: 'Linux',
+    color: '#f87171',
+    colorMuted: 'rgba(248,113,113,0.15)',
+    colorBorder: 'rgba(248,113,113,0.3)',
+    protects: ['Filesystem paths', 'Syscall surface'],
+    whenToUse: 'Low-trust local scripts, helper processes, tight latency requirements',
+    tradeoff: 'Shared kernel — kernel exploit can escape the sandbox',
+  },
+  {
+    level: 'L2',
+    label: 'Namespace',
+    tech: 'Bubblewrap, Firejail',
+    how: 'Linux namespaces (PID, mount, net, user) wrap a process in isolation',
+    kernelShared: 'Yes',
+    escapeRisk: 'Low-Medium',
+    overhead: 'Near-zero',
+    os: 'Linux',
+    color: '#fb923c',
+    colorMuted: 'rgba(251,146,60,0.15)',
+    colorBorder: 'rgba(251,146,60,0.3)',
+    protects: ['Filesystem', 'Network', 'Process tree', 'User IDs'],
+    whenToUse: 'Local agent execution, dev machines, Linux-native workflows',
+    tradeoff: 'Linux-only; still shares kernel with host',
+  },
+  {
+    level: 'L3',
+    label: 'Container',
+    tech: 'Docker, Podman, Incus',
+    how: 'Full container with cgroups, namespaces, and layered filesystem',
+    kernelShared: 'Yes',
+    escapeRisk: 'Low (CVEs exist)',
+    overhead: 'Low',
+    os: 'Linux, macOS, Windows',
+    color: '#fbbf24',
+    colorMuted: 'rgba(251,191,36,0.15)',
+    colorBorder: 'rgba(251,191,36,0.3)',
+    protects: ['Filesystem', 'Network', 'Process tree', 'Resource limits'],
+    whenToUse: 'Cross-platform agent workloads, ephemeral environments, most cloud deployments',
+    tradeoff: 'Kernel escape CVEs (runc, containerd history); not true hardware isolation',
+  },
+  {
+    level: 'L4',
+    label: 'Userspace Kernel',
+    tech: 'gVisor',
+    how: 'Intercepts syscalls in userspace, emulates kernel behavior — host kernel never touched',
+    kernelShared: 'Partial',
+    escapeRisk: 'Low',
+    overhead: 'Medium',
+    os: 'Linux',
+    color: '#34d399',
+    colorMuted: 'rgba(52,211,153,0.15)',
+    colorBorder: 'rgba(52,211,153,0.3)',
+    protects: ['Filesystem', 'Network', 'Syscall surface', 'Host kernel'],
+    whenToUse: 'Untrusted code execution in cloud, GKE workloads, moderate performance requirement',
+    tradeoff: 'Performance overhead on syscall-heavy workloads; not all syscalls supported',
+  },
+  {
+    level: 'L5',
+    label: 'MicroVM',
+    tech: 'Firecracker, Cloud Hypervisor',
+    how: 'Dedicated kernel per workload via hardware virtualization (KVM)',
+    kernelShared: 'No',
+    escapeRisk: 'Very Low',
+    overhead: 'Medium-High',
+    os: 'Linux (KVM)',
+    color: '#818cf8',
+    colorMuted: 'rgba(129,140,248,0.15)',
+    colorBorder: 'rgba(129,140,248,0.3)',
+    protects: ['Filesystem', 'Network', 'Kernel', 'Memory isolation'],
+    whenToUse: 'Cloud sandboxes (E2B, Fly.io), multi-tenant agent platforms, high-security requirements',
+    tradeoff: 'Requires KVM; cold start 100ms–1s; harder local dev',
+  },
+  {
+    level: 'L6',
+    label: 'Full VM',
+    tech: 'QEMU/KVM, Hyper-V',
+    how: 'Complete OS isolation with dedicated hardware abstraction',
+    kernelShared: 'No',
+    escapeRisk: 'Minimal',
+    overhead: 'High',
+    os: 'Cross-platform',
+    color: '#c084fc',
+    colorMuted: 'rgba(192,132,252,0.15)',
+    colorBorder: 'rgba(192,132,252,0.3)',
+    protects: ['Full OS stack', 'Hardware abstraction', 'Network', 'Storage'],
+    whenToUse: 'Maximum security, legacy workloads, compliance-mandated isolation',
+    tradeoff: 'High overhead; slow cold start (minutes); operational complexity',
+  },
+  {
+    level: 'L7',
+    label: 'Policy Engine',
+    tech: 'NVIDIA OpenShell',
+    how: 'Combines multiple isolation levels + L7 HTTP inspection per binary/endpoint',
+    kernelShared: 'Varies',
+    escapeRisk: 'Very Low',
+    overhead: 'Medium',
+    os: 'Linux (k3s)',
+    color: '#22d3ee',
+    colorMuted: 'rgba(34,211,238,0.15)',
+    colorBorder: 'rgba(34,211,238,0.3)',
+    protects: ['Filesystem', 'Network (method+path)', 'Processes', 'API endpoints', 'GPU access'],
+    whenToUse: 'Enterprise agent governance, GPU inference, multi-tenant, policy-as-code requirement',
+    tradeoff: 'Per-endpoint policy maintenance; k3s cluster required; seconds cold start',
+  },
+];
+
+const tools = [
+  { name: 'Bubblewrap (bwrap)', level: 'L2', os: 'Linux', gpu: false, selfHosted: true, openSource: 'LGPL', coldStart: 'Instant', pricing: 'Free', link: 'https://github.com/containers/bubblewrap' },
+  { name: 'Firejail', level: 'L2', os: 'Linux', gpu: false, selfHosted: true, openSource: 'GPL', coldStart: 'Instant', pricing: 'Free', link: 'https://firejail.wordpress.com' },
+  { name: 'Docker Sandboxes', level: 'L3', os: 'Lin/Mac/Win', gpu: 'Limited', selfHosted: true, openSource: 'Partial', coldStart: 'Sub-second', pricing: 'Free', link: 'https://www.docker.com' },
+  { name: 'Clampdown', level: 'L3', os: 'Linux/macOS', gpu: false, selfHosted: true, openSource: 'Yes', coldStart: 'Fast', pricing: 'Free', link: 'https://github.com/getlocalci/clampdown' },
+  { name: 'code-on-incus', level: 'L3', os: 'Linux', gpu: false, selfHosted: true, openSource: 'Yes', coldStart: 'Fast', pricing: 'Free', link: 'https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo' },
+  { name: 'Daytona', level: 'L3', os: 'Cross-platform', gpu: true, selfHosted: true, openSource: 'AGPL', coldStart: '<90ms', pricing: '~$0.08/hr', link: 'https://www.daytona.io' },
+  { name: 'BoxLite', level: 'L3+', os: 'Linux/macOS', gpu: false, selfHosted: true, openSource: 'Rust', coldStart: 'Fast', pricing: 'Free', link: 'https://github.com/nicholasgasior/boxlite' },
+  { name: 'Sandbox0', level: 'L3', os: 'Linux', gpu: false, selfHosted: true, openSource: 'Go', coldStart: 'Fast', pricing: 'Free', link: 'https://github.com/bluesky-social/sandbox0' },
+  { name: 'ContainAI', level: 'L3', os: 'Linux', gpu: false, selfHosted: true, openSource: 'MIT', coldStart: 'Fast', pricing: 'Free', link: 'https://github.com/containai/containai' },
+  { name: 'Cagent', level: 'L3+', os: 'Linux', gpu: false, selfHosted: true, openSource: 'Yes', coldStart: 'Fast', pricing: 'Free', link: 'https://github.com/anthropics/cagent' },
+  { name: 'Modal', level: 'L4', os: 'Cloud', gpu: 'Best', selfHosted: false, openSource: 'No', coldStart: 'Sub-second', pricing: 'Pay/sec', link: 'https://modal.com' },
+  { name: 'Google Agent Sandbox', level: 'L4+', os: 'GKE', gpu: true, selfHosted: false, openSource: 'Yes', coldStart: 'Varies', pricing: 'GKE pricing', link: 'https://github.com/google-deepmind/agent-sandbox' },
+  { name: 'k8s-sigs/agent-sandbox', level: 'L4+', os: 'Any K8s', gpu: true, selfHosted: true, openSource: 'Yes', coldStart: 'Varies', pricing: 'Free', link: 'https://github.com/kubernetes-sigs/agent-sandbox' },
+  { name: 'E2B', level: 'L5', os: 'Cloud', gpu: false, selfHosted: 'Terraform', openSource: 'Partial', coldStart: '~150ms', pricing: '~$0.08/hr', link: 'https://e2b.dev' },
+  { name: 'Fly.io Sprites', level: 'L5', os: 'Cloud', gpu: false, selfHosted: false, openSource: 'No', coldStart: '1–12s', pricing: 'Per-second', link: 'https://fly.io' },
+  { name: 'Northflank', level: 'L5', os: 'Cloud', gpu: false, selfHosted: 'BYOC', openSource: 'No', coldStart: 'Fast', pricing: 'Per-second', link: 'https://northflank.com' },
+  { name: 'Alibaba OpenSandbox', level: 'L3', os: 'Linux', gpu: false, selfHosted: true, openSource: 'Apache 2.0', coldStart: 'Varies', pricing: 'Free', link: 'https://github.com/alibaba/open-sandbox' },
+  { name: 'Microsandbox', level: 'L5', os: 'Linux', gpu: false, selfHosted: true, openSource: 'Apache 2.0', coldStart: 'Varies', pricing: 'Free', link: 'https://github.com/microsandbox/microsandbox' },
+  { name: 'NVIDIA OpenShell', level: 'L7', os: 'Linux (k3s)', gpu: true, selfHosted: true, openSource: 'Apache 2.0', coldStart: 'Seconds', pricing: 'Free', link: '/articles/nvidia-openshell-sandbox-ai-agents' },
+];
+
+const threatModels = [
+  { emoji: '🏠', threat: 'Local filesystem access', defense: 'Agent reads ~/.ssh, .env, credentials', level: 'L2', tools: 'Bubblewrap, Firejail' },
+  { emoji: '🌐', threat: 'Network exfiltration', defense: 'Agent sends data to unauthorized endpoints', level: 'L3–L7', tools: 'Docker (port-level), OpenShell (method-level)' },
+  { emoji: '💣', threat: 'Destructive commands', defense: 'Agent runs rm -rf, drops tables', level: 'L2–L3', tools: 'Bubblewrap (read-only mounts), Docker' },
+  { emoji: '🔑', threat: 'Privilege escalation', defense: 'Agent gains root, installs packages', level: 'L1–L3', tools: 'seccomp, containers' },
+  { emoji: '🧬', threat: 'Kernel exploit', defense: 'Agent escapes via kernel vulnerability', level: 'L5–L6', tools: 'Firecracker, QEMU (separate kernel)' },
+  { emoji: '📡', threat: 'API abuse', defense: 'Agent calls wrong endpoints or methods', level: 'L7', tools: 'OpenShell (HTTP path + method inspection)' },
+  { emoji: '🔄', threat: 'State persistence', defense: 'Agent needs to survive restarts', level: 'L3+', tools: 'BoxLite (snapshots), OpenShell, Sandbox0' },
+  { emoji: '⚡', threat: 'Latency-sensitive workflows', defense: 'Interactive agent, can\'t wait for boot', level: 'L1–L2', tools: 'seccomp (zero), Bubblewrap (instant)' },
+  { emoji: '🎮', threat: 'GPU inference', defense: 'Agent needs local model inference', level: 'L5–L7', tools: 'OpenShell (DGX/RTX), Modal, K8s' },
+];
+
+const considerations = [
+  { icon: '⚖️', title: 'Performance vs Security', body: 'L2 is instant but shares the kernel. L5 is isolated but adds cold start overhead. Pick based on your actual threat model — most agents don\'t need MicroVM protection.' },
+  { icon: '🖥️', title: 'OS Portability', body: 'Bubblewrap, Firejail, and Landlock are Linux-only. If your agents run on macOS or Windows dev machines, containers are your minimum viable sandbox.' },
+  { icon: '📋', title: 'Policy Maintenance', body: 'L7 policy engines require per-endpoint maintenance. Is your team prepared to define and update network policies per agent binary? It\'s powerful but carries operational cost.' },
+  { icon: '🚪', title: 'Escape Surface', body: 'Containers share the kernel — container escape CVEs (runc, containerd) have a documented history. MicroVMs isolate at hardware. Know what you\'re trusting.' },
+  { icon: '🔍', title: 'Debugging Complexity', body: 'More isolation means harder debugging. Audit logs help but add overhead. Plan your observability strategy before locking down the sandbox.' },
+  { icon: '🎮', title: 'GPU Passthrough', body: 'Most lightweight sandboxes can\'t pass GPUs to containerized workloads. If your agent needs local inference, plan for L5+ or a managed GPU sandbox like Modal or OpenShell.' },
+  { icon: '💾', title: 'Statefulness', body: 'Ephemeral sandboxes (E2B, Firecracker) are great for short-lived tasks. Persistent agents (long-running sessions, file editing) need snapshot support or persistent volumes.' },
+  { icon: '🕐', title: 'Cold Start', body: 'Instant (bwrap) → sub-second (Docker) → ~150ms (E2B) → 1–12s (Fly.io Sprites) → minutes (full VM). Match cold start budget to the UX you need.' },
+  { icon: '🌐', title: 'DNS in Cluster Sandboxes', body: 'K8s-based sandboxes can have DNS issues in child namespaces. Test your agent\'s DNS resolution behavior early — silent DNS failures are a common gotcha.' },
+];
+
+const stackLayers = [
+  { layer: '0: Sandbox', what: 'Execution boundary', where: 'This page', here: true },
+  { layer: '1: Instructions', what: 'Context engineering', where: 'Agent-Proof Architecture', link: '/articles/agent-proof-architecture-agentic-devops' },
+  { layer: '2: Hooks', what: 'Tool-call interception', where: 'Copilot CLI Hooks', link: '/articles/agent-hooks-controlling-ai-codebase' },
+  { layer: '3: Gates', what: 'CI/CD validation', where: 'Agentic Workflows', link: '/articles/github-agentic-workflows-hands-on-guide' },
+];
+---
+
+<BaseLayout
+  title="Agent Sandboxing — htek.dev"
+  description="The definitive guide to agent sandboxing: every isolation level, every tool, and how to choose what fits your threat model."
+>
+  <Navbar />
+  <main id="main-content">
+
+    <!-- Hero -->
+    <section class="relative min-h-[85vh] flex items-center bg-bg-void overflow-hidden">
+      <!-- Background effects -->
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-accent-cyan/8 rounded-full blur-[120px]"></div>
+        <div class="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-accent-violet/5 rounded-full blur-[80px]"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-accent-green/5 rounded-full blur-[80px]"></div>
+      </div>
+      <!-- Grid overlay -->
+      <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: linear-gradient(rgba(34,211,238,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,0.3) 1px, transparent 1px); background-size: 60px 60px;"></div>
+
+      <div class="relative max-w-5xl mx-auto px-6 pt-32 pb-20 text-center">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-6 opacity-80">// agent-sandboxing</span>
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-text-primary mb-8 leading-tight">
+          Your Agent Has Access.
+          <span class="block mt-2">
+            <span class="sandbox-gradient">The Question Is: How Much?</span>
+          </span>
+        </h1>
+        <p class="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-12 leading-relaxed">
+          Agent sandboxing isn't one thing — it's a spectrum from lightweight process isolation to full policy-governed runtimes.
+          This page maps every level, every tool, and helps you choose what fits your threat model.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
+          <a href="#spectrum" class="inline-flex items-center gap-2 bg-accent-cyan/15 border border-accent-cyan/30 text-accent-cyan font-semibold px-8 py-3 rounded-lg hover:bg-accent-cyan/25 transition-all">
+            See the Levels
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+          </a>
+          <a href="#tools" class="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-text-secondary hover:text-text-primary hover:border-accent-cyan/30 font-medium px-8 py-3 rounded-lg transition-all">
+            Compare Tools ↓
+          </a>
+          <a href="#threat-model" class="inline-flex items-center gap-2 text-text-muted hover:text-text-primary font-medium px-8 py-3 rounded-lg transition-colors">
+            Choose by Threat Model →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: The Spectrum -->
+    <section id="spectrum" class="fade-in py-24 md:py-32 bg-bg-surface relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 left-1/3 w-[400px] h-[400px] bg-accent-cyan/5 rounded-full blur-[100px]"></div>
+      </div>
+      <div class="relative max-w-5xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// the big picture</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">The Isolation Spectrum</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          Before diving into the full taxonomy, here's the landscape. Every sandbox sits somewhere on this spectrum — the tradeoff is always isolation strength vs. overhead.
+        </p>
+
+        <!-- Spectrum SVG -->
+        <div class="overflow-x-auto mb-16">
+          <svg viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[900px] mx-auto">
+            <defs>
+              <linearGradient id="spectrum-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#f87171" stop-opacity="0.6"/>
+                <stop offset="25%" stop-color="#fb923c" stop-opacity="0.6"/>
+                <stop offset="50%" stop-color="#fbbf24" stop-opacity="0.6"/>
+                <stop offset="70%" stop-color="#34d399" stop-opacity="0.6"/>
+                <stop offset="85%" stop-color="#818cf8" stop-opacity="0.6"/>
+                <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.6"/>
+              </linearGradient>
+              <marker id="spec-arr-r" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill="rgba(255,255,255,0.3)"/>
+              </marker>
+            </defs>
+            <!-- Labels top -->
+            <text x="20" y="18" fill="rgba(248,113,113,0.7)" font-size="11" font-weight="600" font-family="system-ui">Lightest</text>
+            <text x="820" y="18" fill="rgba(34,211,238,0.7)" font-size="11" font-weight="600" font-family="system-ui" text-anchor="end">Strongest</text>
+            <!-- Arrow -->
+            <line x1="20" y1="30" x2="860" y2="30" stroke="url(#spectrum-grad)" stroke-width="3" marker-end="url(#spec-arr-r)"/>
+            <!-- Nodes -->
+            <!-- L1: Process -->
+            <circle cx="60" cy="30" r="6" fill="#f87171"/>
+            <text x="60" y="62" fill="#f87171" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">🔓 Process</text>
+            <text x="60" y="76" fill="rgba(248,113,113,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">seccomp</text>
+            <text x="60" y="88" fill="rgba(248,113,113,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">Landlock</text>
+            <text x="60" y="108" fill="rgba(248,113,113,0.5)" text-anchor="middle" font-size="8" font-family="system-ui">Near-zero</text>
+            <text x="60" y="118" fill="rgba(248,113,113,0.5)" text-anchor="middle" font-size="8" font-family="system-ui">overhead</text>
+            <!-- L2: Namespace -->
+            <circle cx="210" cy="30" r="6" fill="#fb923c"/>
+            <text x="210" y="62" fill="#fb923c" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">🧱 Namespace</text>
+            <text x="210" y="76" fill="rgba(251,146,60,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">bubblewrap</text>
+            <text x="210" y="88" fill="rgba(251,146,60,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">Firejail</text>
+            <text x="210" y="108" fill="rgba(251,146,60,0.5)" text-anchor="middle" font-size="8" font-family="system-ui">Near-zero</text>
+            <text x="210" y="118" fill="rgba(251,146,60,0.5)" text-anchor="middle" font-size="8" font-family="system-ui">overhead</text>
+            <!-- L3: Container -->
+            <circle cx="380" cy="30" r="6" fill="#fbbf24"/>
+            <text x="380" y="62" fill="#fbbf24" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">📦 Container</text>
+            <text x="380" y="76" fill="rgba(251,191,36,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">Docker</text>
+            <text x="380" y="88" fill="rgba(251,191,36,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">Podman · Incus</text>
+            <text x="380" y="108" fill="rgba(251,191,36,0.5)" text-anchor="middle" font-size="8" font-family="system-ui">Low</text>
+            <text x="380" y="118" fill="rgba(251,191,36,0.5)" text-anchor="middle" font-size="8" font-family="system-ui">overhead</text>
+            <!-- L4/L5: MicroVM -->
+            <circle cx="580" cy="30" r="6" fill="#818cf8"/>
+            <text x="580" y="62" fill="#818cf8" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">🖥️ MicroVM</text>
+            <text x="580" y="76" fill="rgba(129,140,248,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">Firecracker</text>
+            <text x="580" y="88" fill="rgba(129,140,248,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">E2B · Cloud Hypervisor</text>
+            <text x="580" y="108" fill="rgba(129,140,248,0.5)" text-anchor="middle" font-size="8" font-family="system-ui">Medium-High</text>
+            <text x="580" y="118" fill="rgba(129,140,248,0.5)" text-anchor="middle" font-size="8" font-family="system-ui">overhead</text>
+            <!-- L7: Policy Engine -->
+            <circle cx="800" cy="30" r="6" fill="#22d3ee"/>
+            <text x="800" y="62" fill="#22d3ee" text-anchor="middle" font-size="11" font-weight="700" font-family="system-ui">🛡️ Policy Engine</text>
+            <text x="800" y="76" fill="rgba(34,211,238,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">OpenShell</text>
+            <text x="800" y="88" fill="rgba(34,211,238,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">OPA + Landlock</text>
+            <text x="800" y="108" fill="rgba(34,211,238,0.5)" text-anchor="middle" font-size="8" font-family="system-ui">Medium</text>
+            <text x="800" y="118" fill="rgba(34,211,238,0.5)" text-anchor="middle" font-size="8" font-family="system-ui">overhead</text>
+            <!-- vertical tick lines -->
+            <line x1="60" y1="36" x2="60" y2="54" stroke="#f87171" stroke-width="1" opacity="0.4"/>
+            <line x1="210" y1="36" x2="210" y2="54" stroke="#fb923c" stroke-width="1" opacity="0.4"/>
+            <line x1="380" y1="36" x2="380" y2="54" stroke="#fbbf24" stroke-width="1" opacity="0.4"/>
+            <line x1="580" y1="36" x2="580" y2="54" stroke="#818cf8" stroke-width="1" opacity="0.4"/>
+            <line x1="800" y1="36" x2="800" y2="54" stroke="#22d3ee" stroke-width="1" opacity="0.4"/>
+            <!-- Level labels at bottom -->
+            <text x="60" y="145" fill="rgba(248,113,113,0.4)" text-anchor="middle" font-size="9" font-family="system-ui">L1</text>
+            <text x="210" y="145" fill="rgba(251,146,60,0.4)" text-anchor="middle" font-size="9" font-family="system-ui">L2</text>
+            <text x="380" y="145" fill="rgba(251,191,36,0.4)" text-anchor="middle" font-size="9" font-family="system-ui">L3–L4</text>
+            <text x="580" y="145" fill="rgba(129,140,248,0.4)" text-anchor="middle" font-size="9" font-family="system-ui">L5</text>
+            <text x="800" y="145" fill="rgba(34,211,238,0.4)" text-anchor="middle" font-size="9" font-family="system-ui">L7</text>
+          </svg>
+        </div>
+
+        <!-- 3 framing cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="framing-card group bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 transition-all hover:border-accent-rose/30 hover:bg-white/[0.05]">
+            <span class="text-4xl mb-5 block">🏠</span>
+            <h3 class="text-lg font-heading font-semibold text-text-primary mb-3 group-hover:text-accent-rose transition-colors">Protect Your Machine</h3>
+            <p class="text-text-secondary text-sm leading-relaxed mb-4">Keep agents out of your files, secrets, and home directory. Stop accidental reads of <code class="text-accent-rose/80 text-xs">~/.ssh</code> and <code class="text-accent-rose/80 text-xs">.env</code>.</p>
+            <p class="font-mono text-xs text-text-muted">Bubblewrap, Firejail</p>
+            <p class="text-xs text-text-muted mt-1 opacity-70">Zero overhead. Instant. Linux.</p>
+          </div>
+          <div class="framing-card group bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 transition-all hover:border-accent-cyan/30 hover:bg-white/[0.05]">
+            <span class="text-4xl mb-5 block">📦</span>
+            <h3 class="text-lg font-heading font-semibold text-text-primary mb-3 group-hover:text-accent-cyan transition-colors">Isolate Workloads</h3>
+            <p class="text-text-secondary text-sm leading-relaxed mb-4">Disposable environments that spin up and throw away. Agents get a fresh sandbox each task — state doesn't bleed between runs.</p>
+            <p class="font-mono text-xs text-text-muted">Docker, E2B, Fly.io</p>
+            <p class="text-xs text-text-muted mt-1 opacity-70">Ephemeral. Cross-platform.</p>
+          </div>
+          <div class="framing-card group bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 transition-all hover:border-accent-violet/30 hover:bg-white/[0.05]">
+            <span class="text-4xl mb-5 block">🔐</span>
+            <h3 class="text-lg font-heading font-semibold text-text-primary mb-3 group-hover:text-accent-violet transition-colors">Govern Access</h3>
+            <p class="text-text-secondary text-sm leading-relaxed mb-4">Control exactly which APIs, methods, and endpoints an agent can reach. Policy-as-code enforcement at the network level.</p>
+            <p class="font-mono text-xs text-text-muted">NVIDIA OpenShell</p>
+            <p class="text-xs text-text-muted mt-1 opacity-70">Policy-as-code. Enterprise.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Isolation Levels Taxonomy -->
+    <section id="levels" class="fade-in py-24 md:py-32 bg-bg-void relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-accent-violet/5 rounded-full blur-[100px]"></div>
+      </div>
+      <div class="relative max-w-5xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// isolation taxonomy</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">Isolation Levels — The Full Taxonomy</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          Seven levels, each wrapping the ones below. The further out you go, the stronger the boundary — and the higher the operational cost.
+        </p>
+
+        <!-- Nested Stack SVG -->
+        <div class="overflow-x-auto mb-16">
+          <svg viewBox="0 0 740 520" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-[740px] mx-auto">
+            <!-- L7 Policy Engine (outermost) -->
+            <rect x="10" y="10" width="720" height="500" rx="12" fill="rgba(34,211,238,0.04)" stroke="rgba(34,211,238,0.35)" stroke-width="1.5"/>
+            <text x="26" y="34" fill="#22d3ee" font-size="11" font-weight="700" font-family="system-ui">L7: Policy Engine (OpenShell)</text>
+            <text x="26" y="48" fill="rgba(34,211,238,0.5)" font-size="9" font-family="system-ui">L7 network inspection + multi-level enforcement + GPU policy</text>
+            <!-- L6 Full VM -->
+            <rect x="30" y="62" width="680" height="438" rx="10" fill="rgba(192,132,252,0.04)" stroke="rgba(192,132,252,0.3)" stroke-width="1.5"/>
+            <text x="46" y="84" fill="#c084fc" font-size="11" font-weight="700" font-family="system-ui">L6: Full VM (QEMU/KVM, Hyper-V)</text>
+            <text x="46" y="98" fill="rgba(192,132,252,0.5)" font-size="9" font-family="system-ui">Complete OS isolation, dedicated everything</text>
+            <!-- L5 MicroVM -->
+            <rect x="50" y="112" width="640" height="378" rx="10" fill="rgba(129,140,248,0.04)" stroke="rgba(129,140,248,0.3)" stroke-width="1.5"/>
+            <text x="66" y="134" fill="#818cf8" font-size="11" font-weight="700" font-family="system-ui">L5: MicroVM (Firecracker, Cloud Hypervisor)</text>
+            <text x="66" y="148" fill="rgba(129,140,248,0.5)" font-size="9" font-family="system-ui">Dedicated kernel, hardware virtualization</text>
+            <!-- L4 Userspace Kernel -->
+            <rect x="70" y="162" width="600" height="318" rx="10" fill="rgba(52,211,153,0.04)" stroke="rgba(52,211,153,0.25)" stroke-width="1.5"/>
+            <text x="86" y="184" fill="#34d399" font-size="11" font-weight="700" font-family="system-ui">L4: Userspace Kernel (gVisor)</text>
+            <text x="86" y="198" fill="rgba(52,211,153,0.5)" font-size="9" font-family="system-ui">Syscall interception in userspace</text>
+            <!-- L3 Container -->
+            <rect x="90" y="212" width="560" height="258" rx="10" fill="rgba(251,191,36,0.04)" stroke="rgba(251,191,36,0.25)" stroke-width="1.5"/>
+            <text x="106" y="234" fill="#fbbf24" font-size="11" font-weight="700" font-family="system-ui">L3: Container (Docker, Podman, Incus)</text>
+            <text x="106" y="248" fill="rgba(251,191,36,0.5)" font-size="9" font-family="system-ui">cgroups + namespaces + layered filesystem</text>
+            <!-- L2 Namespace -->
+            <rect x="110" y="262" width="520" height="198" rx="10" fill="rgba(251,146,60,0.04)" stroke="rgba(251,146,60,0.25)" stroke-width="1.5"/>
+            <text x="126" y="284" fill="#fb923c" font-size="11" font-weight="700" font-family="system-ui">L2: Namespace (Bubblewrap, Firejail)</text>
+            <text x="126" y="298" fill="rgba(251,146,60,0.5)" font-size="9" font-family="system-ui">PID, mount, net, user namespaces</text>
+            <!-- L1 Process (innermost) -->
+            <rect x="130" y="312" width="480" height="138" rx="10" fill="rgba(248,113,113,0.06)" stroke="rgba(248,113,113,0.3)" stroke-width="1.5"/>
+            <text x="146" y="334" fill="#f87171" font-size="11" font-weight="700" font-family="system-ui">L1: Process (seccomp, Landlock)</text>
+            <text x="146" y="348" fill="rgba(248,113,113,0.5)" font-size="9" font-family="system-ui">Syscall filtering, filesystem restrictions</text>
+            <!-- Agent box in center -->
+            <rect x="270" y="372" width="200" height="60" rx="8" fill="rgba(88,166,255,0.08)" stroke="rgba(88,166,255,0.3)" stroke-width="1.5"/>
+            <text x="370" y="398" fill="#58a6ff" text-anchor="middle" font-size="12" font-weight="700" font-family="system-ui">🤖 Agent</text>
+            <text x="370" y="414" fill="rgba(88,166,255,0.6)" text-anchor="middle" font-size="9" font-family="system-ui">Executes here</text>
+            <!-- Level labels on right -->
+            <text x="720" y="265" fill="rgba(34,211,238,0.4)" text-anchor="end" font-size="8" font-family="system-ui">L7</text>
+            <text x="700" y="315" fill="rgba(192,132,252,0.4)" text-anchor="end" font-size="8" font-family="system-ui">L6</text>
+            <text x="680" y="365" fill="rgba(129,140,248,0.4)" text-anchor="end" font-size="8" font-family="system-ui">L5</text>
+            <text x="660" y="415" fill="rgba(52,211,153,0.4)" text-anchor="end" font-size="8" font-family="system-ui">L4</text>
+          </svg>
+        </div>
+
+        <!-- Detailed breakdown table -->
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-white/[0.08]">
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase">Level</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase">Tech</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase hidden md:table-cell">How It Works</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase">Kernel Shared?</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase">Escape Risk</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase">Overhead</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase hidden lg:table-cell">OS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isolationLevels.map((l) => (
+                <tr class="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                  <td class="py-4 px-3 whitespace-nowrap">
+                    <span class="inline-block font-mono text-[10px] tracking-widest uppercase px-2 py-1 rounded-full border" style={`color: ${l.color}; background: ${l.colorMuted}; border-color: ${l.colorBorder}`}>
+                      {l.level}: {l.label}
+                    </span>
+                  </td>
+                  <td class="py-4 px-3 text-text-secondary font-mono text-xs whitespace-nowrap">{l.tech}</td>
+                  <td class="py-4 px-3 text-text-muted text-xs leading-relaxed hidden md:table-cell max-w-xs">{l.how}</td>
+                  <td class="py-4 px-3 text-xs whitespace-nowrap">
+                    <span class={`font-semibold ${l.kernelShared === 'No' ? 'text-accent-green' : l.kernelShared === 'Partial' ? 'text-accent-orange' : 'text-accent-rose'}`}>
+                      {l.kernelShared}
+                    </span>
+                  </td>
+                  <td class="py-4 px-3 text-text-secondary text-xs whitespace-nowrap">{l.escapeRisk}</td>
+                  <td class="py-4 px-3 text-text-secondary text-xs whitespace-nowrap">{l.overhead}</td>
+                  <td class="py-4 px-3 text-text-muted text-xs hidden lg:table-cell">{l.os}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Level Cards -->
+        <div class="mt-16 space-y-6">
+          {isolationLevels.map((l) => (
+            <div class="level-card bg-white/[0.02] border rounded-2xl p-8 relative overflow-hidden" style={`border-color: ${l.colorBorder}`}>
+              <div class="absolute inset-0 bg-gradient-to-r pointer-events-none rounded-2xl" style={`background: linear-gradient(90deg, ${l.colorMuted} 0%, transparent 60%)`}></div>
+              <div class="relative">
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                  <span class="inline-block font-mono text-[10px] tracking-widest uppercase px-3 py-1 rounded-full border font-bold" style={`color: ${l.color}; background: ${l.colorMuted}; border-color: ${l.colorBorder}`}>
+                    {l.level}: {l.label}
+                  </span>
+                  <span class="text-text-primary font-heading font-semibold">{l.tech}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <h4 class="font-mono text-xs text-text-muted uppercase tracking-wider mb-2">Protects</h4>
+                    <ul class="space-y-1">
+                      {l.protects.map((p) => (
+                        <li class="text-text-secondary text-sm flex items-center gap-2">
+                          <span class="w-1.5 h-1.5 rounded-full shrink-0" style={`background: ${l.color}`}></span>
+                          {p}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 class="font-mono text-xs text-text-muted uppercase tracking-wider mb-2">When to Use</h4>
+                    <p class="text-text-secondary text-sm leading-relaxed">{l.whenToUse}</p>
+                  </div>
+                  <div>
+                    <h4 class="font-mono text-xs text-text-muted uppercase tracking-wider mb-2">Trade-off</h4>
+                    <p class="text-text-muted text-sm leading-relaxed">{l.tradeoff}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Every Tool Compared -->
+    <section id="tools" class="fade-in py-24 md:py-32 bg-bg-surface relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute bottom-1/3 left-1/4 w-[400px] h-[400px] bg-accent-cyan/5 rounded-full blur-[100px]"></div>
+      </div>
+      <div class="relative max-w-6xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// tool comparison</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">Every Tool Compared</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          19 tools across the entire spectrum — from Linux-native namespace wrappers to managed cloud MicroVM platforms.
+        </p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-white/[0.08]">
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase">Tool</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase">Level</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase">OS</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase">GPU</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase hidden md:table-cell">Self-Hosted</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase hidden md:table-cell">Open Source</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase">Cold Start</th>
+                <th class="text-left py-4 px-3 text-text-muted font-mono text-xs tracking-wider uppercase hidden lg:table-cell">Pricing</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tools.map((t) => (
+                <tr class="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                  <td class="py-3 px-3">
+                    <a href={t.link} class="text-text-primary hover:text-accent-cyan transition-colors font-semibold text-sm" target="_blank" rel="noopener noreferrer">{t.name}</a>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="font-mono text-xs text-text-muted">{t.level}</span>
+                  </td>
+                  <td class="py-3 px-3 text-text-muted text-xs whitespace-nowrap">{t.os}</td>
+                  <td class="py-3 px-3 text-xs">
+                    <span class={`font-semibold ${t.gpu === true || t.gpu === 'Best' ? 'text-accent-green' : t.gpu === 'Limited' ? 'text-accent-orange' : 'text-text-muted'}`}>
+                      {t.gpu === true ? 'Yes' : t.gpu === false ? '—' : t.gpu}
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-xs text-text-muted hidden md:table-cell">
+                    {typeof t.selfHosted === 'boolean' ? (t.selfHosted ? <span class="text-accent-green">Yes</span> : <span class="text-text-muted">No</span>) : t.selfHosted}
+                  </td>
+                  <td class="py-3 px-3 text-xs text-text-muted hidden md:table-cell">{t.openSource}</td>
+                  <td class="py-3 px-3 text-text-secondary text-xs whitespace-nowrap">{t.coldStart}</td>
+                  <td class="py-3 px-3 text-text-muted text-xs hidden lg:table-cell">{t.pricing}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Choose by Threat Model -->
+    <section id="threat-model" class="fade-in py-24 md:py-32 bg-bg-void">
+      <div class="max-w-6xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// choose your sandbox</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">Choose by Threat Model</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          Don't pick a sandbox by vibes. Pick it by what you're defending against. Here's the decision map.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {threatModels.map((t) => (
+            <div class="threat-card group bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 transition-all hover:border-accent-cyan/25 hover:bg-white/[0.05]">
+              <div class="flex items-start gap-3 mb-3">
+                <span class="text-2xl shrink-0">{t.emoji}</span>
+                <h3 class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors">{t.threat}</h3>
+              </div>
+              <p class="text-text-muted text-xs leading-relaxed mb-4">{t.defense}</p>
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <span class="font-mono text-[10px] text-accent-cyan/70 bg-accent-cyan/10 border border-accent-cyan/20 rounded-full px-2 py-0.5">{t.level}</span>
+                <span class="text-text-muted text-xs">{t.tools}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Considerations -->
+    <section class="fade-in py-24 md:py-32 bg-bg-surface relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/3 right-1/4 w-[350px] h-[350px] bg-accent-violet/5 rounded-full blur-[100px]"></div>
+      </div>
+      <div class="relative max-w-6xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// before you decide</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">Considerations</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-16">
+          Nine things worth thinking through before you pick your sandbox strategy.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {considerations.map((c) => (
+            <div class="consideration-card group bg-white/[0.02] border border-white/[0.06] rounded-2xl p-7 transition-all hover:border-accent-cyan/25 hover:bg-white/[0.04]">
+              <span class="text-3xl mb-4 block">{c.icon}</span>
+              <h3 class="text-text-primary font-heading font-semibold mb-3 group-hover:text-accent-cyan transition-colors">{c.title}</h3>
+              <p class="text-text-secondary text-sm leading-relaxed">{c.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: How Sandboxing Fits the Stack -->
+    <section class="fade-in py-24 md:py-32 bg-bg-void">
+      <div class="max-w-5xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// the bigger picture</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">How Sandboxing Fits the Stack</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-12">
+          Sandboxing is Layer 0 — the execution boundary beneath everything else. It's necessary but not sufficient.
+          Above it sit instructions, hooks, and CI/CD gates that together make agentic safety structural.
+        </p>
+
+        <div class="overflow-x-auto mb-12">
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-white/[0.08]">
+                <th class="text-left py-4 px-4 text-text-muted font-mono text-xs tracking-wider uppercase">Layer</th>
+                <th class="text-left py-4 px-4 text-text-muted font-mono text-xs tracking-wider uppercase">What</th>
+                <th class="text-left py-4 px-4 text-text-muted font-mono text-xs tracking-wider uppercase">Where</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stackLayers.map((row) => (
+                <tr class={`border-b border-white/[0.04] transition-colors ${row.here ? 'bg-accent-cyan/[0.04]' : 'hover:bg-white/[0.02]'}`}>
+                  <td class="py-4 px-4">
+                    <span class={`font-mono text-xs font-bold ${row.here ? 'text-accent-cyan' : 'text-text-muted'}`}>{row.layer}</span>
+                  </td>
+                  <td class="py-4 px-4 text-text-secondary text-sm">{row.what}</td>
+                  <td class="py-4 px-4">
+                    {row.here ? (
+                      <span class="text-accent-cyan text-sm font-semibold">This page ← you are here</span>
+                    ) : row.link ? (
+                      <a href={row.link} class="text-accent-cyan hover:underline text-sm">{row.where}</a>
+                    ) : (
+                      <span class="text-text-muted text-sm">{row.where}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="bg-white/[0.02] border border-accent-cyan/15 rounded-2xl p-8 relative">
+          <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-accent-cyan/[0.03] to-transparent pointer-events-none"></div>
+          <div class="relative flex flex-col md:flex-row gap-6 items-start">
+            <span class="text-4xl shrink-0">💡</span>
+            <div>
+              <h3 class="text-lg font-heading font-semibold text-text-primary mb-2">Sandboxing is Layer 0, not the whole solution</h3>
+              <p class="text-text-secondary text-sm leading-relaxed">
+                A sandbox defines the execution boundary — what the agent can and cannot touch. But it doesn't tell the agent <em>what to do</em>.
+                Instructions (Layer 1) set context and intent. Hooks (Layer 2) enforce rules in real time. CI/CD gates (Layer 3) catch what slips through.
+                The full <a href="/agentic-devops" class="text-accent-cyan hover:underline">Agentic DevOps stack</a> uses all four layers together.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Further Reading -->
+    <section class="fade-in py-24 md:py-32 bg-bg-surface">
+      <div class="max-w-5xl mx-auto px-6">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// deep dives</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">Further Reading</h2>
+        <p class="text-text-secondary text-lg max-w-3xl mb-12">
+          The articles that go deeper on specific tools and the philosophy behind agent sandboxing.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <a href="/articles/nvidia-opencontainers-sandbox-ai-agents" class="group block bg-bg-void/50 border border-white/[0.06] rounded-xl p-6 transition-all hover:border-accent-cyan/30 hover:-translate-y-0.5">
+            <span class="font-mono text-[10px] text-accent-cyan/70 tracking-wider uppercase mb-3 block">NVIDIA OpenShell</span>
+            <h3 class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors mb-2">The Sandbox Your AI Agents Should Be Running In</h3>
+            <p class="text-text-muted text-sm leading-relaxed">NVIDIA's OpenShell is the first policy-governed, multi-layer sandbox purpose-built for GPU-accelerated agent workloads.</p>
+          </a>
+          <a href="/articles/sandboxes-missing-infrastructure-layer-agentic-devops" class="group block bg-bg-void/50 border border-white/[0.06] rounded-xl p-6 transition-all hover:border-accent-cyan/30 hover:-translate-y-0.5">
+            <span class="font-mono text-[10px] text-accent-cyan/70 tracking-wider uppercase mb-3 block">Infrastructure</span>
+            <h3 class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors mb-2">NVIDIA OpenShell and the Rise of Agent Sandboxes</h3>
+            <p class="text-text-muted text-sm leading-relaxed">NVIDIA's OpenShell dropped the first policy-driven sandbox for AI agents. Here's why sandboxes are Layer 0 of agentic DevOps.</p>
+          </a>
+          <a href="/agentic-devops" class="group block bg-bg-void/50 border border-white/[0.06] rounded-xl p-6 transition-all hover:border-accent-cyan/30 hover:-translate-y-0.5">
+            <span class="font-mono text-[10px] text-accent-green/70 tracking-wider uppercase mb-3 block">Agentic DevOps</span>
+            <h3 class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors mb-2">Agentic DevOps Hub</h3>
+            <p class="text-text-muted text-sm leading-relaxed">The full Agentic DevOps philosophy, stack, and tooling — sandboxing is Layer 0, but see how all five layers work together.</p>
+          </a>
+          <a href="/articles/agent-proof-architecture-agentic-devops" class="group block bg-bg-void/50 border border-white/[0.06] rounded-xl p-6 transition-all hover:border-accent-cyan/30 hover:-translate-y-0.5">
+            <span class="font-mono text-[10px] text-accent-violet/70 tracking-wider uppercase mb-3 block">Architecture</span>
+            <h3 class="text-text-primary font-heading font-semibold group-hover:text-accent-cyan transition-colors mb-2">Building Agent-Proof Architecture</h3>
+            <p class="text-text-muted text-sm leading-relaxed">Layered enforcement that makes agents structurally incapable of shipping untested code — the full five-layer model.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="fade-in py-24 md:py-32 bg-bg-void relative overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent-cyan/5 rounded-full blur-[120px]"></div>
+      </div>
+      <div class="relative max-w-3xl mx-auto px-6 text-center">
+        <span class="inline-block font-mono text-accent-cyan text-sm tracking-wider mb-4">// let's build</span>
+        <h2 class="text-3xl md:text-5xl font-heading font-bold text-text-primary mb-6">
+          Ready to Sandbox <span class="sandbox-gradient">Your Agents?</span>
+        </h2>
+        <p class="text-text-secondary text-lg mb-10 leading-relaxed">
+          I help engineering teams design and implement agent execution boundaries — from namespace-level isolation for local dev to policy-governed MicroVM environments for production. Let's talk.
+        </p>
+        <a href="/consulting#book" class="inline-block bg-accent-cyan text-bg-void font-semibold px-8 py-3 rounded-lg hover:opacity-90 transition-opacity">
+          Book a Free Consultation
+        </a>
+      </div>
+    </section>
+
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .sandbox-gradient {
+    background: linear-gradient(135deg, #22d3ee, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .framing-card {
+    position: relative;
+  }
+
+  .framing-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0), transparent);
+    border-radius: 2px 2px 0 0;
+    transition: background 0.3s ease;
+  }
+
+  .framing-card:hover::before {
+    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.4), transparent);
+  }
+
+  .threat-card {
+    position: relative;
+  }
+
+  .threat-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    background: radial-gradient(circle at 50% 0%, rgba(34, 211, 238, 0.05), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .threat-card:hover::after {
+    opacity: 1;
+  }
+
+  .consideration-card {
+    position: relative;
+  }
+
+  .consideration-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0), transparent);
+    border-radius: 2px 2px 0 0;
+    transition: background 0.3s ease;
+  }
+
+  .consideration-card:hover::before {
+    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.35), transparent);
+  }
+</style>
+
+<script>
+  // Fade-in on scroll
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    },
+    { threshold: 0.1 },
+  );
+
+  document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el));
+</script>
