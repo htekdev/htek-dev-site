@@ -1,0 +1,143 @@
+---
+title: 'Copilot CLI --remote: Access Your Agent From Anywhere'
+description: >-
+  Copilot CLI 1.0 ships a game-changing remote access model. Your agent now
+  lives across devices, browsers, and SSH sessions — not just your local
+  terminal.
+pubDate: 2026-03-23T00:00:00.000Z
+tags:
+  - GitHub Copilot
+  - Developer Experience
+  - AI
+  - Automation
+draft: true
+---
+
+## The Problem With Local-Only AI
+
+Here's a workflow I used to lose sleep over: I'd spend an hour on my workstation building up a long Copilot CLI session — context-rich, deep into a refactor, 15 turns of conversation that captured exactly what I was trying to accomplish. Then my MacBook's battery dies at a coffee shop, or I need to switch to my work laptop for a call, or I'm SSH'd into a cloud VM and want to continue from my home machine.
+
+Gone. All of it. Start over.
+
+This is the fundamental flaw in the "AI assistant as local process" model. The more powerful these agents become, the more painful it is when they're tethered to a single device. A great Copilot CLI session isn't just a terminal window — it's a shared understanding of your codebase, your intent, and the work in progress. Losing that context is expensive.
+
+GitHub is solving this with a suite of features in Copilot CLI 1.0 that I'd loosely call the "remote access model." No single `--remote` flag does everything — it's a collection of capabilities that together let you access your agent from anywhere: different devices, browsers, cloud VMs, and IDE integrations. This is barely covered territory. Let's dig in.
+
+## Session Continuity: Pick Up Where You Left Off
+
+The foundation of the remote access story is **session persistence**. Every Copilot CLI session is saved automatically and can be resumed from any environment where you're authenticated.
+
+The `/resume` slash command or `--resume` CLI flag opens a session picker listing all your saved sessions with timestamps and context summaries. To instantly resume your most recent session without choosing, there's a shorthand:
+
+```bash
+copilot --continue
+```
+
+That's it. Boot into the CLI and you're back in the last session — full conversation history, working directory, all approved tools, and the full context of what you were building. The session ID is durable, so you can resume the same session from a different machine by specifying it directly:
+
+```bash
+copilot --resume=<session-id>
+```
+
+Starting in Copilot CLI 1.0.10, sessions generate a **remote session URL** that displays as a clickable "Open in browser" link in the terminal. This isn't just a tracking URL — it's a persistent reference to your session that you can share, bookmark, or use to monitor progress from another device. The fact that the team specifically polished how this URL renders (1.0.10 changed it from a duplicated raw URL to a compact clickable link) tells me they consider this a first-class feature, not a debug aid.
+
+## Delegate and Walk Away
+
+The most powerful remote access primitive in Copilot CLI is `/delegate`. I've mentioned this in [my Copilot vs. the world breakdown](/articles/github-copilot-vs-the-world), but it deserves deeper treatment in the context of remote work.
+
+When you prefix a prompt with `/delegate` or use the `&` shorthand, Copilot does something remarkable: it packages your current session context — including unstaged local changes — commits them to a new branch, and hands the work off to the **Copilot coding agent running on GitHub's infrastructure**.
+
+```bash
+& complete the API integration tests and fix any failing edge cases
+```
+
+From that point, the agent works autonomously in the cloud. You get a link to the GitHub pull request and agent session. Your terminal is free. Your laptop can sleep. When the agent finishes, it opens a draft PR and requests your review.
+
+This is a fundamentally different model than "run the agent locally and wait." You're not blocking your machine or your attention. The work happens on GitHub's servers, and you pick up the pull request review on your own schedule, from any device with a browser.
+
+The security posture here is also worth understanding: since this delegates to GitHub's infrastructure, the agent uses GitHub Actions-style permissions, not your local credentials. Your laptop never needs to stay on.
+
+## Running Copilot Over SSH
+
+The simplest form of remote access is also the most underappreciated: **Copilot CLI runs cleanly over SSH**.
+
+Install and authenticate once on a cloud VM or development server, and you can access that agent from any SSH client — your laptop, a tablet with Termius, a Chromebook, even your phone in a pinch. The full interactive UI renders correctly in SSH sessions, including alt-screen mode, mouse support, and the visual diff viewer.
+
+```bash
+ssh user@my-dev-server
+copilot --continue
+```
+
+The 1.0.10 release specifically called out improvements for SSH and Codespaces environments: `/login` device flow now works correctly in remote terminals, and working directory detection is fixed when using `--server` mode with remote sessions. These aren't accidental improvements — they signal that SSH-based remote usage is an officially supported workflow.
+
+For teams, this pattern is powerful: set up a shared development server with Copilot CLI authenticated under a service account, configure trusted directories for your repositories, and your team can connect from any device and get full agent capabilities without each developer needing to manage authentication and setup locally.
+
+## ACP: The Bridge Between Your Agent and Your IDE
+
+The `--acp` flag (Agent Client Protocol) enables a different kind of remote access — **connecting your running Copilot CLI session to IDEs and other tools**.
+
+```bash
+copilot --acp
+```
+
+This starts Copilot as an ACP server. Your IDE (currently VS Code, with broader support in development) can connect to it, and suddenly the agent that's been running in your terminal is also powering your editor. The bidirectional connection means file selections in VS Code appear in the CLI context, and changes the agent makes in the terminal appear immediately in your editor.
+
+The ACP model is what makes the "agent from anywhere" vision coherent at the tooling level. Your Copilot CLI session isn't just a terminal process — it's a service that other developer tools can connect to. The SDK (currently in technical preview) extends this further: third-party tools can embed and communicate with the Copilot CLI engine via JSON-RPC, opening up possibilities for custom IDEs, CI/CD integration, and workflow automation.
+
+I explored the broader SDK implications in [the biggest week in Copilot CLI history](/articles/copilot-cli-biggest-week-yet) — the short version is that once GitHub ships an SDK, the tool becomes infrastructure, not just a utility.
+
+## Programmatic Mode for Automation
+
+Remote access isn't only about human developers on different devices. Copilot CLI's programmatic mode is essential for CI/CD pipelines, automated workflows, and scripting.
+
+The `-p` / `--prompt` flag runs a single prompt and exits — no interactive UI, just the agent's response to stdout:
+
+```bash
+copilot -p "Summarize the changes in the last 10 commits and flag any security-relevant patterns"
+```
+
+Add `--autopilot` and `--allow-all` to let the agent work autonomously, and `--max-autopilot-continues` to bound how far it runs:
+
+```bash
+copilot --autopilot --allow-all --max-autopilot-continues 10 \
+  -p "Review open PRs for this repository and flag any with failing CI"
+```
+
+This runs cleanly in GitHub Actions, Docker containers, or any environment with Node.js installed. You're not limited to interactive use — you can invoke Copilot as a step in any automated pipeline. Combined with `GH_TOKEN` for authentication and `COPILOT_ALLOW_ALL=true` for non-interactive permission granting, it becomes a composable building block.
+
+The `--output-format=json` flag (added in v0.0.422) emits JSONL output for programmatic consumption, making it easy to parse agent responses in scripts or pipe results into other tools.
+
+## What This Changes About How You Work
+
+Let me be concrete about what these features unlock together:
+
+**The traveling developer**: Authenticate Copilot CLI on your home workstation. Work on a feature all morning, building rich session context. Leave the house with your laptop. Run `copilot --continue` over SSH to your workstation from a coffee shop. You're exactly where you left off — same codebase, same conversation history, same work in progress. No VPN required for the agent itself.
+
+**The parallel workflow**: Start a complex refactor in Copilot CLI with `&` to delegate. While the coding agent works in the cloud, you continue with different code in your local session, or just step away for a meeting. Come back to a draft PR ready for review.
+
+**The thin client setup**: Provision a powerful cloud VM with your full development environment. Install Copilot CLI once. Work from your M1 MacBook, your iPad with a Bluetooth keyboard, or your office Linux box — all SSH'd into the same machine, resuming the same sessions.
+
+**The automated pipeline**: Add Copilot CLI as a step in your CI workflow. Run code review analysis, generate changelogs, summarize test failures, or draft release notes automatically on every merge.
+
+## Security Matters
+
+I'd be doing you a disservice if I covered remote access without addressing security.
+
+When running over SSH, Copilot CLI's permission system still applies — the agent asks for approval before executing shell commands or writing files unless you've pre-approved specific tools. The `--deny-tool` flag lets you explicitly block dangerous operations, and `--allow-tool` patterns give fine-grained control:
+
+```bash
+# Allow all git operations except push
+copilot --allow-tool='shell(git:*)' --deny-tool='shell(git push)'
+```
+
+For programmatic and automated usage, **never use `--allow-all` or `--yolo` in production environments** without careful scoping. These flags disable all permission prompts, which is appropriate for controlled CI pipelines but dangerous in anything with broad repository access or untrusted input.
+
+Repository-level hook configurations (`.github/hooks/*.json`) let you enforce security policies that apply to every Copilot CLI session in the repo — including remote ones. You can block specific tools, require confirmation before dangerous operations, or inject additional context at session start.
+
+## The Bottom Line
+
+Copilot CLI's remote access model isn't a single killer feature — it's a collection of well-designed primitives that together break the local-only constraint. Session persistence, `/delegate` to cloud agents, SSH compatibility, the ACP server mode, and programmatic invocation all solve different parts of the same problem: your agent shouldn't be tied to one machine.
+
+This is barely covered territory right now. Most developers using Copilot CLI still think of it as "the thing that runs in my terminal on my laptop." The remote session model changes that fundamentally. The teams that figure out how to use these features — resuming sessions across devices, delegating to cloud agents for long-running work, integrating into CI pipelines — will compound productivity gains that the rest are still leaving on the table.
+
+Run `copilot --continue` from somewhere new. You might be surprised how much context survived.
