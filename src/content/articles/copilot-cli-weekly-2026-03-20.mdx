@@ -1,0 +1,79 @@
+---
+title: "Copilot CLI Weekly: Six Releases, Zero Breaks"
+description: "Copilot CLI shipped 6 versions in 7 days with SDK evolution, UX polish, and terminal compatibility fixes. The post-GA velocity is real."
+pubDate: 2026-03-20
+tags: ["GitHub Copilot", "Developer Experience", "AI", "Open Source"]
+draft: false
+---
+
+## The Velocity Since GA Hasn't Slowed
+
+GitHub shipped **six Copilot CLI releases** between March 13 and March 20, 2026 — versions 1.0.5 through 1.0.10. That's nearly one release per day since [general availability landed three weeks ago](https://github.blog/changelog/2026-02-25-github-copilot-cli-is-now-generally-available/). I expected the pace to slow after GA. It didn't.
+
+This week's releases aren't flashy feature drops. They're the kind of work that makes a tool production-ready: SDK refinements for extension authors, terminal compatibility fixes for edge-case environments, and UX polish that removes friction from daily use. The commits tell the story of a team hardening the foundation while expanding the API surface.
+
+## SDK Evolution: Subagent Hooks and Custom Commands
+
+The most significant addition this week is the **subagent lifecycle hook system** introduced in v1.0.7. Extension authors can now inject context into subagents as they spawn via the `subagentStart` hook:
+
+````yaml
+hooks:
+  - event: subagentStart
+    action: injectContext
+    context: |
+      Project style guide: Use TypeScript strict mode.
+      Testing framework: Vitest with coverage >80%.
+````
+
+This is infrastructure for the [multi-agent workflows](/articles/github-agentic-workflows-hands-on-guide) I've been writing about. When your main agent dispatches a task to a specialized subagent, you can now ensure that subagent inherits project-specific knowledge without duplicating instruction files. It's a force multiplier for complex workflows.
+
+v1.0.10 extended the SDK further with **custom slash command registration** (`session.registerCommand`) and **UI elicitation dialogs** (`session.ui.elicitation`). Extension developers can now build custom commands that feel native to the CLI and prompt users for structured input without breaking out of the terminal flow. That's critical for tools that need more than a text prompt to operate.
+
+## The Details That Make Tools Usable
+
+The rest of the release notes read like a punch list from production use:
+
+### Remote and Constrained Environments (v1.0.10, v1.0.8)
+- `/login` device flow now works in **Codespaces and remote terminals** where browser-based OAuth is blocked
+- **Working directory detection** fixed for `--server` mode with remote sessions
+- **Arrow keys** fixed in terminals using application keypad mode (a real problem in some SSH configurations)
+- Colors render correctly on **non-truecolor terminals** (tmux, SSH, screen)
+
+These aren't theoretical edge cases. If you run Copilot CLI over SSH or inside a devcontainer, these fixes matter.
+
+### Terminal UX Polish (v1.0.8, v1.0.7)
+- **Alternate screen buffer** enabled by default for cleaner output
+- **Idle subagents** hidden from `/tasks` view after 2 minutes (reduces clutter)
+- **Session history** preserved when exiting via `/quit`, Ctrl+C, or restart
+- **Model picker** reorganized into Available/Blocked/Upgrade tabs based on your plan
+
+The alternate screen buffer change is subtle but significant — it means Copilot CLI output doesn't pollute your shell history. When you exit, your terminal returns to the state before you launched the CLI. That's how tools like `less` and `vim` work, and it's the right default for an interactive agent.
+
+### Copy/Paste Improvements (v1.0.10, v1.0.9)
+- `/copy` writes **formatted HTML** to clipboard on Windows (paste into Word, Outlook, Teams)
+- Copying on WSL correctly preserves **CJK and other non-ASCII characters**
+- Leading UI indent stripped when copying assistant responses
+
+If you've ever copied AI output from a terminal tool into a document and had the formatting explode, you know why this matters. GitHub is sweating the details for cross-platform workflows.
+
+### Config and Hook System Refinements (v1.0.10, v1.0.8)
+- Config settings renamed to **camelCase** (`includeCoAuthoredBy`, `effortLevel`, `autoUpdatesChannel`) with backward compatibility
+- Repo-level hooks (`.github/hooks/`) load **only after folder trust** is confirmed
+- **Workspace MCP servers** from `.mcp.json`, `.vscode/mcp.json`, and `devcontainer.json` respect folder trust
+- Hook matchers in nested structures now correctly filter inner items
+
+The trust model is important here. GitHub isn't blindly executing hooks from repos you clone. The security boundary is clear: trust happens explicitly, and hooks don't run until you say yes.
+
+## What This Signals
+
+Six releases in seven days is not sustainable forever, but it's the right cadence for the weeks following GA. The team is reacting fast to edge cases surfacing from production use while building out the SDK for third-party extensibility.
+
+The subagent hooks and SDK expansions tell me GitHub sees Copilot CLI as a **platform**, not just a tool. They're betting that the community will build specialized agents, custom workflows, and domain-specific extensions. That only works if the primitives are right — and they're systematically adding those primitives.
+
+The terminal compatibility fixes (SSH, Codespaces, tmux, non-truecolor) signal they're serious about **universal access**. AI coding assistants have mostly been editor-centric. Copilot CLI works where editors don't: production servers, CI runners, minimal containers. These fixes expand that reach.
+
+## The Bottom Line
+
+Post-GA velocity often drops as teams shift to LTS mode. GitHub's doing the opposite — they're shipping daily, hardening the platform, and expanding extensibility at the same time. If you dismissed Copilot CLI as "just a terminal wrapper for GPT," check the [release history](https://github.com/github/copilot-cli/releases). The commits tell a different story.
+
+The foundation is getting stronger, the SDK is maturing, and the edge cases are getting fixed. That's what production-ready looks like.
