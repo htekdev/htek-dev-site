@@ -1,0 +1,140 @@
+---
+title: "Copilot CLI Native Sandboxing — What This Means for Agent Security"
+description: >-
+  VS Code 1.112 ships native MCP sandboxing and Docker Sandbox integration for
+  Copilot CLI. Here's what changed, how it compares to OpenShell, and which
+  approach your team should actually use.
+pubDate: 2026-03-23
+tags:
+  - AI
+  - GitHub Copilot
+  - DevOps
+  - Developer Experience
+  - Sandboxes
+draft: true
+---
+
+## The Problem Nobody Was Talking About Loudly Enough
+
+When you run GitHub Copilot CLI in agent mode, you're handing it your keyboard. It can read files, write files, execute shell commands, install packages, and make network calls — all as your user, with your permissions, on your machine.
+
+This was always a problem. It just wasn't discussed much because the default mode required explicit approval for every action. That speed bump hid the real issue: **there was no isolation boundary**. If an agent in "approve everything" mode ran a destructive command, or if a carefully crafted prompt injection bypassed your review, the blast radius was your entire system.
+
+[CVE-2025-53773](https://embracethered.com/blog/posts/2025/github-copilot-remote-code-execution-via-prompt-injection/) made this concrete. A crafted workspace setting (`"chat.tools.autoApprove": true`) could push Copilot into YOLO mode without explicit user consent, allowing shell command execution across the full filesystem. Without isolation, that's not a theoretical risk — it's your SSH keys, your `.env` files, your entire home directory.
+
+VS Code 1.112, released March 18, 2026, is where the first-party answer arrived.
+
+## What VS Code 1.112 Actually Shipped
+
+There are two distinct sandboxing features in this release, and it's worth separating them clearly.
+
+### MCP Local Server Sandboxing
+
+Model Context Protocol servers — the tools that extend Copilot with filesystem access, CI integrations, database connections — can now run in sandboxed processes on macOS and Linux. You opt in per server in your `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "my-file-tool": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["server.js"],
+      "sandboxEnabled": true,
+      "sandbox": {
+        "filesystem": {
+          "allowRead": ["/workspace"],
+          "allowWrite": ["/workspace/src"]
+        },
+        "network": {
+          "allowConnect": ["api.github.com"]
+        }
+      }
+    }
+  }
+}
+```
+
+When `sandboxEnabled` is `true`, VS Code restricts the server process to only the paths and hosts you declare. Attempt to read `/home/user/.ssh/id_rsa` from inside that server? Blocked. Try to phone home to an unexpected endpoint? Blocked. The policy lives in your repository alongside your code — auditable, version-controlled, and reviewable in pull requests.
+
+**The limitation:** Windows isn't supported yet. This is macOS and Linux only. And this sandboxes the *MCP server* itself, not the Copilot CLI process or the agent's broader execution context.
+
+### Autopilot Mode + Docker Sandbox
+
+The second piece is [Docker Sandbox](https://docs.docker.com/ai/sandboxes/agents/copilot/) integration for Copilot CLI. This addresses the broader execution isolation problem.
+
+Docker Sandbox runs Copilot CLI in a disposable microVM via Docker Desktop, mounting only your project directory. Your credentials, your home folder, your host Docker daemon — none of it is visible to the agent:
+
+```bash
+# Run Copilot CLI in an isolated sandbox for your project
+docker sandbox run copilot ~/my-project
+
+# Full autonomy mode, safely contained
+docker sandbox run copilot ~/my-project -- --yolo
+```
+
+The microVM is disposable. If Copilot installs packages you didn't expect, modifies files outside the task scope, or hits something catastrophic — delete the sandbox and start fresh. Your host system is untouched.
+
+VS Code 1.112 also shipped `chat.autopilot.enabled`, a new autonomy tier that lets Copilot run tool calls and shell commands without approval dialogs. This mode is designed specifically for use *inside* Docker Sandbox — it's the combination that makes unattended agent sessions safe for everyday developer use.
+
+## The Three-Level Picture
+
+Here's what the sandboxing landscape looks like now for Copilot CLI specifically:
+
+| Approach | Isolation Layer | Network Control | Policy Management | Platform |
+|---|---|---|---|---|
+| **Default (no sandbox)** | None | None | None | All |
+| **VS Code MCP Sandboxing** | Process (per MCP server) | Declarative per server | `.vscode/mcp.json` | macOS, Linux |
+| **Docker Sandbox** | MicroVM (per session) | Not restricted by default | Container config | macOS, Windows |
+| **OpenShell** | Kernel (Landlock + seccomp) | OPA/Rego deny-by-default | YAML policies, hot-reload | Linux (self-hosted) |
+
+Each layer addresses a different threat surface. And notably, they're composable — you can run Copilot CLI inside a Docker Sandbox *and* use MCP sandboxing for the tools running inside it.
+
+## How OpenShell Compares
+
+I covered [NVIDIA's OpenShell](/articles/sandboxes-missing-infrastructure-layer-agentic-devops) in depth when it launched at GTC 2026. It takes a fundamentally different posture from both Docker Sandbox and VS Code's MCP sandboxing.
+
+**Docker Sandbox says:** *"Run the agent in a throwaway microVM. If it breaks something, the damage is contained to the sandbox."*
+
+**VS Code MCP Sandboxing says:** *"Restrict each tool server to only the paths and hosts it needs. Misconfigured tools can't reach beyond their declared scope."*
+
+**OpenShell says:** *"Every process in the agent's execution context is untrusted until proven otherwise. Here's a policy engine. Declare exactly what's allowed — filesystem reads, network calls, LLM inference destinations — and enforce it at the kernel level. Hot-reload policies as requirements change, without restarting the sandbox."*
+
+The OpenShell model is strictly more powerful. Kernel-level Landlock LSM enforcement can't be bypassed by a process that's found a way around namespace isolation. Seccomp BPF filters block dangerous syscalls before they reach the kernel. The OPA/Rego network proxy evaluates every outbound connection against live policy — no firewall rule to misconfigure, no iptables exception to forget.
+
+But OpenShell also ships in alpha, requires a Linux host, and demands that you actually write the YAML policies. For a team of three shipping fast, Docker Sandbox is "run one command, done." For an enterprise running autonomous agents against production infrastructure, OpenShell's governance model is the right foundation.
+
+> The question isn't which approach is more secure in the abstract. It's which approach matches your threat model, your team size, and your infrastructure reality.
+
+## What the Docker Sandbox Misses
+
+Docker Sandbox is the easiest path to Copilot CLI isolation, but it has a meaningful gap: **network access isn't restricted by default**.
+
+A microVM shares the host network unless you explicitly configure isolation. That means an agent running inside Docker Sandbox can still:
+
+- Call internal APIs on your LAN
+- Exfiltrate data to external endpoints
+- Reach services that should only be accessible from trusted infrastructure
+
+This isn't a Docker flaw — it's a configuration responsibility. But it means Docker Sandbox solves the *filesystem blast radius* problem without fully addressing the *data exfiltration* problem. You need to consciously layer network restrictions on top, either through Docker network policies or by routing agent traffic through a proxy.
+
+OpenShell's deny-by-default network stance closes this gap automatically. If the policy doesn't explicitly permit a connection, the connection doesn't happen.
+
+## Practical Recommendations
+
+**For individual developers:** Turn on Docker Sandbox for Copilot CLI today. It's one command, it works on macOS and Windows, and it eliminates the most common risk — accidental file destruction or privilege escalation during high-autonomy sessions. Add `docker sandbox run copilot ~/project -- --yolo` as your standard Copilot invocation.
+
+**For teams using VS Code with Copilot agent mode:** Enable `sandboxEnabled: true` in your `.vscode/mcp.json` for every local MCP server that touches the filesystem or makes network calls. Commit these policies to the repository — they're as important as your CI configuration.
+
+**For enterprise teams running autonomous agents:** Docker Sandbox isn't enough on its own. Either layer explicit network restrictions on Docker Sandbox or evaluate [OpenShell](https://github.com/NVIDIA/OpenShell) for policy-governed isolation. The YAML policies are operational overhead, but they're also the auditable record that compliance teams will eventually require.
+
+**For teams on Windows:** VS Code MCP sandboxing isn't available yet. Docker Sandbox is your best current option. Follow the [Docker Docs guide](https://docs.docker.com/ai/sandboxes/agents/copilot/) for setup.
+
+## The Direction of Travel
+
+VS Code 1.112 signals something important: **Microsoft is treating agent isolation as a first-class feature**, not an afterthought. MCP sandboxing isn't an external tool you bolt on — it's in the MCP configuration spec, in the product, shipped.
+
+The progression is clear. First-party sandboxing for MCP servers means the ecosystem will standardize around declaring permissions per tool, per server, per session. Developers who adopt these patterns now will be ahead when the next autonomy tier arrives — and it will arrive, probably faster than the tooling is ready for.
+
+The [sandboxes article](/articles/sandboxes-missing-infrastructure-layer-agentic-devops) I wrote last week positioned isolation as Layer 0 of agentic DevOps. VS Code 1.112 and Docker Sandbox are Layer 0 becoming accessible to every developer, not just the teams with the infrastructure budget to deploy OpenShell.
+
+That's the real story here. The isolation gap is closing — and it's closing in the tooling you're already using.
