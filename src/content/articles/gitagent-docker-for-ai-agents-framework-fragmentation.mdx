@@ -1,0 +1,114 @@
+---
+title: 'GitAgent: Docker for AI Agents — Solving Framework Fragmentation'
+description: >-
+  Every AI agent framework is its own container format. GitAgent is the Docker
+  layer we've been missing — a Git-native, framework-agnostic standard that
+  makes agents portable, versioned, and auditable.
+pubDate: 2026-03-23
+tags:
+  - AI
+  - Software Architecture
+  - Multi-Agent Systems
+  - Open Source
+  - Developer Experience
+draft: true
+---
+
+## The "Which Framework?" Tax
+
+Last month I watched a team spend three days migrating an agent from LangChain to CrewAI. Not because CrewAI is better — it might not be — but because their vendor changed its pricing model and now half their prompt logic is framework-specific glue that doesn't port cleanly. Three days of engineering time, burned on translation work that adds zero product value.
+
+This is the AI agent fragmentation tax, and right now every team building serious agentic systems is paying it. [LangChain](https://www.langchain.com/), [AutoGen](https://github.com/microsoft/autogen), [CrewAI](https://www.crewai.com/), [OpenAI Agents SDK](https://github.com/openai/openai-agents-python), [Anthropic's Claude Code](https://www.anthropic.com/claude-code), [Lyzr](https://www.lyzr.ai/) — each framework has its own agent spec, its own tool interface, its own way of wiring prompts and memory. You're not building an agent; you're building an agent for a specific runtime.
+
+[GitAgent](https://www.gitagent.sh/) is the first credible answer to that problem. And the Docker analogy isn't just marketing — it's the most accurate description of what this standard is trying to do.
+
+## Why Docker is the Right Analogy
+
+Before Docker, shipping software meant writing deployment scripts for every environment: one for bare metal, one for the test server, one for production. The code was the same; the packaging layer was bespoke for every target.
+
+Docker gave us a container format — a single artifact that carried everything an application needed to run, portable across any environment that understood the Docker runtime. "Build once, run anywhere" became real because the abstraction sat at the right layer: above the OS, below the application.
+
+AI agents have the same problem at the definition layer. Right now, your agent's identity, skills, tools, and behavioral rules are deeply embedded inside the framework that runs them. Swap the framework, rewrite the agent. That's not a tooling problem; it's a missing standard.
+
+GitAgent defines a portable file structure for AI agents that lives in a Git repository. The framework becomes a runtime detail — something you target at deploy time, not something you're coupled to at build time.
+
+## What a GitAgent Repository Actually Looks Like
+
+A GitAgent-compliant agent is just a directory with a defined structure. Here's a minimal enterprise-grade example:
+
+```
+customer-support-agent/
+├── agent.yaml          # Root manifest: metadata, model config, linked skills
+├── SOUL.md             # Identity: persona, tone, values, system prompt
+├── RULES.md            # Hard constraints: must/must-not behavioral guardrails
+├── DUTIES.md           # Segregation of duties for compliance-heavy environments
+├── AGENTS.md           # Multi-agent coordination instructions (framework-agnostic)
+├── skills/
+│   ├── handle-escalation/
+│   │   └── SKILL.md
+│   └── check-order-status/
+│       └── SKILL.md
+├── tools/
+│   └── crm-lookup.yaml
+├── memory/
+│   ├── context.md
+│   └── dailylog.md
+└── compliance/
+    └── regulatory-map.yaml
+```
+
+The `agent.yaml` is the manifest — it names the agent, pins the model version, and lists which skills and tools are active. `SOUL.md` is where you define who the agent is: its communication style, expertise, and system-prompt-level personality. This file is intentionally human-readable, which means a compliance officer can review it without touching code.
+
+`DUTIES.md` is the file that makes enterprise teams light up. It documents explicit role boundaries and permissions in plain text — what the agent can and cannot do, and why. For teams in regulated industries, this is the foundation of an audit trail that actually means something.
+
+The `skills/` and `tools/` directories are modular and composable. A skill is a higher-level capability definition; a tool is a specific function or API the agent can invoke. Both can be shared across agents in a monorepo or pulled from the public [GitAgent registry](https://registry.gitagent.sh/).
+
+## The Git-Native Advantage
+
+The reason Git is the right substrate for this standard isn't just developer familiarity — it's that Git already solves the problems we've been trying to bolt onto agent systems.
+
+**Versioning is automatic.** Every change to your agent — a prompt update in `SOUL.md`, a new skill, a compliance rule added to `DUTIES.md` — is a Git commit. You get full history, blame, and rollback for free. No custom versioning system, no "Agent v2.3-final-FINAL."
+
+**Branching enables safe experimentation.** Want to test a more aggressive sales persona against your current conservative one? Branch it. Run a/b evaluations against the same production tooling. Merge when you have data. This is the [git worktree pattern applied to agent development](/articles/git-worktree-unlocks-agentic-development) — and it makes agent iteration feel like normal software development.
+
+**Pull requests mean code review for agents.** When a team member updates the agent's `RULES.md` to remove a constraint, that change shows up as a diff in a PR. Product, legal, and engineering can review and approve it before it ships. That's not just good practice — in regulated environments, it's the kind of paper trail that satisfies auditors.
+
+**Auditability is built in, not bolted on.** The full history of every decision — every prompt change, every compliance overlay update, every skill added or removed — lives in the commit log. For FINRA, SEC, or healthcare audit requirements, this is a meaningful step beyond "we trust the LLM to behave correctly."
+
+## Framework Export, Not Framework Lock-in
+
+Here's where GitAgent earns its Docker comparison most directly. Just as Docker images are built for a target OS architecture but described in a portable `Dockerfile`, GitAgent definitions are written in a framework-agnostic format but exported to a specific runtime.
+
+The GitAgent CLI converts your agent definition into the target framework's native format. Want to run your agent in Claude Code? Export it. Want to deploy to CrewAI? Export it. The `agent.yaml` and associated Markdown files stay canonical; the target-framework config is generated, not hand-maintained.
+
+This directly addresses the [problem I see with bespoke agent stacks](/articles/your-god-prompt-is-the-new-monolith) — the God-prompt anti-pattern where all your agent logic gets packed into a single, framework-specific prompt blob that nobody wants to touch. GitAgent enforces modular structure that stays maintainable as the agent evolves.
+
+It also reframes [how you think about choosing agent SDKs](/articles/choosing-the-right-ai-sdk). The SDK decision becomes a deployment-time concern, not an architecture-time constraint. You can evaluate frameworks against the same agent definition without rewriting the agent.
+
+## The Compliance Angle Is Underrated
+
+Most of the GitAgent coverage focuses on developer ergonomics and portability. But the compliance architecture is the feature that will drive enterprise adoption.
+
+The `DUTIES.md` file introduces explicit segregation of duties — the same concept that governs human-role boundaries in financial systems. An agent with clearly documented permission boundaries, stored in version control, with change history and PR-based approval workflows, is a fundamentally different compliance posture than "we wrote a system prompt that tells it not to do bad things."
+
+The `compliance/` directory adds optional regulatory mapping — financial firms can document FINRA or SEC alignment directly in the agent repository, audited alongside the agent definition. Healthcare teams can map HIPAA constraints to specific behavioral rules in `RULES.md`.
+
+This is the [agent harness concept](/articles/agent-harnesses-controlling-ai-agents-2026) applied at the definition layer rather than the runtime layer. You're not just controlling what the agent can do at runtime — you're documenting and enforcing what it's supposed to do at the architectural level.
+
+## Where GitAgent Sits Today
+
+GitAgent launched publicly in March 2026, backed by Lyzr, and the [GitHub repository](https://github.com/open-gitagent/gitagent) reached meaningful community traction quickly. The spec is at v0.1.0, which means it's early — but "early" in the Docker sense, not the "experimental vaporware" sense. The core file structure is stable, the CLI export tooling is functional, and the public registry is live for discovering community-contributed agents.
+
+The frameworks with export support at launch include OpenAI Agents SDK, Claude Code, CrewAI, and Lyzr's own runtime. More are in progress. The MCP compatibility angle is interesting too — GitAgent stores MCP-compatible tool schemas in the `tools/` directory, which means it complements rather than competes with Anthropic's Model Context Protocol.
+
+What's missing, at v0.1.0, is tooling for large-scale agent fleets — versioned deployments across dozens of agents, automated compliance checks in CI, and registry-based dependency management. Those are solvable problems, and the Git substrate makes them tractable in ways that framework-native approaches don't.
+
+## The Bottom Line
+
+Every team building AI agents is currently either paying the fragmentation tax or betting heavily on a single framework staying relevant. Neither is a good position.
+
+GitAgent is the abstraction we needed at the start of the agent wave — a packaging standard that separates what an agent is from where it runs. The Docker comparison holds precisely because Docker didn't win by being a better container format than the alternatives; it won by being the standard that made the others interoperable.
+
+If your team is starting a new agent project, I'd seriously evaluate the GitAgent structure even before the ecosystem fully matures. The discipline of separating identity (`SOUL.md`), behavior (`RULES.md`), duties (`DUTIES.md`), and capabilities (`skills/`, `tools/`) will make your agents more maintainable regardless of which runtime you target — and it positions you to swap frameworks without a three-day migration tax when the landscape inevitably shifts again.
+
+> The best time to adopt a packaging standard is before you're locked in. We're still at "before."
