@@ -1,0 +1,69 @@
+---
+title: "Your Agentic Platform Choice Is Invisible Risk — Until It's Too Late"
+description: "Gartner predicts 40% of agentic AI projects will be cancelled by 2027. Here's a leadership playbook for choosing the right platform, deploying it in the right order, and avoiding the productivity trap."
+pubDate: 2026-03-12
+tags: ["AI", "Engineering Leadership", "DevOps", "Developer Experience", "GitHub Copilot"]
+draft: false
+---
+
+Every CEO in tech is saying the same thing right now: "We need to be AI-first." Coinbase has mandated AI coding across their engineering org. Lemonade's CEO declared developers who don't use AI will be left behind. Citi is rolling out GitHub Copilot to 40,000 developers. The pressure to adopt agentic AI platforms is immense — and it's coming from the top.
+
+But here's the number that should be on every leadership slide deck: [Gartner predicts that over 40% of agentic AI projects will be cancelled by the end of 2027](https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-predicts-over-40-percent-of-agentic-ai-projects-will-be-canceled-by-end-of-2027). Of the thousands of vendors claiming agentic AI capabilities, Gartner found only about 130 are "real." The rest? Agent washing — rebranding chatbots and automation scripts as autonomous agents. The question isn't whether your organization should adopt agentic AI. It's whether you'll be in the 60% that survives or the 40% that writes it off as an expensive lesson.
+
+## The Productivity Honeymoon Trap
+
+The first week with an agentic platform is intoxicating. Code ships faster than anyone's ever seen. Tickets close in hours instead of days. Velocity charts spike and your engineering leaders send Slack messages about how this changes everything.
+
+Then month two hits.
+
+[Stanford's study of 120,000 developers across 600+ companies](https://arxiv.org/abs/2409.15152) found the median AI productivity lift is 10–15% — not the 60% that vendors love to pitch. The initial surge is real, but it's not sustainable, and the research from IJSET's 2026 "Productivity-Quality Paradox" study tells us why: teams using AI coding tools saw a 4x increase in code duplication, code churn that doubled compared to 2021 baselines, and experienced developers spending 19% more time debugging AI-generated output than writing code themselves. I wrote about [the real ROI numbers from Stanford's research](/articles/stanford-study-ai-roi-in-engineering) — the gap between marketing claims and measured reality is staggering.
+
+The vibe coding crisis made this concrete. Y Combinator's Winter 2025 batch saw 25% of startups arrive with codebases that were 95% AI-generated. Many required complete rewrites within months. Industry estimates put the cleanup costs for vibe-coded startups between $400 million and $4 billion — and that's just the startups that survived long enough to attempt a rewrite.
+
+The pattern is predictable: extraordinary productivity for the first few days, then a steady erosion of code quality that becomes unmaintainable before leadership even realizes what happened.
+
+## The Security Crisis You Can't See Coming
+
+The productivity numbers are debatable. The security numbers are not.
+
+[Veracode's 2025 analysis](https://www.veracode.com/resources/ai-code-security) tested over 100 LLMs across 80 real-world coding tasks and found that 45% of AI-generated code contains security flaws. For Java specifically, that number exceeds 70%. These aren't theoretical vulnerabilities in contrived examples — these are the same types of code your teams are shipping to production right now.
+
+Apiiro's September 2025 research put it bluntly: organizations are getting "4x Velocity, 10x Vulnerabilities." The velocity gains are real, but the vulnerability multiplication factor outpaces them dramatically. Trend Micro's March 2026 threat report confirmed that AI-powered development became "ground zero for cyber risk" in the second half of 2025, with AI-generated code emerging as a primary attack surface.
+
+IJSET's broader analysis found a 51%+ security failure rate in AI-generated code — meaning more than half of what these tools produce has exploitable weaknesses. And Gartner projects AI governance spending will hit $492 million in 2026 and exceed $1 billion by 2030, a clear signal that enterprises are scrambling to contain risks they didn't anticipate.
+
+This is the invisible risk. By the time a critical vulnerability hits production, the AI-generated code that caused it is woven throughout your codebase with no clear audit trail of what was human-written and what wasn't.
+
+## Platform Selection Is the Decision That Matters Most
+
+Not all agentic platforms are equal, and the differences aren't features — they're governance, audit trails, security boundaries, and blast radius when things go wrong.
+
+GitHub Copilot holds roughly 42% market share and was purpose-built for enterprise adoption: SSO integration, [comprehensive audit logging and policy controls](https://learn.microsoft.com/en-us/copilot/github/managing-copilot), IP indemnity, content exclusion policies, and organization-wide governance. I've written about how [agent harnesses](/articles/agent-harnesses-controlling-ai-agents-2026) and [agent hooks at the codebase level](/articles/agent-hooks-controlling-ai-codebase) give engineering teams granular control over what AI agents can and cannot do.
+
+Cursor captured 18% market share in just 18 months — impressive growth driven by developer experience. But it's cloud-only with more limited enterprise governance tooling. Windsurf offers self-hosted and FedRAMP/HIPAA-compliant deployment options, appealing for regulated industries, but with a smaller ecosystem.
+
+The platform you select determines your blast radius. A platform with robust governance means a vulnerability gets caught by policy controls before it ships. A platform without governance means you find out when your security team gets a 2 AM page. In a market where Gartner says most "agentic" vendors are just agent washing, choosing a platform with proven enterprise governance isn't conservative — it's survival.
+
+## First Move: Mature Your Existing Practices
+
+Here's the counterintuitive play that separates the 60% from the 40%: don't start by building features with AI. Start by using agentic platforms to mature your existing development practices.
+
+Your first agentic AI use case should be generating comprehensive test suites for your existing codebase. Use AI to write the tests that your team never had time to write. [Tests are everything in the agentic era](/articles/tests-are-everything-agentic-ai) — without them, you have no safety net when AI starts generating production code. But be deliberate about it: [vibe testing, where AI agents Goodhart your test suite](/articles/vibe-testing-when-ai-agents-goodhart-your-test-suite), is a real failure mode that teams need to understand before they start.
+
+Then move to CI/CD quality gates. Automate security scanning, dependency auditing, and SBOM generation. Build [agent-proof architecture](/articles/agent-proof-architecture-agentic-devops) that catches AI-generated problems before they reach production. Mature your [DevOps practices with agentic capabilities](/articles/agentic-devops-next-evolution-of-shift-left) — observability, incident response, deployment safety.
+
+This isn't slowing down. It's building the runway that lets you actually accelerate. The organizations that skip this step are the ones that end up in rewrite cycles by month three.
+
+## The Greenfield Strategy
+
+Once your guardrails are in place, there's a smart way to test deeper adoption: create a new repository with the context of an existing one.
+
+Greenfield with institutional knowledge. A new codebase gives AI a clean slate — no legacy patterns to misinterpret, no accumulated debt to compound. But by feeding the platform your existing architecture decisions, domain models, and coding standards through [proper context engineering](/articles/context-engineering-key-to-ai-development), you preserve the institutional knowledge that makes your software yours.
+
+This approach lets you validate the platform's real capabilities in a controlled environment. You get test coverage, CI gates, and security scanning from day zero because you already built those practices in the previous step. It's lower risk than retrofitting AI into legacy codebases, and it gives you real data on what the platform can actually deliver before you roll it out broadly.
+
+## The Bottom Line
+
+Platform choice is invisible risk until production breaks. The organizations that will thrive with agentic AI are the ones that choose their platform deliberately — prioritizing governance over hype — deploy it to mature their existing practices first, and only then accelerate feature development with the guardrails already in place.
+
+The ones that chase velocity without guardrails, that pick platforms based on demo magic instead of enterprise readiness, that skip the boring work of testing and CI maturation — they'll join the 40%. And by the time they realize it, the technical debt will be too deep to unwind.
