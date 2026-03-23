@@ -1,0 +1,138 @@
+---
+title: "Microsoft Just Made AI Agent Security a First-Class Infrastructure Layer"
+description: "Azure AI Foundry Agent Service went GA with managed network isolation, Entra Agent ID is maturing into a real identity fabric, and VS Code 1.112 shipped MCP sandboxing. Microsoft isn't bolting security onto agents — they're building it into the infrastructure agents run on."
+pubDate: 2026-03-23
+tags:
+  - AI
+  - Microsoft
+  - Azure
+  - DevOps
+  - Developer Experience
+  - Sandboxes
+draft: true
+---
+
+## Three Announcements in One Week
+
+Last week was one of those moments where you have to step back and look at the whole picture instead of each piece individually.
+
+On March 16, [Azure AI Foundry Agent Service went GA](https://devblogs.microsoft.com/foundry/foundry-agent-service-ga/) with private networking, managed VNet isolation, and full enterprise RBAC. On March 18, VS Code 1.112 shipped [native MCP sandboxing and Docker Sandbox integration](/articles/copilot-cli-native-sandboxing-agent-security). And threading through both: Microsoft Entra Agent ID — announced at Build 2025, now 10 months into preview — is growing into a mature identity fabric for non-human entities.
+
+Taken individually, these are shipping updates. Taken together, they signal something structural: **Microsoft is treating agent security as infrastructure, not as features you bolt on after the fact.**
+
+This matters more than any single product announcement. Here's why.
+
+## Agents Were Security Blind Spots
+
+Before getting into what changed, it's worth being precise about the problem these things solve.
+
+For the past two years, most teams building with AI agents have done one of two things: they've used generic service accounts ("it's just a service principal"), or they've run agents with developer credentials in local environments. Both approaches produce the same result — agents with no dedicated identity, no lifecycle management, and no visibility in your security tooling.
+
+Ask an enterprise security team to show you all the AI agents operating in their environment. They can't. The agents are invisible to the tools that govern human identities, invisible to network monitoring, and invisible to audit logs. They call APIs with shared credentials, write files on systems where they don't have scoped access, and make network calls to endpoints nobody approved.
+
+The attack surface for "agent as shadow IT" is real. A compromised service account that a human uses for a few tasks per day is one risk profile. An autonomous agent operating that same account continuously, calling tools, reading files, and spawning subprocesses, is a fundamentally different one.
+
+Microsoft has spent the past year building the infrastructure layer that closes these gaps.
+
+## Entra Agent ID: The Identity Fabric for Non-Human Entities
+
+Microsoft Entra Agent ID, launched in preview at Build 2025, gives AI agents first-class citizenship in your identity infrastructure. Every agent gets its own identity object in Entra — not a service principal kludge, not a managed identity stretched to fit — a purpose-built agent identity with its own metadata: owner, purpose, environment, and custom security attributes.
+
+What that unlocks is significant:
+
+**Conditional Access policies apply to agents.** The same Zero Trust enforcement engine that governs user access — risk-based controls, network location policies, compliant device requirements — now applies to AI agents. You can write a policy that restricts your document summarization agent to read-only access on specific storage containers, that blocks the agent from authenticating outside your corporate network, that triggers an alert if an agent's risk score spikes. This is the same CA framework security teams already know.
+
+**Agent identities have lifecycle management.** Every Agent ID must have an owner and an expiration date. Orphaned agents — agents where the owner left the company, projects that were decommissioned — are surfaced automatically. Identity Protection can quarantine agents flagged as risky, just as it would suspend a user account showing anomalous activity.
+
+**The audit trail exists.** Security teams can filter Entra sign-in logs with `isAgent:true` and see exactly which agent authenticated, what resource it accessed, and when. That's the foundation of forensic analysis if something goes wrong.
+
+For teams building on [Azure AI Foundry](/articles/az-prototype-scaffold-enterprise-azure-with-copilot), this integrates directly. Foundry agents are automatically registered as Agent IDs. The identity fabric and the agent runtime speak the same language.
+
+## Foundry Agent Service GA: Network Security by Default
+
+The Azure AI Foundry Agent Service GA on March 16 shipped the networking story that enterprise teams were waiting for.
+
+Private networking is now end-to-end. You can deploy agents in your own VNet with zero public egress — and critically, **that isolation extends all the way through tool calls and MCP connections**. If your agent is calling an Azure AI Search index or hitting a database via MCP, those calls stay on the private backbone. No public endpoint exposure for your data layer.
+
+There are two deployment patterns:
+
+**BYO VNet** gives you full control — your subnets, your routing, your firewall policies, your DNS. Everything stays within your infrastructure. Microsoft provides Bicep and Terraform templates to provision the full network stack: VNet, DNS zones, private endpoints for storage, key vault, Cosmos DB, and AI Search. This is the right choice for organizations with advanced compliance requirements or existing network architectures they need to integrate into.
+
+**Managed VNet** is the zero-ops path. Microsoft provisions and manages the network boundary. You approve which private endpoints are enabled and choose between unrestricted outbound (default) or approved-only outbound. For most teams, this is the right starting point — you get network isolation without building it yourself.
+
+The GA also brings enterprise RBAC to the agent layer. Each agent has scoped permissions — a read-only agent can't write, a write-scoped agent can't delete, no agent inherits its owner's full permission set. Combined with Entra Agent ID, every permission grant is auditable and revocable.
+
+This is what I wrote about in my [sandboxes article](/articles/sandboxes-missing-infrastructure-layer-agentic-devops): the execution environment itself needs to be a security boundary, not just the code running inside it. Foundry's private networking is the cloud-hosted equivalent of that principle applied at the network layer.
+
+## VS Code 1.112: The Process Boundary
+
+At the execution layer — the laptop and CI runner level, not the cloud infrastructure level — VS Code 1.112 brought the same philosophy to bear. I covered the full details in my [MCP sandboxing article](/articles/copilot-cli-native-sandboxing-agent-security), but the structural point deserves restating here.
+
+MCP local servers can now declare their own permission boundaries in `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "my-data-tool": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["server.js"],
+      "sandboxEnabled": true,
+      "sandbox": {
+        "filesystem": {
+          "allowRead": ["/workspace"],
+          "allowWrite": ["/workspace/src"]
+        },
+        "network": {
+          "allowConnect": ["api.github.com"]
+        }
+      }
+    }
+  }
+}
+```
+
+The policy lives in the repository. It's version-controlled, auditable, and reviewable in pull requests. The MCP server physically cannot access paths or hosts that aren't declared. That's not a guideline — it's a policy checked by VS Code before any tool call executes.
+
+Docker Sandbox adds the microVM layer: run Copilot CLI in a disposable execution environment where your credentials, your home folder, and your host filesystem don't exist from the agent's perspective. The blast radius of any agent failure is contained to the sandbox.
+
+These two mechanisms — MCP sandboxing and Docker Sandbox — are the execution layer counterpart to Foundry's network layer. Different threat model, same principle: **define the boundary first, then let the agent operate within it**.
+
+## What the Full Stack Looks Like Now
+
+For the first time, there's a coherent, Microsoft-native security stack for AI agents that covers every layer:
+
+| Layer | Mechanism | What It Enforces |
+|---|---|---|
+| **Identity** | Entra Agent ID | Who the agent is, what it can access, full lifecycle governance |
+| **Network** | Foundry Managed/BYO VNet | Where traffic can go, which endpoints are reachable |
+| **Execution** | MCP Sandboxing + Docker Sandbox | What files/processes the agent can touch at runtime |
+| **Authorization** | Foundry RBAC + Conditional Access | What operations are permitted per agent, per resource |
+| **Governance** | Agent 365 control plane | Visibility, policy enforcement, shadow AI detection |
+| **Audit** | Entra sign-in logs + Foundry traces | Full forensic trail of every agent action |
+
+None of these layers is new on its own. Service principals existed. VNets existed. Process isolation existed. What's new is that they're wired together into a coherent security model that's **designed for agents**, not retrofitted for them.
+
+This is the difference between bolting on security and building it in. When you define an agent's identity in Entra, deploy it in a managed VNet with approved outbound only, and run its tools in sandboxed MCP servers, you haven't added security features. You've defined a security envelope that the agent operates inside. The agent can't escape that envelope through prompt injection, over-eager autonomy, or creative reasoning.
+
+## What Teams Should Actually Do Now
+
+**If you're running agents in Azure AI Foundry:** Enable private networking before you go to production. Start with Managed VNet if you don't have strong reasons for BYO. Assign each agent a scoped identity and review what RBAC it actually needs. The [built-in enterprise readiness features](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/built-in-enterprise-readiness-with-azure-ai-agent-service/4386541) are now GA — there's no reason to defer.
+
+**If you're building with Copilot in VS Code:** Enable `sandboxEnabled: true` in your `.vscode/mcp.json` for every local MCP server that touches the filesystem or makes network calls. Commit those policies to the repository. When Docker Sandbox ships to your platform, add it to your standard Copilot invocation.
+
+**If you're an enterprise security team:** Entra Agent ID is in preview. Start inventorying your agent identities now, before the fleet grows. The [Conditional Access for Agent Identities](https://learn.microsoft.com/en-us/entra/identity/conditional-access/agent-id) documentation is the starting point for applying existing Zero Trust policies to your non-human identities.
+
+**If you're on Windows or don't yet have Foundry deployment:** Docker Sandbox is your best current execution isolation option. VS Code MCP sandboxing is macOS/Linux only today. The gap will close.
+
+## The Infrastructure Posture Shift
+
+I've written about [cryptographic gates](/articles/cryptographic-approval-gates-ai-agents), [agent hooks](/articles/agent-hooks-controlling-ai-codebase), and [sandbox isolation](/articles/sandboxes-missing-infrastructure-layer-agentic-devops) as enforcement mechanisms. All of those matter. But there's something different about what Microsoft shipped this month.
+
+Every enforcement mechanism I've built was designed to compensate for an infrastructure gap. No agent identity? Build a signing scheme. No network isolation? Build a proxy. No execution boundary? Build hooks. The interventions were necessary because the platform didn't provide the foundation.
+
+What Microsoft has now done — across Entra Agent ID, Foundry's private networking GA, and VS Code MCP sandboxing — is start filling those gaps at the platform level. The intervention layer still matters. But the reason to build it is shifting from "the platform doesn't provide this" to "I need tighter policy than the platform defaults give me."
+
+That's a meaningful difference. When security is infrastructure, every team gets a baseline for free. When it's a bolt-on, only the teams who build it get it.
+
+The infrastructure is here. Build on it.
