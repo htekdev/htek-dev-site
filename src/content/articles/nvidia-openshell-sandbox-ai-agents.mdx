@@ -1,0 +1,149 @@
+---
+title: "NVIDIA OpenShell — The Sandbox Your AI Agents Should Be Running In"
+description: >-
+  NVIDIA open-sourced OpenShell at GTC 2026 — a policy-driven sandbox runtime for
+  autonomous AI agents. I contributed the Copilot CLI provider and here's what
+  I learned about running agents you can actually trust.
+pubDate: 2026-03-23
+tags:
+  - AI
+  - NVIDIA
+  - GitHub Copilot
+  - Agentic DevOps
+  - Open Source
+  - Developer Experience
+draft: true
+---
+
+## Your Agent Has Root Access. Do You Know What It's Doing?
+
+I've been running autonomous AI agents in production for months. GitHub Copilot in agent mode, Claude Code, custom multi-agent pipelines — all committed code, triggered workflows, modified infrastructure. The results have been genuinely impressive.
+
+But a few weeks ago, I started staring at a question I'd been avoiding: **what exactly can those agents access?**
+
+The honest answer was uncomfortable. My Copilot CLI agent could write to any directory it had permissions to. It could make network requests to arbitrary endpoints. It could spawn subprocesses I didn't explicitly authorize. I had [instructions, hooks, and gates](/articles/sandboxes-missing-infrastructure-layer-agentic-devops) — three layers of enforcement that made agents structurally better behaved. But all of those layers ran *inside* the agent process. They were policy-as-suggestion, not policy-as-physics.
+
+Then NVIDIA shipped [OpenShell](https://github.com/NVIDIA/OpenShell) at GTC 2026. And suddenly I had a way to turn those suggestions into walls.
+
+## What OpenShell Actually Does
+
+OpenShell is not a container. It's not a VM. It's a **policy engine with kernel-level teeth**.
+
+When you start an agent inside an OpenShell sandbox, it enforces four protection domains at the OS level — not the application level:
+
+**Filesystem isolation via Landlock LSM.** The Linux [Landlock security module](https://docs.kernel.org/userspace-api/landlock.html) locks allowed paths at sandbox creation. Your agent can only read and write directories you explicitly permit. Not a namespace trick — actual kernel enforcement. There's no `os.path.join("..", "..", "etc")` that gets around it.
+
+**Network control via OPA policy proxy.** All outbound traffic routes through an HTTP CONNECT proxy evaluated by [Open Policy Agent](https://www.openpolicyagent.org/) rules in real-time. Deny-by-default. You declare exactly which hosts, ports, and HTTP methods your agent needs. Everything else is silently blocked.
+
+**Process isolation via seccomp BPF.** Dangerous syscalls are filtered at the kernel boundary. The agent can't escalate privileges, can't create arbitrary sockets outside the proxy, can't call `ptrace` on other processes.
+
+**Private inference routing.** LLM API calls are intercepted by a privacy router that strips the caller's credentials and injects backend credentials. Your agent's context — code, secrets, data — never reaches unauthorized model providers.
+
+The result: even if an agent is compromised, exploited, or just buggy, it physically cannot access things outside the declared policy. Not "it shouldn't." **It can't.**
+
+## The Part That Changes Everything: Policy as Code
+
+OpenShell's killer feature isn't the kernel enforcement — it's that the enforcement is **declarative, human-readable, and version-controllable**.
+
+Here's what a minimal policy looks like:
+
+```yaml
+# openagent-policy.yaml
+filesystem:
+  read:
+    - /home/user/project
+    - /tmp/agent-workspace
+  write:
+    - /home/user/project/src
+    - /tmp/agent-workspace
+
+network:
+  outbound:
+    - host: "api.github.com"
+      ports: [443]
+      methods: [GET, POST, PATCH]
+    - host: "registry.npmjs.org"
+      ports: [443]
+      methods: [GET]
+
+process:
+  allowed_binaries:
+    - node
+    - npm
+    - git
+```
+
+This policy lives in your repo. It gets reviewed in PRs. It gets updated alongside your code. And — here's the part that made me stop and re-read the docs — it **hot-reloads on running sandboxes**. Update the file, and the running sandbox immediately enforces the new rules. No restart. No downtime.
+
+If your threat model requires an agent to only ever touch `src/` and only ever reach GitHub and npm, you can enforce that exactly. And you can prove it to your security team with a diff.
+
+## I Got Involved — Copilot CLI Needed a Provider
+
+When OpenShell launched, it shipped with providers for Claude (via `claude` CLI), Codex CLI, and OpenCode. Copilot CLI was missing.
+
+That bothered me. I've been building Copilot CLI into [everything I do](/articles/github-copilot-cli-extensions-complete-guide) — agentic workflows, terminal automation, PR review loops. Not having first-class OpenShell support felt like a gap worth closing.
+
+So I submitted [PR #476 to NVIDIA/OpenShell](https://github.com/NVIDIA/OpenShell/pull/476) — a Copilot CLI agent provider.
+
+The implementation followed the established provider pattern but had a few interesting wrinkles:
+
+**Credential discovery.** Copilot CLI uses GitHub's OAuth flow, so the provider supports automatic credential lookup from `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, and `GITHUB_TOKEN` in that order. This matches how Copilot CLI itself discovers credentials, so existing token setups just work.
+
+**Command detection.** Copilot CLI ships as both a standalone binary (`copilot`) and as a `gh` extension (`gh copilot`). The provider detects both forms so the sandbox correctly identifies Copilot invocations regardless of how you've installed it.
+
+**Network policy scoping.** Because Copilot CLI manages its own API communication to `*.githubcopilot.com`, the sandbox policy update needed precise endpoint allowlisting — not just "allow GitHub" but specifically the Copilot inference endpoints. The `sandbox-policy.yaml` updates scope it to the minimum required surface.
+
+The PR also added unit tests for the provider and updated the provider registry documentation. Contributing to OpenShell requires going through their vouch system for first-time contributors — a deliberate friction point that keeps the security posture of the project itself high. Worth noting if you're thinking about contributing.
+
+## Running Copilot CLI in OpenShell
+
+With the provider merged, getting Copilot CLI inside an OpenShell sandbox is two commands:
+
+```bash
+# Create a sandbox with the Copilot CLI provider
+openshell sandbox create --provider copilot -- gh copilot suggest "write unit tests for auth.ts"
+
+# Apply a custom policy
+openshell policy set my-sandbox --policy openagent-policy.yaml
+```
+
+The agent runs inside the sandbox with your declared policy active. It can suggest code, modify files in allowed directories, make network calls to permitted endpoints — and nothing else. The audit log captures every permitted and blocked action, which is genuinely useful both for debugging and for explaining to stakeholders what the agent actually did.
+
+## How This Fits the Agentic DevOps Stack
+
+I've spent a lot of time writing about [layered agent enforcement](/articles/agent-proof-architecture-agentic-devops). The model is:
+
+- **Layer 1: Instructions** — Context engineering, tell the agent what you expect
+- **Layer 2: Hooks** — Intercept tool calls at the moment of action
+- **Layer 3: Gates** — Verify server-side in CI before merge
+
+OpenShell isn't a replacement for any of these layers. It's what I now think of as **Layer 0** — the execution boundary that makes every other layer trustworthy. Hooks are more meaningful when the environment they run in is isolated. Gates matter more when you know the agent couldn't have accessed systems it wasn't authorized to touch.
+
+The combination looks like this in practice:
+
+| Layer | Mechanism | When | Trust model |
+|-------|-----------|------|-------------|
+| **0: Sandbox** | OpenShell kernel enforcement | During execution | Policy-as-physics |
+| **1: Instructions** | Context, prompts, harnesses | Before execution | Policy-as-suggestion |
+| **2: Hooks** | Tool-call interception | At moment of action | Policy-as-logic |
+| **3: Gates** | CI/CD validation | After execution | Policy-as-verification |
+
+Each layer assumes the one below is in place. Hooks are better because the sandbox means there's no escape hatch. Gates are cleaner because you know exactly what the agent could have accessed.
+
+If you're using [GitHub Agentic Workflows](/articles/github-agentic-workflows-hands-on-guide), you already have a purpose-built sandbox for GitHub's CI environment. OpenShell extends that model to any infrastructure — your staging database, internal APIs, credential stores. Anywhere an agent might go beyond a CI runner.
+
+## The State of It
+
+OpenShell is alpha software. Single-player mode. Rough edges. The documentation is sparse in places, and the provider ecosystem is still growing (Copilot CLI is now in it, but don't expect every agent framework to be supported on day one).
+
+That said, the architecture is right. Kernel-level isolation, declarative YAML policies, hot-reload on running sandboxes, Apache 2.0 license. The design choices reflect a serious understanding of what enterprise agent security actually requires — not just containers and hope, but governance infrastructure.
+
+If you're running agents in any sensitive context — production access, internal tooling, credential-adjacent workflows — OpenShell is worth the alpha-software trade-offs right now. The alternative is agents running on trust. And trust doesn't scale.
+
+## The Bottom Line
+
+NVIDIA OpenShell is the most architecturally serious entrant in the agent sandbox space because it treats the problem correctly: not as isolation, but as **governance**. Declarative policies that are versioned, reviewed, and enforced at the kernel level — the same rigor you'd bring to any other piece of infrastructure-as-code.
+
+Contributing the Copilot CLI provider was my way of saying: this is the direction the ecosystem should go. Every major agent should have a first-class OpenShell provider. Every team running agents in sensitive environments should have sandboxes in their stack.
+
+The project is at [github.com/NVIDIA/OpenShell](https://github.com/NVIDIA/OpenShell). Apache 2.0. Two commands to get started. And if you're using Copilot CLI, the sandbox is ready for you.
