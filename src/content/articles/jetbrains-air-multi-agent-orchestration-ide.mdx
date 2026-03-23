@@ -1,0 +1,98 @@
+---
+title: "JetBrains Air — The First IDE Built for Multi-Agent Orchestration"
+description: "JetBrains Air enters public preview as the first development environment purpose-built to orchestrate multiple AI agents in parallel. Here's what it means for how we write software."
+pubDate: 2026-03-23
+tags:
+  - AI
+  - Developer Experience
+  - Software Architecture
+  - Multi-Agent Systems
+draft: true
+---
+
+## The IDE Paradigm Just Broke
+
+For forty years, an IDE meant one thing: a place where *you* write code, and tools help. Syntax highlighting, autocomplete, refactoring — all designed to make the human developer faster. Even the first wave of AI coding assistants followed this same mental model. Copilot in your sidebar. Claude Code in your terminal. Cursor's Composer panel. Every single one of them was still built around the idea that *you're* the one writing. The AI is just a very smart autocomplete.
+
+JetBrains just blew that model up.
+
+[JetBrains Air](https://air.dev/), which entered public preview in March 2026, isn't an IDE with an AI assistant bolted on. It's an environment built from the ground up around a completely different assumption: **you don't write code anymore — you direct agents that write it for you.** And unlike every other tool in this space, Air is designed to run multiple agents in parallel, on different tasks, at the same time.
+
+That's not a feature. That's a different paradigm entirely.
+
+## The Fleet Pivot Nobody Saw Coming
+
+To understand why Air exists, you need to understand what happened to [JetBrains Fleet](https://blog.jetbrains.com/fleet/2025/12/the-future-of-fleet/).
+
+Fleet was JetBrains' attempt to build a modern, lightweight collaborative editor — a VS Code challenger with a cleaner UI and smarter code intelligence. It launched in 2022, stayed in perpetual preview, and [never found its footing](https://www.infoworld.com/article/4104991/jetbrains-discontinues-fleet-ide.html). On December 22, 2025, JetBrains shut it down. Their explanation was honest: Fleet overlapped too much with IntelliJ-based IDEs and didn't offer a compelling enough reason for developers to switch.
+
+But here's what JetBrains did next that surprised everyone: instead of scrapping the Fleet codebase, they repurposed it entirely. Air is built directly on Fleet's technical foundations — the same UI platform, the same editor infrastructure — redirected toward a completely different mission. Where Fleet tried to be a better code editor, Air doesn't try to be a code editor at all. [The Register called it](https://www.theregister.com/2026/03/10/jetbrains_previews_air_proclaims_new/) "an agentic IDE built on abandoned Fleet."
+
+That's the story. Fleet failed as an editor. JetBrains reframed the platform as an agent orchestrator and relaunched it as Air. Depending on how Air performs, it might be one of the smartest pivots in developer tooling history.
+
+## What Air Actually Does
+
+The core concept of Air is straightforward to describe and genuinely hard to execute: give different coding tasks to different AI agents, run them simultaneously in isolated environments, then review and merge their work.
+
+Here's the workflow in practice:
+
+1. **Define tasks** — Describe what you want done, with Air's interface letting you attach context down to specific lines, files, or symbols in your codebase.
+2. **Assign to agents** — Pick which agent handles each task. Air supports [OpenAI Codex](https://openai.com/codex), Anthropic's Claude agent, Google Gemini CLI, and JetBrains' own [Junie](https://www.jetbrains.com/junie/) agent out of the box.
+3. **Parallel execution** — Each agent runs in its own isolated environment — a Docker container, a Git worktree, or a local workspace — so they can't interfere with each other.
+4. **Review and merge** — Air gives you IDE-quality diff tools to review every change before anything touches your main branch. You're not just accepting raw AI output; you're reviewing it like a proper code review.
+
+The isolation piece is what makes this viable at scale. If you've ever watched two AI agents fight over the same files, you understand why [Git worktrees](/articles/git-worktree-unlocks-agentic-development) became essential infrastructure for agentic development. Air bakes that isolation model into the product by default.
+
+## The Agent Client Protocol — Open Standard or Land Grab?
+
+What makes Air more than just another agentic IDE is its investment in the **Agent Client Protocol (ACP)**. Developed by JetBrains and Zed, ACP is an open protocol designed to decouple agents from editors — so any ACP-compatible agent can run inside any ACP-compatible editor, without custom integrations.
+
+Think of it as the USB-C of agentic coding. Want to run Codex inside Zed? ACP handles it. Want to run Gemini CLI inside a JetBrains IDE without Air? Also ACP. The [JetBrains ACP page](https://www.jetbrains.com/acp/) lists a growing registry of compatible agents including Mistral Vibe, OpenCode, Qwen, and Factory Droid — with more being added regularly.
+
+This is a direct contrast to how the current ecosystem works. [MCP (Model Context Protocol)](https://modelcontextprotocol.io/), created by Anthropic and now a widely adopted standard, defines how agents connect to *tools and data sources*. ACP defines how agents connect to *editors and development environments*. The two protocols are complementary, not competing — MCP handles what agents can reach, ACP handles where agents run.
+
+The strategic move JetBrains is making with ACP is smart and slightly audacious: position themselves and Zed as the governance layer for agent-editor interop, while simultaneously building the first environment that showcases what ACP makes possible. It's the kind of play that either becomes industry infrastructure or gets absorbed by a larger ecosystem. Anthropic did something similar with MCP, and that worked out pretty well for them.
+
+## Parallel Agents: Why It Actually Matters
+
+Here's the thing about multi-agent orchestration that most coverage misses: it's not a gimmick. It solves a real bottleneck in how developers currently use AI.
+
+Today's workflow looks like this: you open Claude Code or Copilot CLI, give it a task, wait for it to finish, review the output, then give it the next task. It's sequential. And for long-running agent sessions on complex tasks, you're blocked while the agent works. I've covered the [productivity gains from agentic workflows](/articles/agentic-devops-next-evolution-of-shift-left) — sequential execution is the ceiling that limits how much of those gains you can actually capture.
+
+Air breaks that ceiling. While one agent is writing a feature, another is writing tests for a different component. While one agent refactors legacy code, another is adding documentation to a different module. You're not waiting for agents to finish — you're reviewing their work as it completes, in parallel, like a tech lead working across multiple contributors simultaneously.
+
+That mental model shift — from "user interacting with an AI assistant" to "tech lead directing a team of AI contributors" — is exactly what Air is designed for. And it's not theoretical. The dev teams who figure this out will have an absurd throughput advantage over teams still using AI sequentially.
+
+## Where It Fits in the Ecosystem
+
+It's worth being clear about what Air is not trying to replace. JetBrains has explicitly stated that Air doesn't replace IntelliJ, PyCharm, WebStorm, or any of their language-specific IDEs. Those tools are for when *you're* writing code and want language intelligence, refactoring tools, and deep project understanding. Air is for when you want to delegate coding to agents and oversee their work.
+
+In the wider competitive landscape, Air is carving out a position that doesn't overlap neatly with other tools:
+
+- **GitHub Copilot CLI** ([which I've written about extensively](/articles/github-copilot-vs-the-world)) runs agents sequentially, with `/fleet` parallelization as a feature. But it's still primarily a terminal tool, and its integration with non-GitHub workflows requires extra setup.
+- **Cursor** and **Windsurf** are IDE replacements — they want to be the place you write code and use AI assistance. Air explicitly isn't competing there.
+- **Claude Code** is a single-agent CLI tool. Excellent if you live in Anthropic's model ecosystem. Not built for orchestrating multiple agent providers simultaneously.
+
+Air's angle is specifically "orchestration-first, agent-agnostic, editor as control plane." That's a novel enough position that it doesn't obviously cannibalise what developers already use — at least not yet.
+
+## What I'm Watching For
+
+Air is still in public preview, macOS only, with Windows, Linux, and browser versions planned for 2026. A few things will determine whether this becomes essential infrastructure or an interesting experiment:
+
+**Enterprise readiness** — The BYOK model (bring your own Anthropic/OpenAI keys) works for individual developers, but enterprise teams need centralized billing, audit logs, and policy controls. JetBrains has announced team collaboration features coming, but the details aren't public yet. This is the same hurdle every AI tool faces when trying to cross from dev-curious to IT-approved.
+
+**ACP adoption** — If ACP stays a JetBrains-and-Zed thing, it's a nice integration story. If it gets adopted by VS Code, Neovim, and other editors, it's genuinely transformative infrastructure. The momentum looks positive, but the ecosystem is still young.
+
+**Agent quality at orchestration scale** — Running one agent reliably is hard enough. Running three or four agents simultaneously, keeping their work isolated, and maintaining a coherent codebase across all of them requires disciplined task definition and review. The tools in Air look promising, but I want to see how this performs in real production workflows, not just demos.
+
+**MCP + ACP interplay** — [Context engineering](/articles/context-engineering-key-to-ai-development) is already complex with a single agent. Multi-agent orchestration makes it exponentially harder — each agent needs appropriate context without interfering with others. How Air handles shared context, agent memory, and project-wide coherence across parallel sessions is going to be a defining product challenge.
+
+## The Bottom Line
+
+JetBrains made a genuinely interesting bet. Fleet failed as a code editor, but the underlying platform was solid enough to repurpose. Air transforms that platform into something novel: the first development environment designed from scratch for multi-agent orchestration rather than human-first coding.
+
+The paradigm it represents — directing agents rather than writing code, running parallel workflows, reviewing agent output like code reviews — is where software development is heading. I've argued [this shift is already underway](/articles/agentic-ai-transforming-dev-teams) and it's only accelerating. Air is the first tool built specifically for that future rather than adapted to it.
+
+Whether Air specifically becomes the dominant platform is an open question. But the concept it's pioneering — treating an IDE as an orchestration layer for a team of AI agents rather than a productivity tool for a human writer — is going to win. The only question is who builds it best.
+
+Start watching [air.dev](https://air.dev/). This one is worth keeping an eye on.
