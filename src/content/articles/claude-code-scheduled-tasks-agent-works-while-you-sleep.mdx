@@ -1,0 +1,197 @@
+---
+title: 'Claude Code Scheduled Tasks: Your Agent Now Works While You Sleep'
+description: >-
+  Anthropic's scheduled tasks turn Claude Code into a background worker that
+  runs code reviews, dependency checks, and audits on your behalf — no terminal
+  babysitting required. Here's what changed and how to set it up.
+pubDate: 2026-03-23
+tags:
+  - AI
+  - Developer Experience
+  - Automation
+  - DevOps
+  - Multi-Agent Systems
+draft: true
+---
+
+Every coding agent I've used operates on the same implicit contract: you show up, you ask, it answers. Even the most capable agents — the ones that can navigate a massive codebase, write tests, fix bugs — are fundamentally reactive. They wait for you.
+
+That contract just changed. Anthropic [shipped scheduled tasks for Claude Code](https://winbuzzer.com/2026/03/09/anthropic-claude-code-cron-scheduling-background-worker-loop-xcxwbn/) in early March 2026, and the shift is more significant than the feature description suggests. Claude Code can now run as a background worker — checking in on PRs, auditing code quality, watching for deployment failures — without you sitting in front of a terminal. Your agent works while you sleep.
+
+This isn't just a convenience feature. It's a capability unlock that changes what agentic workflows can look like in practice.
+
+## Two Modes, One Big Idea
+
+Scheduled tasks in Claude Code come in two flavors, and understanding the distinction matters for how you'd actually use them.
+
+### The `/loop` Command (CLI Mode)
+
+The `/loop` command schedules recurring prompts within an active Claude Code session. The syntax is straightforward:
+
+```bash
+# Run a code review every 30 minutes
+/loop 30m run the code review checklist on recent changes
+
+# Check a specific PR every two hours
+/loop 2h /review-pr 1234
+
+# Daily morning brief
+/loop 24h summarize overnight commits and open issues
+```
+
+You can use plain English or precise intervals — Claude parses both. A few technical details worth knowing:
+
+- **Up to 50 scheduled tasks** can run concurrently per session
+- **Tasks auto-expire after three days** to prevent runaway operations
+- **Jitter is applied automatically** — up to 10% of the interval or 15 minutes max — to smooth API load and avoid thundering herd problems
+- When your session closes, so do your loop tasks. They're session-scoped by design.
+
+For fully unattended CLI operation, you pair `/loop` with `tmux` or `screen` — the same pattern I covered in [Claude Code Channels and persistent session management](/articles/claude-code-channels-anthropic-event-driven-ai-agents):
+
+```bash
+tmux new-session -d -s claude-monitor 'claude --dangerously-skip-permissions'
+# Then inside the session, set up your loops
+```
+
+### Desktop Scheduled Tasks (Persistent Mode)
+
+The Claude Code Desktop app takes this further with a proper task scheduler — a graphical interface where you configure jobs that survive restarts and run as long as the app is open.
+
+You can create tasks conversationally ("set up a nightly code audit at midnight") or through the "+ New task" button in the sidebar. Each desktop task gets:
+
+- Its own isolated session (no context bleed between scheduled runs)
+- Optional Git worktree isolation so the task runs on a separate branch without touching your working directory
+- Configuration for model, permissions, and output delivery
+- A persistent schedule that doesn't disappear when you close the terminal
+
+The practical difference: `/loop` is for "while I'm working, also keep doing X." Desktop scheduled tasks are for "every night at midnight, do this whether or not I'm at my desk."
+
+## What You Actually Set Up First
+
+Before the clever use cases, the basics.
+
+**Requirements:**
+- Claude Code updated to at least v2.1.80 (`claude update`, verify with `claude --version`)
+- A claude.ai Pro, Max, Team, or Enterprise subscription — this isn't available on free plans
+- Team/Enterprise: your org admin must enable the feature in settings
+
+**For desktop tasks**, open Claude Code Desktop and either type "create a scheduled task that..." in a new session, or use the sidebar scheduler directly.
+
+**For CLI loops**, start Claude Code in a persistent session and run `/loop` commands from within it. The session needs to stay alive for the tasks to fire.
+
+## The Use Cases That Actually Matter
+
+Scheduled tasks aren't useful for everything, but they're genuinely transformative for the specific class of work that's currently burning developer time: the routine, repetitive monitoring and maintenance that nobody wants to do manually but everyone knows they should do consistently.
+
+### Overnight PR Reviews
+
+You have 12 PRs open by end of day. You're not reviewing all of them tonight, but they need attention. With a scheduled task:
+
+```bash
+/loop 2h review all open pull requests for correctness, security issues, and test coverage gaps. Comment on any that need changes.
+```
+
+Claude works through the queue while you're not watching, leaving substantive review comments. By morning, every PR has been touched. The ones that need human judgment are flagged; the ones with obvious issues are commented.
+
+This isn't replacing the human review decision — it's replacing the part where you have to remember to look at each PR and do the initial pass.
+
+### Nightly Dependency Checks
+
+Dependency management is one of those tasks that compounds badly when neglected. A scheduled task that runs every night:
+
+```bash
+/loop 24h check for outdated dependencies, try to upgrade any with patch-level updates, run the test suite, and create a PR with the results if tests pass
+```
+
+Like [Dependabot](https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/about-dependabot-version-updates) but with reasoning — Claude can understand *why* a test failed after an upgrade and attempt a fix before giving up.
+
+### Self-Healing Error Log Monitoring
+
+This use case connects directly to the [self-healing infrastructure pattern](/articles/self-healing-infrastructure-with-agentic-ai) I've written about. An agent that monitors error logs on a schedule and attempts remediation isn't science fiction anymore:
+
+```bash
+/loop 1h check the application error logs for new patterns. For any error that matches a known fixable category, implement the fix and open a PR. For unknown errors, create an issue with diagnosis.
+```
+
+The agent isn't just reporting — it's triaging. Known error classes get patches. Unknown ones get properly documented issues. Your on-call rotation stops getting paged for things the agent could have fixed before you noticed.
+
+### Morning Engineering Brief
+
+A daily task that synthesizes what happened overnight and surfaces what needs attention:
+
+```bash
+/loop 24h at 8am: summarize all commits from the last 24 hours, open issues created, PR status changes, and any failing CI runs. Include action items for items that need developer attention.
+```
+
+You start the day knowing exactly what's in flight without reading through Slack backscroll and GitHub notifications.
+
+## The Worktree Isolation Angle
+
+One of the more important technical details: desktop scheduled tasks support [Git worktree](https://git-scm.com/docs/git-worktree) isolation. Each scheduled run can get its own worktree — a separate checkout of the repository in an isolated directory.
+
+This matters because scheduled tasks run while you're working on the same codebase. Without isolation, an overnight dependency update might conflict with your in-progress feature branch. With worktree isolation, the scheduled task operates on a clean copy with no interaction with your working state.
+
+I covered the broader case for worktrees in [Git Worktree: The Infrastructure That Unlocks Agentic Development](/articles/git-worktree-unlocks-agentic-development) — scheduled tasks are exactly the parallel-work scenario that makes worktrees essential infrastructure rather than a niche power-user trick.
+
+## Scheduled Tasks vs. GitHub Actions
+
+The comparison that comes up immediately: what does this give you that GitHub Actions doesn't?
+
+| Dimension | Claude Code Scheduled Tasks | GitHub Actions scheduled workflows |
+|---|---|---|
+| **Scheduling** | Natural language or exact intervals | Cron syntax only |
+| **Reasoning** | Can adapt, diagnose, and fix | Scripts run deterministically |
+| **Context** | Full codebase access, memory across runs | Stateless job execution |
+| **Local execution** | Runs on your machine with your credentials | Runs on GitHub-hosted runners |
+| **Setup cost** | Conversational prompts | YAML workflow files |
+| **Failure handling** | Attempts remediation | Reports failure, stops |
+
+GitHub Actions is better for strict, reproducible pipelines that need to run in CI infrastructure. Claude Code scheduled tasks are better when you want something that *reasons* about what it finds — not just runs a fixed script and reports success or failure.
+
+The practical answer is you use both. Actions runs your test suite and deploys your code on a defined pipeline. Claude Code runs the monitoring, triage, and maintenance work that currently falls through the gaps because writing an Actions workflow for "check this and fix it if you can" is hard.
+
+## Agent Hooks + Scheduled Tasks: The Real Power Combination
+
+The combination I'm most interested in: [Agent Hooks](/articles/agent-hooks-controlling-ai-codebase) for event-driven triggers, and scheduled tasks for time-driven ones.
+
+Agent hooks fire when something happens (a file changes, a test fails, a commit is pushed). Scheduled tasks fire when a clock hits a threshold. Together, they cover the full surface of autonomous agentic operation:
+
+- **Something happened → hooks respond**
+- **Enough time has passed → scheduled tasks respond**
+
+An architecture that uses both looks like a continuously running background agent: proactive about time-based maintenance, reactive to code-change events, and only involving you when something requires a human decision.
+
+That's not a personal AI assistant anymore. That's an engineering colleague with a predictable shift.
+
+## The Limitations You Need to Know
+
+**Machine dependency.** Desktop scheduled tasks require Claude Code Desktop to be running. Your machine needs to be on. For 9-to-5 workday automation, this is fine. For truly 24/7 automation, you need a server running Claude Code CLI with system-level cron (`crontab -e`) triggering non-interactive Claude sessions:
+
+```bash
+# system cron: run nightly at 2am
+0 2 * * * claude -p "run nightly code audit" --output-format json >> /var/log/claude-audit.log 2>&1
+```
+
+This hybrid approach — system cron triggering Claude Code's `-p` (non-interactive, print) mode — gives you durable scheduling without needing a persistent Desktop session.
+
+**Pro subscription required.** Scheduled tasks aren't available on free claude.ai accounts. Factor this into team rollout planning.
+
+**Trust management.** Scheduled tasks often need `--dangerously-skip-permissions` for headless operation — this bypasses Claude's interactive confirmation prompts. You're granting the agent real write access to your codebase on a schedule. Set permissions at the tool level, use worktree isolation for tasks that touch files, and don't run with permissive flags on machines that have production credentials.
+
+**The three-day expiry.** Session-scoped `/loop` tasks disappear after three days even if the session stays alive. This is a guardrail against forgotten loops consuming API quota indefinitely. Factor it in for any automation you intend to run long-term — desktop tasks don't have this restriction.
+
+## This Is What "Agentic" Actually Means
+
+There's been a lot of loose use of the word "agentic" over the last two years. Mostly it's meant "AI that does more than one thing." Scheduled tasks put a finer point on it.
+
+An agent that waits to be asked is an assistant. An agent that operates on its own schedule — reviewing PRs overnight, watching error logs, running audits while you sleep — is something genuinely different. It's proactive in the same way a junior developer with a task list is proactive: working through the queue without someone watching over their shoulder.
+
+This is the direction I pointed at in [Agentic DevOps: The Next Evolution of Shift-Left](/articles/agentic-devops-next-evolution-of-shift-left) — AI not just assisting individual developers but operating as autonomous participants in the development process. Scheduled tasks are the concrete mechanism that gets you there without rebuilding your entire pipeline.
+
+## The Bottom Line
+
+Start with one task. Pick the most annoying repetitive thing in your current workflow — the PR queue that backs up, the dependency updates you keep deferring, the error log you check manually every morning. Set up a scheduled task for it. See what Claude actually does with unstructured time and a clear goal.
+
+The bigger realization comes after: once you've offloaded one class of maintenance work to a scheduled agent, you start seeing the other places where you're doing work that a background agent could do better and more consistently. That's when the shift from "AI assistant" to "AI team member" starts to feel real.
+
+Your agent now has off-hours. Use them.
