@@ -1,0 +1,139 @@
+---
+title: "The Convergent Architecture: How Stripe, Coinbase, and Ramp Proved the Agentic DevOps Pattern"
+description: "Three fintech giants built internal coding agents independently — and arrived at the exact same architecture. Here's what that convergence reveals about the future of software engineering."
+pubDate: 2026-03-23
+tags:
+  - AI
+  - DevOps
+  - Agentic DevOps
+  - Software Architecture
+  - Automation
+draft: true
+---
+
+## Three Teams, Three Codebases, One Architecture
+
+When independent engineering teams at radically different companies converge on the same architecture — without coordinating — that's not a coincidence. That's validation.
+
+Stripe, Coinbase, and Ramp all built internal AI coding agents in parallel. Stripe built **Minions**. Coinbase built **Cloudbot**. Ramp built **Inspect**. Different companies, different tech stacks, different business domains, different engineering cultures. No cross-pollination, no shared specification, no conference where someone agreed on a standard.
+
+They arrived at the same four architectural pillars anyway: isolated cloud sandboxes, curated toolsets, hybrid deterministic-agentic orchestration, and deep workflow integration. This convergence is the most important signal in software engineering right now. It means these aren't just design choices — they're load-bearing constraints for operating AI agents in production.
+
+This is the [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left) pattern at its most validated: three teams under real production pressure discovering the same architecture from the ground up. [LangChain's Open SWE framework](https://github.com/langchain-ai/open-swe) codified exactly these patterns after studying all three implementations. When a major AI infrastructure company looks at three independent successful builds and distills them into a framework, you pay attention.
+
+## What Each Team Actually Built
+
+Let me give you the specifics, because the numbers here are not small experiments.
+
+### Stripe Minions: Blueprint Architecture at Scale
+
+Stripe's Minions are producing over [1,300 pull requests per week](https://www.infoq.com/news/2026/03/stripe-autonomous-coding-agents/) — more than 185 per day — all AI-authored and human-reviewed before merge. That's a substantial fraction of a large engineering organization's output coming from autonomous agents.
+
+The key architectural innovation is what Stripe calls the **blueprint** system. A blueprint is a workflow template where each step is classified as either deterministic or agentic:
+
+- **Deterministic nodes** handle repeatable, reliable operations — fetch the repo, run the linter, push the branch. No LLM needed. No variability permitted. These are the load-bearing concrete of the blueprint.
+- **Agentic nodes** handle open-ended reasoning — write the function, fix the failing test, refactor the module. Here the LLM reasons, adapts, and generates. But it's constrained to this specific step with defined inputs and expected outputs.
+
+This hybrid approach is brilliant because it solves the reliability-capability tradeoff that trips up most agent implementations. You don't need AI to do a `git fetch`. You need AI to understand what code needs to change. The blueprint separates these concerns explicitly.
+
+Each Minion runs in an isolated AWS EC2 devbox — a cloud development environment identical to what a human engineer would use, but ephemeral and sandboxed. Spin up, do work, submit PR, disappear. The blast radius of any single agent is contained by design.
+
+### Ramp Inspect: Closed-Loop Engineering
+
+Ramp's Inspect takes a different angle on the same problem. Where Stripe focused on blueprint orchestration at scale, Ramp focused on the **closed loop** — an agent that doesn't just write code, but runs it, tests it, and validates it before handing off to humans.
+
+Within months of launch, [Inspect was writing over 30% of all merged pull requests](https://builders.ramp.com/post/why-we-built-our-background-agent) across Ramp's core repositories. That's not 30% of experimental or low-stakes work — that's 30% of production-merged code.
+
+The architecture runs on Modal for instantly-provisioned full development environments and Cloudflare Durable Objects for persistent state management across a session. Inspect is wired directly into Ramp's engineering stack: Sentry, Datadog, LaunchDarkly, Buildkite, Slack, GitHub. For backend work, it runs actual tests and reviews telemetry. For frontend, it takes visual screenshots and validates DOM state. The agent doesn't guess that the code works. It verifies.
+
+> The shift from "open-loop" to "closed-loop" agents is the difference between having an assistant who writes reports and having one who writes reports, edits them, and confirms the facts before submitting.
+
+### Coinbase Cloudbot: Engineering for Auditability
+
+Coinbase's approach is the most instructive for teams in regulated industries. Building [Cloudbot with enterprise trust as a first-class constraint](https://www.coinbase.com/blog/building-enterprise-AI-agents-at-Coinbase) meant making decisions that most teams postpone until something breaks.
+
+The cornerstone of Coinbase's architecture is the **high-code over low-code** principle. They evaluated visual workflow tools and prompt-heavy low-code platforms and rejected them for production automation. The reasoning is unambiguous: low-code approaches introduce context noise, make individual steps difficult to unit test, and create debugging and compliance nightmares at scale.
+
+Instead, Cloudbot is built as a typed, version-controlled, deployed service. Every agent action is observable. Every LLM call is distinct and attributable. Every component is testable in isolation as part of the CI/CD pipeline. Human-in-the-loop approval is a first-class feature, not an afterthought. Cloudbot operates in three distinct modes to match the risk profile of different task types.
+
+For a company handling billions in crypto transactions, this isn't over-engineering. It's table stakes. And it turns out, it's the right approach even when you're not handling crypto.
+
+## The Four Convergent Patterns
+
+Here's what all three teams arrived at independently:
+
+### 1. Isolated Cloud Sandbox Execution
+
+Every agent task runs in its own disposable, isolated environment. Stripe uses AWS EC2 devboxes. Ramp uses Modal containers. Coinbase runs agents as isolated service instances. The pattern is identical: **spin up, execute, tear down**.
+
+This isn't just about security — though it's critical for that too, as I covered in my article on [sandboxes as the missing infrastructure layer](/articles/sandboxes-missing-infrastructure-layer-agentic-devops). Isolation solves the parallelization problem. When each task is isolated, you can run hundreds simultaneously without state contamination. Stripe handles 1,300+ PRs per week partly because they can parallelize aggressively.
+
+> If your agents are sharing execution environments, you're not running agents — you're running a distributed system with AI in the middle. Those are very different problems.
+
+### 2. Curated Toolsets Over Tool Sprawl
+
+Stripe manages approximately 500 carefully curated tools for Minions. That number sounds large until you realize the emphasis is on *curated* — every tool is maintained, tested, and intentional. The philosophy, which Open SWE adopted explicitly, is that quality and fitness-for-purpose beat raw quantity.
+
+This directly contradicts how many teams set up agents. The instinct is to give the agent everything: every API, every internal service, every integration. The result is what Coinbase identified as "context noise" — more tools means larger context, means more opportunity for the agent to make incorrect inferences about what to use and when.
+
+Each tool in the Ramp and Stripe implementations maps to a specific, well-understood operation. Shell commands, web requests, git operations, Slack replies, PR creation. Not "access to our entire internal developer portal." Focused, auditable, and tested.
+
+### 3. Hybrid Deterministic-Agentic Orchestration
+
+The cleanest articulation of this pattern is Stripe's blueprint architecture, but Coinbase and Ramp implement the same principle. Complex software engineering tasks decompose into steps that need AI reasoning and steps that don't. Treating all steps equally — either all deterministic automation or all LLM calls — leaves performance on the table.
+
+Deterministic steps are reliable, fast, and auditable. Agentic steps are flexible and capable of handling novel situations. The hybrid approach gives you both. It also gives you clear boundaries for debugging: when a deterministic step fails, you have a deterministic error. When an agentic step fails, you know exactly where to look at the LLM's reasoning.
+
+For complex tasks, all three teams also use subagent orchestration — breaking large tasks into subtasks handled by specialized child agents in isolated contexts. This maps directly to how senior engineers actually work: decompose → delegate → synthesize.
+
+### 4. Workflow-First Integration
+
+None of these agents live in a separate AI dashboard that engineers have to context-switch to use. Stripe's Minions are invoked via Slack and CLI. Ramp's Inspect integrates with Slack, GitHub, VS Code, and a Chrome extension. Coinbase's Cloudbot works within existing developer workflows.
+
+Every session starts with rich context pulled from where the work lives: Slack threads, Linear issues, GitHub PRs. The agent understands the ticket, the discussion, the PR history before writing a single line. This context-first approach eliminates the biggest failure mode in AI-assisted development — agents operating without sufficient context about *why* something needs to change.
+
+This is what I mean when I write about [context engineering as the foundation of agentic development](/articles/context-engineering-key-to-ai-development). These teams built it into the architecture at ingestion time, not as an afterthought in a system prompt.
+
+## The Numbers Don't Lie
+
+Let me make the scale concrete:
+
+| Team | Agent | Impact |
+|------|-------|--------|
+| Stripe | Minions | 1,300+ PRs per week, 185+ per day |
+| Ramp | Inspect | 30%+ of all merged PRs |
+| Coinbase | Cloudbot | Full production service with multi-mode operation |
+
+These aren't research projects or productivity pilot programs. These are production systems handling a substantial fraction of engineering output at companies that process hundreds of billions in transactions annually. The architecture has been stress-tested at scale, in regulated environments, under real operational pressure.
+
+## What Open SWE Means for the Rest of Us
+
+After studying all three implementations, LangChain released [Open SWE](https://github.com/langchain-ai/open-swe) — an open-source framework built on [LangGraph](https://github.com/langchain-ai/langgraph) and Deep Agents (LangChain's framework for long-running autonomous agent tasks) that packages these patterns for any engineering team.
+
+The significance of this isn't just that the tooling exists. It's that an organization with deep visibility into how elite engineering teams build AI systems looked at three independent successful implementations and said: these patterns are universal enough to standardize.
+
+Open SWE ships with ~15 curated default tools (shell, web requests, HTTP, git, Slack, Linear, automated PRs), sandbox backend integrations (Modal, Daytona, Runloop), subagent orchestration via [LangGraph](https://github.com/langchain-ai/langgraph) (LangChain's graph-based agent orchestration framework), and context-rich session initialization from Slack or GitHub. It's the convergent architecture in a starter kit.
+
+The gap between what Stripe, Coinbase, and Ramp can build (multi-year internal investment, dedicated teams) and what you can deploy with Open SWE (days to a working agent) has never been smaller.
+
+## What This Means for Your Architecture
+
+If you're building or planning to build AI coding agents for your team, this convergence tells you where to invest:
+
+**Start with isolation.** Don't run agents on developer machines or shared environments. Get disposable cloud environments (Modal is a good starting point) and treat each agent session as ephemeral. The rest of the architecture depends on this being true.
+
+**Curate ruthlessly.** Give your agent 15 excellent tools before you give it 150 mediocre ones. Know what each tool does, test it, and maintain it. Context noise is real and it compounds.
+
+**Separate concerns explicitly.** Map your automation workflows and identify which steps require reasoning versus which steps are deterministic. Build the deterministic steps first. Add LLM where the task is genuinely ambiguous. This is the blueprint pattern and it works.
+
+**Integrate where work happens.** If your agent requires a separate interface, it has a adoption problem before it has a technical problem. Slack and GitHub are where most engineering teams coordinate — that's where your agent should live.
+
+**Build observability from day one.** Coinbase's lesson is the most expensive to learn late: agents that aren't observable aren't auditable, and agents that aren't auditable aren't trustworthy. Log every LLM call, every tool use, every decision point. You'll need it.
+
+## The Bottom Line
+
+When Stripe, Coinbase, and Ramp independently converge on the same architecture, you don't debate the patterns — you implement them. Isolated sandboxes, curated tools, hybrid orchestration, and workflow-first integration aren't opinions. They're the architecture that works at scale, under production pressure, in regulated environments.
+
+The [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left) wave isn't coming — it's here, and three of the most rigorous engineering organizations in fintech have already mapped the terrain. The question for your team isn't whether to adopt this architecture. It's how fast you can build it.
+
+Open SWE means the starting line is lower than it's ever been. Your first agent doesn't need to be Minions at 1,300 PRs per week. It needs to be isolated, focused, observable, and integrated where your team works. Start there.
