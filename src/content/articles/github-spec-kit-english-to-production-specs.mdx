@@ -1,0 +1,114 @@
+---
+title: 'GitHub Spec-Kit: Turn English Into Production-Ready Specs'
+description: >-
+  GitHub's open-source Spec-Kit turns plain English feature descriptions into
+  structured, living specifications that AI agents can execute. Here's why it
+  matters for how teams build software.
+pubDate: 2026-03-23
+tags:
+  - AI
+  - GitHub Copilot
+  - Developer Experience
+  - Software Architecture
+  - Productivity
+draft: true
+---
+
+## The Problem With Starting From Code
+
+I've been watching a pattern repeat across teams adopting AI coding tools: someone opens a blank file, writes a vague comment like `// build a user auth system`, and asks Copilot to fill in the rest. The code that comes back often looks fine. It compiles. It might even pass a few tests. But three days later, you're untangling authentication logic that doesn't match your security requirements, a session model that contradicts your database schema, and edge cases nobody thought through.
+
+This is "vibe coding" at its worst — not the fun kind where you're exploring a prototype, but the kind where production-bound features get built on interpretations of half-formed ideas. The AI isn't to blame. It's filling in the gaps you left with plausible-sounding defaults.
+
+The real problem is that we skipped the spec. And [context engineering](/articles/context-engineering-key-to-ai-development) tells us exactly why that matters: AI output quality is directly proportional to what the model sees before it generates a single token. A blank file tells it nothing.
+
+## What GitHub Spec-Kit Actually Is
+
+[GitHub Spec-Kit](https://github.com/github/spec-kit) is an MIT-licensed, open-source toolkit that puts structured specifications at the center of your development workflow. The core tool is `specify-cli` — a command-line interface (available in Python and Node.js) that walks you through converting your English-language descriptions into structured, reviewable, and AI-ready specification files.
+
+The key word there is *living*. Spec-Kit specs aren't static documents that get written once and drift from reality. They're version-controlled markdown files that evolve alongside your code, and they're structured specifically to feed AI agents like GitHub Copilot, Claude Code, Gemini CLI, and [two dozen others](https://github.com/github/spec-kit/blob/main/AGENTS.md) the precise context they need to generate accurate implementations.
+
+GitHub's own engineering blog [frames this directly](https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/): the goal is to flip the development process from "code first, figure out what it should do later" to "specify first, then execute with AI confidence." Microsoft's developer blog calls it a way to [eliminate the ambiguity gap](https://developer.microsoft.com/blog/spec-driven-development-spec-kit) between what teams want and what AI agents build.
+
+## The Six-Phase SDD Workflow
+
+Spec-Kit structures development into six phases, each building on the last:
+
+| Phase | What Happens | AI Role |
+|---|---|---|
+| **`/constitution`** | Define project-wide rules — quality standards, architecture constraints, privacy requirements | Human-led, AI documents |
+| **`/specify`** | Describe what you're building, for whom, and why — outcomes, not implementation | AI generates structured spec from your description |
+| **`/clarify`** | AI surfaces ambiguities, edge cases, and missing requirements for you to resolve | AI asks questions, human answers |
+| **`/plan`** | Generate a technical implementation plan — architecture, stack, constraints | AI proposes, human reviews |
+| **`/tasks`** | Break the plan into discrete, testable, parallelizable units of work | AI generates task list |
+| **`/implement`** | Execute tasks guided by the living spec | AI codes, spec constrains |
+
+The sequence matters. Each phase gates the next. You can't `/plan` until you've `/specify`-ed and `/clarify`-ied. You can't `/implement` until you have approved `/tasks`. This isn't bureaucracy — it's the same kind of structural enforcement I wrote about in [agent-proof architecture](/articles/agent-proof-architecture-agentic-devops): making the right path the only path.
+
+To get started, the installation is straightforward:
+
+```bash
+# Install specify-cli via pip
+pip install specify-cli
+
+# Or run without installing
+uvx specify-cli
+
+# Initialize a new spec-driven project
+specify init my-feature --ai copilot
+```
+
+From there, you follow the terminal prompts through each phase, with your chosen AI agent generating content at each step.
+
+## Why "Specs as Living Documents" Beats Specs as Docs
+
+Here's the distinction that makes Spec-Kit different from writing a requirements document in Confluence: **the spec is not an artifact you produce and then abandon. It's an input to every subsequent step.**
+
+Most teams I've worked with treat specs as handoff documents — product writes them, engineers glance at them once, and they immediately start diverging from reality. By the time code ships, the spec describes something different from what was built.
+
+I wrote about this exact tension in [my piece on specs and tests](/articles/specs-equal-tests-terraform-ai-development): a markdown document that says "all API responses must include request IDs" is a suggestion. An AI agent will read your spec, nod politely, and implement whatever it finds most convenient in its context window. The only reliable enforcement mechanism is code — tests, hooks, CI gates.
+
+Spec-Kit bridges that gap in two ways. First, by making specs structured and machine-readable, they become actual context for AI agents rather than human-facing documentation. The AI doesn't have to interpret your intent — it's directly encoded. Second, because specs evolve in version control alongside code, the divergence problem is visible. A spec change without corresponding code changes, or vice versa, becomes reviewable.
+
+> Specs that live outside version control are wishes. Specs that live in version control and drive AI execution are requirements.
+
+## The Integration Story
+
+One thing that initially surprised me about Spec-Kit is how AI-agent-agnostic it is. The toolkit ships with out-of-the-box support for [GitHub Copilot, Claude Code, Gemini CLI, Cursor, Windsurf, Kilo Code, and over a dozen more](https://github.com/github/spec-kit/blob/main/AGENTS.md). Each agent has its own directory structure and command conventions, but Spec-Kit normalizes the workflow across all of them.
+
+This matters for teams because it means you're not locked in. The spec format is the constant — your AI agent is a variable you can swap. As models improve or your team's preferences shift, the specifications stay intact and transferable.
+
+For Copilot users specifically, this integrates naturally with the [custom instructions pattern](/articles/context-engineering-key-to-ai-development) I advocate. Your `/constitution` file becomes the project-level `copilot-instructions.md`, and each spec file becomes the targeted context for a specific feature. Instead of hoping Copilot guesses your architecture from the surrounding code, you're explicitly feeding it the decisions you've already made.
+
+## Where This Connects to the Broader Shift
+
+Spec-Driven Development isn't a new idea — it's a return to rigor that got lost during the move to agile. What's new is that AI agents give us an actual enforcement mechanism. When the spec is what drives code generation, the spec has power it never had in a document-centric world.
+
+This is the same argument I make about [tests being the only enforceable specs](/articles/specs-equal-tests-terraform-ai-development) — a test assertion is unambiguous where a prose requirement is interpretable. Spec-Kit pushes in the same direction: structured, versioned, machine-readable intent that constrains what AI agents produce.
+
+The pattern also connects directly to [context engineering fundamentals](/articles/context-engineering-key-to-ai-development). The quality of AI output is determined by what the model sees. A well-structured Spec-Kit specification — clarified, reviewed, and versioned — is exactly the kind of rich, unambiguous context that separates teams getting 10x productivity from teams getting 10x confusion.
+
+Visual Studio Magazine [noted some skepticism](https://visualstudiomagazine.com/articles/2025/09/16/github-spec-kit-experiment-a-lot-of-questions.aspx) when Spec-Kit launched: some engineers found the workflow generated "a lot of questions" and felt slower than just coding. That critique is fair for simple, well-understood tasks. But it misses the point for complex features, cross-functional requirements, or anything being handed to an AI agent for autonomous implementation. The spec overhead pays dividends when ambiguity is expensive — which is most of the time in production software.
+
+## When to Reach for Spec-Kit
+
+Spec-Kit is most valuable when:
+
+- **Features span multiple systems or teams** — the `/constitution` and `/clarify` phases surface coordination issues early
+- **You're handing work to an AI agent for autonomous implementation** — structured specs dramatically reduce hallucinated requirements
+- **Compliance or security requirements need to be explicitly encoded** — the `/constitution` phase creates enforceable project-wide constraints
+- **Onboarding new engineers or contractors** — a version-controlled spec history explains *why* decisions were made, not just what was built
+
+It adds less value when:
+
+- You're building a quick prototype or proof-of-concept
+- The feature is trivially small and well-understood
+- You're working in a highly exploratory, research-mode context where requirements legitimately change every hour
+
+## The Bottom Line
+
+The AI development ecosystem keeps learning the same lesson in different forms: ambiguity is expensive. Vague prompts produce plausible-looking code that breaks in production. Undocumented requirements produce features nobody actually wanted. Half-finished context produces AI agents that confidently build the wrong thing.
+
+[GitHub Spec-Kit](https://github.com/github/spec-kit) attacks that problem at the root by making specifications first-class citizens of your workflow — structured, versioned, and directly integrated with the AI agents doing the implementation. It's not a silver bullet, and the six-phase process has a learning curve. But for teams building production features with AI agents, having a living specification beats having a vibe every single time.
+
+Start with `specify init`. Run through one feature. See if the `/clarify` phase catches something your team would have missed. If it does, you've already paid for the overhead.
