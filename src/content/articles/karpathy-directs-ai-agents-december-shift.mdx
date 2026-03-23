@@ -1,0 +1,96 @@
+---
+title: "Karpathy Hasn't Written Code Since December — He Just Directs AI Agents Now"
+description: "Andrej Karpathy hasn't typed a line of code since December 2025. He now runs 10–20 AI agents in parallel. Here's what that means for the rest of us."
+pubDate: 2026-03-23
+tags:
+  - AI
+  - Developer Experience
+  - Productivity
+  - Multi-Agent Systems
+  - Engineering Leadership
+draft: true
+---
+
+In mid-March 2026, [Andrej Karpathy](https://x.com/karpathy) said something that stopped the developer internet cold: he hasn't typed a single line of code since December 2025. Not one. Instead, he spends his days directing fleets of AI agents — up to 20 running in parallel — who do the actual coding while he manages intent, context, and direction.
+
+Let that sink in. The person who built [nanoGPT](https://github.com/karpathy/nanoGPT) and helped co-found OpenAI doesn't write code anymore. And he's not doing it as a philosophical statement. He's doing it because **it works better**.
+
+Karpathy described his current state as a ["state of psychosis"](https://economictimes.indiatimes.com/tech/artificial-intelligence/ai-researcher-andrej-karpathy-no-longer-writes-code-spends-hours-directing-ai-agents/articleshow/129716812.cms) — not a crisis, but an obsessive, almost intoxicating immersion in what's now possible when you stop being the person who writes code and start being the person who tells systems what to build. He called it a "phase shift" — an irreversible flip, not a gradual evolution. [Before December, most of his work was still hands-on. Then something flipped and it became essentially 100%](https://www.benzinga.com/markets/tech/26/03/51396403/andrej-karpathy-says-ai-agents-are-rewriting-how-software-gets-built-adds-he-hasnt-typed-a-line-of-code-probably-since-december).
+
+When one of the most technically credible voices in AI says programming is now ["unrecognizable"](https://the-decoder.com/andrej-karpathy-says-programming-is-unrecognizable-now-that-ai-agents-actually-work/), I pay attention. You should too.
+
+## What Karpathy's Workflow Actually Looks Like
+
+This isn't "I use Copilot to autocomplete variable names." This is a fundamentally different operating mode.
+
+Karpathy runs [10–20 AI agents in parallel](https://abit.ee/en/artificial-intelligence/karpathy-ai-agents-openai-artificial-intelligence-agentic-coding-codex-home-automation-future-of-pro-en), each working on different features, experiments, or problems simultaneously. His job has become expressing intent — writing the high-level specification, context, and goals — while agents handle implementation, debugging, and iteration.
+
+He made this concrete with his open-source [autoresearch](https://github.com/karpathy/autoresearch) project: a framework where agents autonomously run AI research experiments while you sleep. The structure is telling:
+
+- `prepare.py` — setup and evaluation, written once by the human, not touched again
+- `train.py` — the actual model logic that agents iterate on freely
+- `program.md` — a Markdown file the human maintains, containing goals, instructions, and context
+
+That last file is everything. The human's contribution isn't writing `train.py` — it's writing `program.md`. The intent. The constraints. The definition of success. Sound familiar? It's [context engineering](/articles/context-engineering-key-to-ai-development) at the workflow level.
+
+His bottleneck diagnosis is sharp: when things go wrong, it's almost always **a skill issue**, not a technical limit. The model can do more than you think. The constraint is your ability to communicate what you want clearly enough for an agent to execute it.
+
+## The Forbes Signal: Junior Devs Are Already Feeling It
+
+Before you dismiss this as "Karpathy is special, this doesn't apply to the rest of us" — [Forbes ran a piece the same week](https://www.forbes.com/sites/josipamajic/2026/03/22/ai-agents-wrote-80-of-karpathys-code-junior-developers-are-paying-the-price/) titled *AI Agents Wrote 80% of Karpathy's Code. Junior Developers Are Paying the Price.* The headline says it all.
+
+The math is brutal: if a senior engineer directs agents to produce 80–100% of their code output, the entry-level work — writing boilerplate, implementing specs, first-pass debugging — doesn't need junior developers anymore. It needs more agents. The skills progression pipeline that's worked for 30 years (junior writes code → senior reviews → repeat) is getting disintermediated.
+
+I don't raise this to be alarmist. I raise it because **the transition is already happening**, and the developers who adapt proactively will be on the right side of it. The ones waiting for this to become "normal" before they change anything will find themselves behind a gap that only grows.
+
+## The New Skill Stack
+
+Here's my read on what Karpathy's shift is actually showing us. The skills that make you effective in an agent-directed workflow are fundamentally different from the skills that made you effective at typing code:
+
+**Old bottleneck:** Can you implement this efficiently and correctly in language X?
+
+**New bottleneck:** Can you articulate what "correct" means clearly enough for an agent to execute it? Can you review agent output at a systems level, not a line-by-line level? Can you design a workflow where agents run in parallel without colliding or producing contradictory outputs?
+
+This is closer to **technical product ownership** than traditional software engineering. You need to understand the system deeply enough to specify it precisely, but your leverage comes from orchestration, not execution.
+
+I wrote about this transition in [how agentic AI is transforming dev teams](/articles/agentic-ai-transforming-dev-teams) — the bottleneck was already shifting from development capacity to decision-making velocity. Karpathy's shift is the logical extreme of that: when a senior engineer can direct 20 agents, the question isn't "how fast can they code?" It's "how clearly can they think and specify?"
+
+The other critical skill: **knowing when to trust the output**. This is harder than it sounds. Agents produce plausible-looking code that can be subtly wrong in ways that don't surface immediately. The engineers who will thrive aren't the ones who blindly accept agent output — they're the ones who have developed a nose for when something needs scrutiny. That nose comes from years of actually writing and debugging code yourself. So no, writing code by hand still matters. It's just not the primary workflow anymore.
+
+## What This Means for Your Codebase Right Now
+
+Karpathy's `program.md` is the most important artifact in his workflow. Not the code. Not the tests. The **instructions**.
+
+This aligns exactly with what I've seen in my own work: the quality of agent output is dominated by the quality of the context you give it. A repo with clear conventions, documented architecture, and a good `copilot-instructions.md` (or `CLAUDE.md`, or whatever you call it) is an agent-amplified repo. A repo with none of that produces agent output you can't trust.
+
+The practical implication: **your codebase maintenance strategy needs to include instruction files as first-class citizens**. Not as an afterthought or a one-time setup task. As living documents that you update every time an agent makes a recurring mistake.
+
+And tests. Karpathy's `prepare.py` is the evaluation harness — the automated check that tells agents whether their iteration improved things or broke them. Without that feedback mechanism, agents run in circles. With it, they can optimize overnight while you sleep. This is what I mean when I say [tests are everything in agentic AI development](/articles/tests-are-everything-agentic-ai). They're not just for you. They're the ground truth that your agents evaluate against.
+
+## The Phase Shift Is Real — Here's How to Ride It
+
+Karpathy called it a phase shift, not a gradient. I think he's right. You don't gradually transition from "mostly writing code yourself" to "directing 20 agents in parallel." There's a threshold. On one side, you're the implementer with some AI assistance. On the other side, you're the director with agents as the execution layer.
+
+Most developers I know are still firmly on the left side of that threshold. A handful are crossing it. Very few have landed on the right side.
+
+Here's what I think it takes to make the jump:
+
+1. **Build the habit of instruction-first development.** Before you open your editor, write down what you need. Not a vague prompt — a specification. What should this function do? What should it not do? What are the edge cases? What does success look like? Agents work from intent. Get good at writing intent.
+
+2. **Invest in your repo's instructability.** Every unclear abstraction, every undocumented convention, every inconsistent pattern is a liability when you're directing agents. The ROI on codebase quality has never been higher. I covered the specifics in [my article on context engineering](/articles/context-engineering-key-to-ai-development).
+
+3. **Learn to evaluate at scale.** When an agent hands you 400 lines of code, you can't review it the way you'd review a colleague's PR. You need to think in terms of: does this architecture match the intent? Are the edge cases covered? Does the test output confirm it works? Systemic evaluation, not line-by-line reading.
+
+4. **Start running parallel workstreams.** Don't wait until you have 20 agents to learn parallel orchestration. Start with two. Assign different tasks, manage dependencies, reconcile outputs. The skill builds with practice, and the tools — [GitHub Copilot coding agent](https://github.com/features/copilot), terminal-based agents, custom workflows — are available right now.
+
+5. **Track what your agents get wrong, consistently.** Every repeated mistake is a context gap. Document it. Update your instruction files. Feed the feedback loop. This is the single habit that separates teams that get better at agent orchestration from teams that stay stuck at the same failure modes.
+
+## The Bottom Line
+
+Andrej Karpathy hasn't written code since December. He runs 20 agents in parallel. He's building things that would have taken months in weeks, and calling the whole thing a "phase shift" he can't imagine reversing.
+
+This isn't a curiosity. This is a preview.
+
+The developers who internalize this shift — who start treating specification, orchestration, and evaluation as their primary craft — will have a structural advantage in the coming years. The ones who keep waiting for this to feel normal will be catching up to a bar that keeps moving.
+
+The phase shift is here. The only question is which side of it you'll be standing on.
