@@ -1,0 +1,132 @@
+---
+title: "Copilot CLI v1.0.11 — Monorepo Support, Hook Merging, and I Found the Bug"
+description: "I filed a bug where extension hooks silently overwrote hooks.json. GitHub shipped the fix in 7 days. Here's the full story behind v1.0.11."
+pubDate: 2026-03-23
+tags:
+  - GitHub Copilot
+  - Developer Experience
+  - AI
+  - Open Source
+draft: true
+---
+
+## I Filed a Bug. GitHub Fixed It in 7 Days.
+
+Seven days ago I opened [issue #2076 on the copilot-cli repo](https://github.com/github/copilot-cli/issues/2076). The bug: when a CLI extension registered hooks via `joinSession`, the hooks I'd defined in `hooks.json` silently stopped firing. My extension's `onPreToolUse` hook ran. My `hooks.json` hooks didn't. The extension had *replaced* the pipeline rather than joining it.
+
+I noticed this while building a custom extension for one of my projects. I had an `onPreToolUse` hook in `hooks.json` that blocked certain filesystem writes — safety rails I rely on during agent sessions. When I loaded the extension, those rails disappeared. No warning, no error, just silence.
+
+Today, v1.0.11-1 shipped. The fix is in the release notes: extension hooks now **merge** with `hooks.json` hooks rather than overwriting them. That's a seven-day turnaround from report to fix. For an actively maintained open source tool, that's fast. For a tool I use daily, it's meaningful.
+
+I've written before about the value of contributing to the tools you use — about the [gap between passive users and active participants](/articles/top-5-mistakes-creating-custom-github-copilot-agents). Filing that issue felt like the obvious move. The response from GitHub reinforced why it's worth doing.
+
+## The Bug: What Was Actually Happening
+
+The hook pipeline in Copilot CLI is additive by design. You can define hooks in `hooks.json` at the project level, and extensions can register additional hooks via `joinSession`. The intent is composition: both sources should fire, in a defined order.
+
+What was actually happening: when an extension registered hooks via `joinSession`, it replaced the entire hook pipeline instead of merging into it. The hooks from `hooks.json` were effectively discarded.
+
+Here's the setup that triggered it:
+
+```json
+// .github/hooks/hooks.json
+{
+  "hooks": [
+    {
+      "event": "onPreToolUse",
+      "action": "block",
+      "condition": "tool == 'write_file' && path.startsWith('/secrets')"
+    }
+  ]
+}
+```
+
+```typescript
+// Extension's joinSession handler
+session.hooks.on('onPreToolUse', async (ctx) => {
+  // Log tool use for audit trail
+  await logToAuditService(ctx.tool, ctx.input);
+});
+```
+
+The expectation: both hooks run. The audit log fires *and* the write block fires. The reality: once the extension loaded, only the extension's hook ran. The block rule from `hooks.json` was gone. Any extension with a `joinSession` hook silently broke your `hooks.json` pipeline.
+
+This is the kind of bug that's easy to miss in isolation — your extension works fine, your hooks.json works fine, but together they don't. You only find it when you layer them, which means it surfaces in production workflows, not in quick demos.
+
+## The Fix: Hooks Now Merge
+
+The v1.0.11-1 fix is exactly what the issue requested: hooks from multiple sources are now **composed**, not replaced. Extension hooks layer on top of `hooks.json` hooks. Both fire. The pipeline is additive.
+
+The practical impact: if you're building extensions that add observability, audit logging, or custom behaviors on top of an existing hook setup, they now work correctly together. The security boundaries you define in `hooks.json` stay intact when extensions load.
+
+This also makes extension authoring simpler. You don't need to defensively re-implement or proxy existing hooks to ensure they still run. You write your extension's behavior, and the CLI handles the merge.
+
+Also shipping in v1.0.11-1: the `sessionStart` hook's `additionalContext` field now works correctly. This hook lets you inject context at the beginning of every session — system prompt additions, project summaries, environment metadata. It was available in the API but wasn't being applied reliably. Now it is. If you have a `sessionStart` hook that primes the agent with project conventions, it actually runs on session start.
+
+## Monorepo Support: Context Discovery Up the Tree
+
+The headline feature in v1.0.11-0 is **monorepo-aware context discovery**. Custom instructions, MCP servers, skills, and agents are now discovered at every directory level from the working directory up to the git root.
+
+Before this change, the CLI resolved context from your working directory and a few fixed locations. In a monorepo, that meant you needed your custom instructions and MCP configs at the root or in your immediate directory — no intermediate levels. Anyone who's worked with a large repo knows this gets messy fast.
+
+Now the discovery algorithm walks the directory tree upward. If you're working in `packages/api`, the CLI finds:
+
+- `packages/api/.github/copilot-instructions.md` — service-specific instructions
+- `packages/.github/copilot-instructions.md` — package group instructions
+- `.github/copilot-instructions.md` — repo-wide instructions
+- `.github/extensions/` — extensions defined at any level
+- `.mcp.json` — MCP server configurations at every level
+
+They all compose. The more specific context (closer to your working directory) layers on top of the more general context (closer to the git root). This is the right model for monorepos, where teams own individual packages but share tooling and conventions at higher levels.
+
+In practice, this means a full-stack repo where the `frontend/` team has their own Copilot instructions, the `backend/` team has theirs, and the whole org shares a root-level config — and it all just works without manual path juggling.
+
+## `/new` and `/clear` Now Accept a Prompt
+
+A small change with real workflow impact: `/new` and `/clear` now accept an optional prompt to start the new session with a first message.
+
+```
+/new Fix the authentication bug in src/auth/jwt.ts
+```
+
+```
+/clear Summarize the PR I just opened and suggest reviewers
+```
+
+Before, clearing or starting a new session dropped you at a blank prompt. You'd clear the session, then type your next task. Now it's a single command. When you're chaining tasks — finish one thing, immediately start another — this removes a small but real friction point.
+
+The distinction between `/new` and `/clear` is worth noting: `/new` creates a completely fresh session with no memory of the previous one. `/clear` resets the conversation context but preserves session-level settings like your configured model and active extensions. Both now accept the starting prompt.
+
+## Background Agent Progress in `read_agent`
+
+If you run background agents via `/tasks`, you've been flying somewhat blind on their progress. The task ran, but the only feedback was its final output when it completed (or timed out).
+
+v1.0.11-0 surfaces **current intent and tool calls completed** in `read_agent` responses and task timeout messages. When a background agent is mid-task, you can now see what it's working on and how many tools it has called so far.
+
+This matters for longer-running agents. If an agent has called 47 tools and is still going, you know it's deep into a complex task. If it's called 2 tools and appears stuck, you know something is wrong earlier. Timeout messages now include the same context, so when a task fails because it ran too long, you understand where it was in the work rather than just getting an opaque timeout error.
+
+For teams using [multi-agent workflows](/articles/github-agentic-workflows-hands-on-guide), this is real observability improvement. Background agents aren't black boxes anymore.
+
+## The Small Things
+
+A few other fixes worth calling out from v1.0.11-0:
+
+**`statusLine.command` supports `~` and environment variables.** If you have a status line command that references your home directory or project-specific env vars, it now resolves them correctly. `$HOME`, `${VAR:-default}` syntax, and `~` all work.
+
+**MCP OAuth works with Atlassian Rovo's non-standard URL.** Dynamic Client Registration is a standard, but where hosts publish their authorization metadata isn't fully standardized. The Atlassian Rovo MCP server hosts it at a non-standard URL — Copilot CLI now handles this correctly, unblocking Jira/Confluence integrations.
+
+**`/cd` maintains separate working directories per session.** If you're running multiple sessions and switch between them, each session now remembers its own working directory. Before, `/cd` in one session could affect context in another.
+
+**Terminal screen redraws correctly after `Ctrl+Z` / `fg`.** Suspend and resume would sometimes leave the screen in a broken state. Fixed.
+
+## What I'm Taking From This
+
+The turnaround on issue #2076 tells me something about how the copilot-cli team operates. A practitioner-filed, clearly-reproducible bug with a precise expected vs. actual description gets prioritized. That's not guaranteed — I've filed issues in other projects that sat for months. GitHub moved on this in a week.
+
+The broader pattern across v1.0.11: the team is systematically hardening the extensibility model. Hook merging, `sessionStart` context, subagent lifecycle hooks (from last week's releases), custom command registration — these are all pieces of the same surface. Extensions should compose cleanly. The bugs that undermine that composability are getting fixed.
+
+Monorepo support is the other signal. That's not a feature for individuals — it's a feature for teams. It says: we expect organizations to deploy Copilot CLI as shared infrastructure, with layered configurations that reflect the structure of their repos. That's infrastructure thinking, not tool thinking.
+
+> If you're building on Copilot CLI's extension API, the v1.0.11 releases are the ones to upgrade for. The hook merging fix is a correctness fix — any extension-heavy setup before this could have been silently broken.
+
+Check the [v1.0.11-0 release notes](https://github.com/github/copilot-cli/releases/tag/v1.0.11-0) and [v1.0.11-1 release notes](https://github.com/github/copilot-cli/releases/tag/v1.0.11-1). If you're running extensions alongside `hooks.json`, upgrade. If you've been hesitant to go deep on the extension API because the composability story felt unreliable — this release is the answer to that hesitation.
