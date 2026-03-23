@@ -1,0 +1,114 @@
+---
+title: "Hugging Face Skills: The Agent Skill Marketplace Just Went Mainstream"
+description: "Hugging Face launched a standardized, open-source marketplace for reusable agent skills. Here's what it means for teams building AI-powered workflows."
+pubDate: 2026-03-23
+tags: ["AI", "Open Source", "Developer Experience", "Multi-Agent Systems", "Automation"]
+draft: true
+---
+
+## The Problem Nobody Wants to Admit
+
+Every team building AI agents hits the same wall within a few months: you've wired up a capable agent, connected it to MCP servers, tuned your prompts — and then you need it to actually *do something complex*. Train a model. Create a dataset. Evaluate a checkpoint. And suddenly you're writing hundreds of lines of workflow logic that your agent has to figure out from scratch every time.
+
+Nobody is sharing this. Every team is solving the same domain-knowledge problem in isolation. The agent ecosystem has protocols for *what tools can do* (that's MCP), but nothing for *how to get complex tasks done* — the accumulated workflow knowledge, guardrails, and best practices for non-trivial AI/ML operations.
+
+Hugging Face just fixed that. Their new [Skills repository](https://github.com/huggingface/skills) is an open-source, standardized marketplace for reusable agent skills — and it's a bigger deal than most people realize.
+
+## What Skills Actually Are
+
+A "skill" in Hugging Face's framing is not a plugin. It's not an MCP server. It's something more fundamental: **encoded workflow knowledge that any agent can consume**.
+
+Each skill is a self-contained directory. At its core is a `SKILL.md` file — YAML frontmatter for discovery, followed by rich Markdown guidance for the agent. Here's what that looks like for a model training skill:
+
+```yaml
+---
+name: hf-llm-trainer
+description: Skill for training Hugging Face-compatible large language models, including setup, configuration, and performance estimation.
+---
+```
+
+The Markdown that follows isn't documentation for humans. It's structured guidance, best practices, examples, and guardrails that an LLM agent reads as context. The agent interprets these instructions against your specific environment and executes accordingly.
+
+The full directory structure for a skill looks like this:
+
+```
+hf-llm-trainer/
+├── SKILL.md          # Core discovery + agent guidance
+├── scripts/
+│   ├── train_sft.py  # Executable implementations
+│   ├── estimate_cost.py
+│   └── convert_to_gguf.py
+└── resources/
+    └── documentation.md
+```
+
+This is the [Agent Context Protocol (ACP)](https://deepwiki.com/huggingface/skills) — Hugging Face's JSON-based standard for portable skill discovery. Agents scan for `*/skills/*/SKILL.md` to index what's available. An aggregator script collects all frontmatter into a machine-readable `AGENTS.md` catalog. Platform adapters (like `gemini-extension.json` for Gemini CLI) handle framework-specific integration.
+
+> Skills encode *how* to approach a task — procedures, policies, domain knowledge. MCP encodes *what* you can do — tools, APIs, data access. They're different layers of the same stack.
+
+## The Skills Available at Launch
+
+The [huggingface/skills](https://github.com/huggingface/skills) repository launched with over 30 skills covering the full AI/ML lifecycle:
+
+| Skill | What it Does |
+|-------|-------------|
+| `hf-llm-trainer` | Fine-tunes or trains LLMs using TRL and the Hugging Face ecosystem |
+| `hf_dataset_creator` | Creates new datasets for instruction tuning or evaluation |
+| `hf_model_evaluation` | Runs benchmarks and updates model cards automatically |
+| `hf-paper-publisher` | Formats and publishes research results to the Hub |
+| `web-search` | Agent-optimized web scraping and data extraction |
+| `hf-sql-query` | Queries Hugging Face datasets with SQL |
+
+The operational skills are where this gets genuinely useful. "Train a model on my dataset using SFT" is a real instruction your agent can now execute by reading `hf-llm-trainer/SKILL.md` — not because you wrote custom orchestration, but because Hugging Face did and you installed it.
+
+## How It Works Across Agent Platforms
+
+This is the part that makes the Skills marketplace genuinely different from previous attempts at agent standardization: it works across Claude, Gemini CLI, OpenAI Codex, and Cursor without rewriting anything.
+
+Installing Skills is a single command:
+
+```bash
+pip install huggingface-agent-skills
+```
+
+Or you can reference the GitHub repo directly in your agent setup:
+
+```bash
+git clone https://github.com/huggingface/skills
+```
+
+For Claude specifically, skills are available as a [Claude Plugin](https://claude.com/plugins/huggingface-skills). For Gemini CLI, the `gemini-extension.json` adapter handles discovery automatically. For any OpenAI-compatible agent, you import the skill module:
+
+```python
+from hf_agent_skills import hf_llm_trainer
+agent.add_skill(hf_llm_trainer)
+```
+
+The agent platform reads the `SKILL.md`, loads the guidance as context, and the agent can now navigate the workflow with domain expertise it didn't have before. No custom tool definitions. No prompt engineering for the workflow itself. The skill encodes all of that.
+
+## Skills vs. MCP: Two Layers, Not Competitors
+
+I've already seen the hot takes — "this is just MCP with extra steps" — and they're wrong. The distinction matters.
+
+MCP defines *capabilities*: what tools exist, what APIs you can call, what data you can access. It's the plumbing. Hugging Face Skills define *procedures*: how to approach a task, what guardrails to apply, what order to do things in. Skills are the expertise layer that sits on top.
+
+Think of it this way:
+
+- **MCP server** gives your agent access to a Hugging Face inference endpoint
+- **HF Skill** tells your agent *how* to fine-tune a model properly — data validation first, cost estimation before GPU job submission, model card update after training completes
+
+The emerging best practice in 2026 is to combine both: MCP for connectivity and capability access, Skills for domain knowledge and workflow guidance. The most capable agent setups use [MCP servers](https://huggingface.co/docs/hub/en/agents-skills) alongside Skills to get both the tools and the expertise to use them well.
+
+This connects directly to the [context engineering](/articles/context-engineering-key-to-ai-development) shift I've been writing about. Skills are a form of structured context — carefully engineered workflow knowledge that dramatically improves what an agent can reliably execute. You're not hoping the agent figures out how to train a model; you're giving it a proven playbook.
+
+## Why This Matters for Engineering Teams
+
+For teams like mine, the immediate value is in eliminating the "workflow archaeology" problem. Before Skills, if you wanted an agent to run model evaluations on a new checkpoint, you were either writing the orchestration yourself or relying on the model to reconstruct the workflow from scratch — which means inconsistent execution, missed guardrails, and debugging sessions that shouldn't need to happen.
+
+With Skills, you install the evaluation skill once. Every agent on your team — regardless of which platform it runs on — follows the same proven workflow, with the same guardrails, consistently.
+
+The open contribution model matters too. The repository is Apache-2.0, and Hugging Face is explicitly inviting the community to submit and verify new skills. This is the model that made the Hub successful for models and datasets. If it works for skills, you get a compounding ecosystem effect: more skills → more capable agents → more teams contributing what they've learned → more skills.
+
+If you're building anything in the AI/ML space and you're using coding agents for workflow automation, [install the skills package](https://github.com/huggingface/skills) and drop the relevant skills into your agent setup. The time you'd have spent writing custom orchestration is better spent on the actual problem you're trying to solve.
+
+Hugging Face has been the infrastructure layer for AI models for years. With Skills, they're making a credible bid to become the infrastructure layer for agent expertise too. That's a much bigger surface area — and one that's been conspicuously empty.
