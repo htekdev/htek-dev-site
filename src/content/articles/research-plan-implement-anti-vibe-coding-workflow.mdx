@@ -1,0 +1,131 @@
+---
+title: "Research → Plan → Implement — The Anti-Vibe-Coding Workflow"
+description: "Dex Horthy coined the RPI framework to beat hallucinated AI code. Here's how Research, Plan, and Implement phases — with human review gates — transform how you build with AI agents."
+pubDate: 2026-03-24
+tags:
+  - AI
+  - Developer Experience
+  - GitHub Copilot
+  - Productivity
+  - Software Architecture
+draft: true
+---
+
+## The Article That Never Should Have Existed
+
+A few weeks ago, I assigned a GitHub Copilot coding agent to write and publish an article for this site. I gave it a topic, pointed it at the codebase, and let it run. The agent did exactly what I asked: it wrote an article and opened a PR.
+
+The article was confident, well-structured, and completely hallucinated. It cited things that didn't happen, referenced features that didn't exist, and invented a narrative that had no grounding in reality. [PR #105](https://github.com/htekdev/htek-dev-site/pull/105) stands as the monument to what happens when you skip the research phase.
+
+I caught it in review. But I shouldn't have had to. And that's the point.
+
+This is the vibe-coding problem — applied not just to code, but to anything an AI agent produces without first understanding its context. Agents that jump straight to output without grounding themselves in what's actually true produce confident-sounding garbage. The fix isn't a better model. It's a better workflow.
+
+## Enter Dex Horthy and the RPI Framework
+
+[Dex Horthy](https://humanlayer.dev), CEO of HumanLayer, put a name to the pattern in his AI Engineer conference talk ["No Vibes Allowed"](https://youtube.com/watch?v=rmvDxxNubIg) (AI Engineer World's Fair, 2024). The **Research → Plan → Implement** (RPI) framework is a structured workflow for AI-assisted development that inserts human review gates at the moments that matter most. He revisited and sharpened it in a March 2026 follow-up talk — ["Everything We Got Wrong"](https://youtube.com/watch?v=YwZR6tc7qYg) — that surfaced the rough edges from running the framework in production teams for over a year.
+
+The core idea is simple enough to fit on an index card: don't let an agent touch a single line of implementation until a human has reviewed and approved its plan. Every syllable matters in that sentence.
+
+## The Three Phases
+
+### Research: Ground the Agent Before It Types
+
+The Research phase is about context, not code. Before the agent writes anything, it explores.
+
+In practice, this means explicitly prompting the agent to *only* read and summarize — no code, no fixes, no drafts. Something like:
+
+```
+Explore the codebase and summarize what you find.
+Identify the patterns, conventions, and relevant files for this task.
+Do not write any code yet.
+```
+
+This is more important than it sounds. Without this phase, agents fabricate. They invent API shapes that look plausible but don't match what's actually in the codebase. They call functions that don't exist. They follow conventions they imagined rather than conventions they read. The hallucination isn't random — it's a confident extrapolation from incomplete information.
+
+The PR #105 incident was exactly this. The agent knew the topic I gave it. It did not know the actual content of the articles, the style conventions, the sources used, or the real state of the features it was covering. It extrapolated confidently from nothing, and it looked like a real article until you read it carefully.
+
+[Context engineering](/articles/context-engineering-key-to-ai-development) is the discipline of giving AI agents the right information at the right time. Research is how you force the agent to acquire that context before it acts.
+
+### Plan: The Human Review Gate
+
+After Research comes Plan — and this is where the governance happens.
+
+The agent takes what it learned and writes an explicit, numbered implementation plan. Not pseudocode, not a vague outline: a numbered list of specific steps the agent intends to take. Every file it will touch, every decision it will make, in sequence.
+
+Then you stop. You read the plan. You ask: does this make sense? Does this match what I actually want? Are there steps that will cause problems downstream?
+
+This is the gate. The plan is a contract between you and the agent. If you sign off on a bad plan, you own what comes out of Implement. If you catch the problem here, you've saved yourself a complicated diff review and a potentially broken codebase.
+
+> The plan phase is governance operationalized. Not a formality — a genuine checkpoint where a human takes responsibility for what happens next.
+
+This connects directly to the [agentic DevOps thesis](/articles/agentic-devops-next-evolution-of-shift-left): governance must happen at every phase of autonomous operation. At the velocity agents operate, a bad decision in minute one compounds into a broken system by minute ten. The Plan phase is the firebreak.
+
+### Implement: Follow the Plan, Review the Drift
+
+Once the plan is approved, the agent implements. And here's the subtle second gate: you review the diff not just for correctness, but for *plan fidelity*.
+
+Did the agent do what it said it would do? If there's drift between the plan and the implementation, that drift is a signal. Sometimes it's benign — the agent found a cleaner approach. Sometimes it's a hallucination creeping back in under the guise of execution.
+
+Reviewing implementation against a pre-approved plan is fundamentally different from reviewing a diff in isolation. You have a reference. You have intent. You know what "done" looks like before you look at what the agent actually did.
+
+## Why Skipping Research Produces Hallucinations
+
+Here's the mechanics of why the Research skip is so costly.
+
+Large language models don't know your codebase. They know what code generally looks like. They know common patterns, popular libraries, typical conventions. When you ask an agent to implement something without first grounding it in your specific codebase, it fills the gaps with plausible-sounding defaults.
+
+This is especially insidious because the output *looks* right. The agent writes idiomatic code in your language. It follows patterns that are common in the ecosystem. It references real-sounding APIs. But none of it is grounded in what your codebase actually contains.
+
+The [agent harness work I've been following](/articles/agent-harnesses-controlling-ai-agents-2026) frames this as a control problem: agents need constraints that channel their output toward what's actually true, not what's statistically likely. Research is that constraint. It's not optional scaffolding — it's the mechanism that converts a pattern-matcher into a contextually aware collaborator.
+
+## RPI Is Already Built Into Your Tools
+
+The good news: you don't have to implement this from scratch. The major AI coding tools have started building RPI natively.
+
+**GitHub Copilot CLI** has a `/plan` command that does exactly this. Before writing any code, it generates a spec — a structured plan for what it's about to do. You review the spec, edit it if needed, then execute. That's Research and Plan in one step, built into the tool. I covered this in detail in [my Copilot vs. the world breakdown](/articles/github-copilot-vs-the-world).
+
+**Claude Code** doesn't have a dedicated plan mode, but you can enforce RPI with an explicit prompt sequence:
+
+```
+Step 1: Explore the codebase. Read the relevant files and summarize 
+what you find. Output your research summary. Do not write any code.
+
+[Review the summary]
+
+Step 2: Based on your research, write a numbered implementation plan.
+List every file you will modify and every change you will make.
+Do not start implementing yet.
+
+[Review and approve the plan]
+
+Step 3: Implement according to the plan.
+```
+
+It's more manual, but it works. The discipline is in enforcing the gates — not letting the agent skip ahead just because it "already knows what to do."
+
+**Cursor** has Composer in planning mode, which previews diffs before applying them. The key habit is to actually read that preview before hitting accept. Don't let the approval gate become a rubber stamp.
+
+The [GitHub agentic workflows hands-on guide](/articles/github-agentic-workflows-hands-on-guide) covers how to wire these patterns into real workflows, including how to structure agent tasks so Research is a required first step rather than an optional nicety.
+
+## What Dex Got Wrong (And Then Fixed)
+
+In the "Everything We Got Wrong" follow-up, Dex surfaced the most honest thing you can say about any framework you've shipped: the clean phase boundaries were a useful fiction.
+
+In practice, good agents iterate between Research and Plan. They discover something during planning that sends them back to read more. They find a constraint during research that changes the plan architecture entirely. The phases aren't waterfall stages — they're more like a negotiation that converges on a solid plan before implementation begins.
+
+But here's what didn't change in the revision: **the human review gate before Implement is non-negotiable.**
+
+Everything before that gate is the agent doing its job — exploring, hypothesizing, planning. The gate is where human judgment enters. You can let the Research and Plan phases be fluid. You cannot let the implementation gate be optional. Once an agent starts writing code, it's committed. Your codebase is changing. That transition needs a human in the loop, every time.
+
+## The Discipline That Separates Engineers From Vibe-Coders
+
+There's a version of AI-assisted development that looks like this: paste a prompt, accept the diff, commit to main. Some developers call this productivity. I call it technical debt accumulation at machine speed.
+
+RPI is the operational discipline that separates engineers who use AI to build better software from those who use it to produce output faster. The Research phase ensures the agent is grounded. The Plan phase ensures a human understands and approves what's about to happen. The Implement phase ensures the execution matches the intent.
+
+It's the same discipline that made senior engineers effective before AI existed: understand before you act, plan before you code, review before you ship. The framework hasn't changed. We just needed to apply it to agents.
+
+The PR #105 article was vivid, coherent, and wrong in ways that would have damaged my credibility if it had shipped. RPI would have caught it at the Research phase — the agent would have read the actual articles, understood the actual conventions, and known what it didn't know.
+
+That's the whole point. Not slower development. **Disciplined** development. There's a difference.
