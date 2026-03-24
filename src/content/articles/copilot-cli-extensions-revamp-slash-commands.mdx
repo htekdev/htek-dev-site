@@ -1,9 +1,9 @@
 ---
 title: 'Copilot CLI Extensions Revamp: Custom Slash Commands and Full Extensibility'
 description: >-
-  The Copilot CLI extension system just got a major upgrade. Custom slash
-  commands, UI elicitation dialogs, multi-language SDK, and in-session extension
-  management change the game for terminal extensibility.
+  A verified deep dive into the Copilot CLI extension SDK — custom tools,
+  lifecycle hooks, MCP integration, custom agents, elicitation dialogs,
+  extension management, and what's coming next for slash commands.
 pubDate: 2026-03-23T00:00:00.000Z
 tags:
   - GitHub Copilot
@@ -11,235 +11,481 @@ tags:
   - AI
   - Software Architecture
   - Productivity
-draft: false
+draft: true
 hashnode_id: 69c13d7c181f9c88ec026b6d
-hashnode_hash: 902c646328ad01e5
+hashnode_hash: ''
 devto_id: 3389281
-devto_hash: 94793dd12e06d667
+devto_hash: ''
 ---
 
-## The Extension System Grew Up
+## A Correction — And a Deeper Look
 
-When I first wrote about [Copilot CLI extensions](/articles/github-copilot-cli-extensions-complete-guide), the story was about a powerful but undocumented feature you had to reverse-engineer from SDK type definitions. It was there, it worked, and almost nobody knew about it. That was March 14, 2026.
+The previous version of this article contained fabricated API surfaces. I'll be direct: it described `slashCommands` as a parameter in `joinSession()` and `session.ui.elicitation()` as a method you call directly. **Neither of those exist in the current SDK.** It also claimed multi-language SDK support (Python, Go, .NET) and embedding-based extension retrieval. **Those don't exist either.**
 
-In the nine days since, GitHub has shipped features that turn extensions from a power-user secret into a genuinely first-class extensibility platform:
+This rewrite is based entirely on the actual `@github/copilot-sdk` TypeScript type definitions, the SDK's own documentation (`extensions.md`, `examples.md`, `agent-author.md`), and the CLI source code. Every code example below comes from or is derived from the real exported types and docs.
 
-- **Custom slash commands** are now part of the SDK contract via `slashCommands` in `joinSession()`
-- **UI elicitation dialogs** let extensions show structured input forms to users
-- **The `/extensions` command** lets you manage everything without leaving your session
-- **Multi-language SDK support** — Node.js, Python, Go, and .NET — means you can write extension logic in whatever you're already good at
+Here's what was fabricated and what's real:
 
-This isn't an incremental update. It's the extension system becoming what it always should have been.
+| Claim in Previous Article | Verdict |
+|---|---|
+| `slashCommands` in `joinSession()` | ❌ Not in current SDK — confirmed coming in a future release |
+| `session.ui.elicitation()` direct method | ❌ Fabricated — elicitation is event-based |
+| Python SDK `join_session()` with `slash_commands` | ❌ Fabricated — no Python SDK exists |
+| Multi-language SDK (Go, .NET) | ❌ Fabricated |
+| Embedding-based extension retrieval | ❌ Fabricated |
+| UI elicitation dialogs (the concept) | ✅ Real — event-based via `elicitation.requested` events |
+| `/extensions` slash command | ✅ Real — with mode selection and extension management |
+| Extension modes (load_and_augment, load_only, disabled) | ✅ Real |
+| Extension scaffold, list, inspect via `extensions_manage` tool | ✅ Real |
+| `skipPermission` flag | ✅ Real |
+| Extension discovery (.github/extensions/, user config dir) | ✅ Real |
+| Everything about tools, hooks, MCP, custom agents | ✅ Real |
 
-## What Changed: The Short Version
+What the current SDK actually offers is plenty. Let's cover it properly.
 
-If you've read my [original extensions guide](/articles/github-copilot-cli-extensions-complete-guide) and just want to know what's new, here it is:
+## The Extension Model
 
-| Capability | Before | Now |
-|---|---|---|
-| **Custom slash commands** | Not supported in extensions | First-class `slashCommands` in `joinSession()` |
-| **UI dialogs** | No programmatic UI | `session.ui.elicitation()` for structured user input |
-| **In-session management** | Config files + restart | `/extensions` command — live enable/disable |
-| **SDK languages** | Node.js only | Node.js, Python, Go, .NET |
-| **Hot reload** | `/clear` only | `/extensions reload` + `/clear` |
-| **Session feedback** | `session.log()` | Expanded log levels, blob attachments |
-| **Permission shortcuts** | Require explicit `allow`/`deny` | `skipPermission` flag for low-risk tools |
+Copilot CLI extensions are Node.js processes that join an active session via JSON-RPC over stdio. You create an `extension.mjs` file, place it in `.github/extensions/<name>/` (project-scoped) or the user's copilot config extensions directory (user-scoped), and the CLI discovers and launches it automatically.
 
-The foundational architecture — child process, JSON-RPC over stdio, `joinSession()`, hooks, tools — is unchanged. Everything new builds on top of it.
+The architecture:
 
-## Custom Slash Commands: The Feature I've Wanted
+```
+┌─────────────────────┐          JSON-RPC / stdio           ┌──────────────────────┐
+│   Copilot CLI        │ ◄──────────────────────────────────► │  Extension Process   │
+│   (parent process)   │    tool calls, events, hooks        │  (forked child)      │
+│                      │                                      │                      │
+│  • Discovers exts    │                                      │  • Registers tools   │
+│  • Forks processes   │                                      │  • Registers hooks   │
+│  • Routes tool calls │                                      │  • Listens to events │
+│  • Manages lifecycle │                                      │  • Uses SDK APIs     │
+└─────────────────────┘                                      └──────────────────────┘
+```
 
-The biggest addition is custom slash commands directly in extensions. Here's the minimal setup:
+The entry point is `joinSession()` from `@github/copilot-sdk/extension`:
 
 ```js
 import { joinSession } from "@github/copilot-sdk/extension";
 
-await joinSession({
-  onPermissionRequest: ({ toolName }) => ({
-    permissionDecision: "allow",
+const session = await joinSession({
+  tools: [/* custom tools */],
+  hooks: {/* lifecycle hooks */},
+  onPermissionRequest: (request) => ({ permissionDecision: "allow" }),
+});
+```
+
+That's the real API. The config accepts `tools`, `hooks`, `onPermissionRequest`, `onUserInputRequest`, and more. Extensions are reloaded on `/clear` and stopped on CLI exit (SIGTERM, then SIGKILL after 5s).
+
+**Important:** Only `.mjs` files are supported. The file must be named `extension.mjs`. The `@github/copilot-sdk` import is resolved automatically — you don't install it.
+
+### Extension Discovery and Management
+
+Extensions live in two places:
+
+- **Project extensions:** `.github/extensions/<name>/extension.mjs` — scoped to the repo
+- **User extensions:** copilot config extensions directory — available everywhere
+
+Project extensions shadow user extensions on name collision. Only immediate subdirectories are checked.
+
+The CLI provides a real `/extensions` slash command for managing extensions in-session, and an `extensions_manage` tool that agents (and extensions themselves) can call:
+
+```
+extensions_manage({ operation: "list" })           // List all loaded extensions
+extensions_manage({ operation: "inspect", name: "my-ext" })  // Extension details
+extensions_manage({ operation: "scaffold", name: "my-ext" }) // Create skeleton
+extensions_manage({ operation: "guide" })           // Get authoring guidance
+```
+
+Extensions support three modes:
+- **`load_and_augment`** — loaded and active (tools and hooks registered)
+- **`load_only`** — loaded but not contributing tools/hooks
+- **`disabled`** — not loaded at all
+
+You can reload all extensions mid-session with `extensions_reload({})` — no context loss, no restart. Only the extension processes restart. This makes iterative development viable: edit your `extension.mjs`, reload, test, repeat — all in the same conversation.
+
+## Custom Tools with `skipPermission`
+
+Tools are the primary way extensions add capabilities. Each tool gets a name, description, optional parameter schema, and a handler:
+
+```js
+import { joinSession, defineTool } from "@github/copilot-sdk/extension";
+import { z } from "zod";
+
+const gitStatusTool = defineTool("get_git_status", {
+  description: "Get current git status",
+  parameters: z.object({
+    short: z.boolean().optional().describe("Use short format"),
   }),
+  skipPermission: true,
+  handler: async ({ short }) => {
+    const { execSync } = await import("child_process");
+    const flag = short ? "--porcelain" : "";
+    return execSync(`git status ${flag}`).toString();
+  },
+});
+
+await joinSession({
+  tools: [gitStatusTool],
+  onPermissionRequest: () => ({ permissionDecision: "allow" }),
+});
+```
+
+The `skipPermission: true` flag tells the CLI to execute the tool without prompting the user. Use it for read-only, side-effect-free operations. For anything that writes files or runs arbitrary commands, leave it off.
+
+**Important constraint:** Tool names must be globally unique across all loaded extensions. If two extensions register the same tool name, the second extension fails to initialize. Plan your naming accordingly.
+
+### Tool Handler Context
+
+Handlers receive a second argument with invocation metadata:
+
+```js
+handler: async (args, invocation) => {
+  // invocation.sessionId  — current session ID
+  // invocation.toolCallId — unique ID for this tool call
+  // invocation.toolName   — name of the tool being called
+  return "done";
+}
+```
+
+### Tool Results
+
+Handlers can return a simple string (treated as success) or a structured result:
+
+```js
+handler: async (args) => {
+  // Simple: just return a string
+  return "Operation completed successfully";
+
+  // Structured: more control over what the agent sees
+  return {
+    textResultForLlm: "Found 3 security issues",
+    resultType: "success",  // "success" | "failure" | "rejected" | "denied"
+  };
+}
+```
+
+## Lifecycle Hooks
+
+The `hooks` object gives you six interception points in the session lifecycle:
+
+### `onPreToolUse` — The Security Guardrail
+
+The most powerful hook. Intercept every tool call before it executes:
+
+```js
+hooks: {
+  onPreToolUse: async (input) => {
+    if (input.toolName === "bash") {
+      const cmd = String(input.toolArgs?.command || "");
+      if (/rm\s+-rf/i.test(cmd)) {
+        return {
+          permissionDecision: "deny",
+          permissionDecisionReason: "Destructive commands are not allowed.",
+        };
+      }
+    }
+    // Can also modify args before execution:
+    // return { modifiedArgs: { ...input.toolArgs, safe: true } };
+    // Or inject context:
+    // return { additionalContext: "Remember to handle errors." };
+  },
+}
+```
+
+### `onPostToolUse` — React to Results
+
+Called after tool execution with the full result:
+
+```js
+hooks: {
+  onPostToolUse: async (input) => {
+    if (input.toolName === "edit") {
+      const filePath = input.toolArgs?.path;
+      if (filePath?.endsWith(".ts")) {
+        const { exec } = await import("child_process");
+        const result = await new Promise((resolve) => {
+          exec(`npx eslint "${filePath}"`, (err, stdout) => {
+            resolve(err ? stdout : "No lint errors.");
+          });
+        });
+        return { additionalContext: `Lint result: ${result}` };
+      }
+    }
+  },
+}
+```
+
+### `onUserPromptSubmitted` — Enrich Every Prompt
+
+Automatically inject context or modify the user's message:
+
+```js
+hooks: {
+  onUserPromptSubmitted: async (input) => {
+    return {
+      additionalContext: "Always follow the team's TypeScript style guide. Use 4-space indentation.",
+      // Or rewrite the prompt entirely:
+      // modifiedPrompt: input.prompt.toUpperCase(),
+    };
+  },
+}
+```
+
+### `onSessionStart` and `onSessionEnd`
+
+```js
+hooks: {
+  onSessionStart: async (input) => {
+    // input.source: "startup" | "resume" | "new"
+    await session.log("Security extension active");
+    return { additionalContext: "Security policies loaded." };
+  },
+  onSessionEnd: async (input) => {
+    // input.reason: "complete" | "error" | "abort" | "timeout" | "user_exit"
+    return { sessionSummary: "Session completed with no policy violations." };
+  },
+}
+```
+
+### `onErrorOccurred` — Retry Logic
+
+```js
+hooks: {
+  onErrorOccurred: async (input) => {
+    // input.errorContext: "model_call" | "tool_execution" | "system" | "user_input"
+    if (input.recoverable && input.errorContext === "model_call") {
+      return { errorHandling: "retry", retryCount: 2 };
+    }
+    return {
+      errorHandling: "abort",
+      userNotification: `An error occurred: ${input.error}`,
+    };
+  },
+}
+```
+
+## Elicitation: Structured User Input
+
+This is a real feature — the previous article just got the API shape wrong. Elicitation is **event-based**, not a method call. The agent emits an `elicitation.requested` event carrying a JSON Schema that describes the form fields:
+
+```js
+session.on("elicitation.requested", (event) => {
+  const { requestId, message, mode, requestedSchema } = event.data;
+  // mode: currently only "form"
+  // requestedSchema: JSON Schema with type, properties, required
+  console.error(`Agent asks: ${message}`);
+  console.error(`Fields:`, JSON.stringify(requestedSchema.properties, null, 2));
+
+  // Client/extension collects user input, then responds
+});
+
+session.on("elicitation.completed", (event) => {
+  // event.data.requestId — dismiss any UI for this request
+});
+```
+
+The canonical use case: the agent needs a structured decision before proceeding. Instead of hoping the user types the right thing in natural language, elicitation requests specific fields — environment selectors, confirmation booleans, change descriptions. The schema enforces structure; the event flow keeps it non-blocking.
+
+This is particularly valuable for governance workflows. When the agent tries to deploy or modify production configs, you want explicit, structured confirmation — not an inferred intent from a chat message.
+
+## MCP Server Integration
+
+Extensions can bring external tools into the session through MCP (Model Context Protocol) servers. This is configured at the session level via `mcpServers`:
+
+```js
+await joinSession({
+  mcpServers: {
+    "my-db-tools": {
+      type: "local",
+      command: "node",
+      args: ["./mcp-servers/db-tools.js"],
+      env: { DATABASE_URL: process.env.DATABASE_URL },
+    },
+  },
+  onPermissionRequest: () => ({ permissionDecision: "allow" }),
+});
+```
+
+MCP is the real multi-language extensibility story. An MCP server can be written in any language — Python, Go, Rust, whatever implements the protocol. The extension handles the SDK communication in Node.js; MCP servers handle the business logic in whatever makes sense.
+
+## Custom Agents
+
+The `customAgents` config in `SessionConfig` defines specialized agents accessible via `@agentname`:
+
+```js
+customAgents: [
+  {
+    name: "security-reviewer",
+    displayName: "Security Reviewer",
+    description: "Reviews code for security vulnerabilities",
+    prompt: `You are a security-focused code reviewer. Analyze code for:
+      - Hardcoded credentials and secrets
+      - SQL injection and XSS vulnerabilities
+      - Insecure dependency usage
+      Report findings with severity levels.`,
+    tools: ["read_file", "search_files", "get_git_diff"],
+    mcpServers: { /* agent-specific MCP servers */ },
+  },
+]
+```
+
+Each agent gets its own prompt, tool subset, and MCP servers. Users switch between agents during the session with `@agentname`. This is functionally equivalent to custom commands — you type `@security-reviewer` and get specialized behavior scoped to that agent's capabilities.
+
+## The Session Object
+
+After `joinSession()` resolves, you get a `CopilotSession` with these capabilities:
+
+### Sending Messages
+
+```js
+// Fire and forget
+await session.send({ prompt: "Analyze the test results." });
+
+// With file attachments
+await session.send({
+  prompt: "Review this file",
+  attachments: [{ type: "file", path: "./src/index.ts" }],
+});
+
+// Send and wait for the agent to finish
+const response = await session.sendAndWait(
+  { prompt: "What is 2+2?" },
+  60000
+);
+console.error(response?.data.content);
+```
+
+### Logging to the Timeline
+
+```js
+await session.log("Extension ready");
+await session.log("Rate limit approaching", { level: "warning" });
+await session.log("Connection failed", { level: "error" });
+await session.log("Debug info", { ephemeral: true });
+```
+
+**Don't use `console.log()`** — stdout is reserved for JSON-RPC. Use `session.log()` for user-visible messages, `console.error()` for debug output.
+
+### Event Subscription
+
+```js
+const unsub = session.on("assistant.message", (event) => {
+  console.error("Agent:", event.data.content);
+});
+
+// Key event types:
+// assistant.message — agent's final response
+// tool.execution_start / tool.execution_complete — tool lifecycle
+// user.message — user input
+// session.idle — agent finished processing
+// session.error — something went wrong
+// permission.requested — permission check needed
+// elicitation.requested / elicitation.completed — structured input
+// session.shutdown — session ending
+// command.queued — slash command dispatch
+
+unsub(); // stop listening
+```
+
+### Model Switching
+
+```js
+await session.setModel("gpt-4.1");
+```
+
+## The Permission System
+
+The `onPermissionRequest` handler receives requests with a `kind` field:
+
+```js
+await joinSession({
+  onPermissionRequest: (request) => {
+    switch (request.kind) {
+      case "shell":
+        return { permissionDecision: "deny" };
+      case "write":
+        return { permissionDecision: "ask" };
+      default:
+        return { permissionDecision: "allow" };
+    }
+  },
+});
+```
+
+The `onUserInputRequest` handler handles agent questions (the `ask_user` tool):
+
+```js
+await joinSession({
+  onUserInputRequest: async (request) => {
+    // request.question, request.choices
+    return { answer: "yes", wasFreeform: false };
+  },
+});
+```
+
+## What's Coming: Custom Slash Commands
+
+I've confirmed with the CLI team that **custom slash command registration for extensions is planned**. The mechanism already exists internally — Skills can register slash commands today via `createSkillSlashCommand`, and the internal architecture supports `handlePendingCommand` / `respondToCommandExecution` in the RPC layer.
+
+What's missing is exposing this as a `slashCommands` property in `joinSession()` for extensions. When it ships, it'll probably look something like:
+
+```js
+// FUTURE — not available in v1.0.11
+await joinSession({
   slashCommands: [
     {
       name: "security-check",
-      description: "Run a security audit of the current session's changes",
+      description: "Run a security audit",
       action: async (session, params) => {
-        const files = params?.files ?? [];
         await session.send({
-          prompt: `Run a security review of these files: ${files.join(", ")}. Check for hardcoded credentials, injection vulnerabilities, and insecure dependencies.`,
+          prompt: "Run a security review of the current changes.",
         });
       },
     },
   ],
   tools: [],
-  hooks: {},
 });
 ```
 
-Drop this in `.github/extensions/security-tools/extension.mjs`, and `/security-check` is immediately available in your session. No restart. No config. Just type `/security-check` and it fires.
+In the meantime, you have three paths to command-like behavior:
 
-The `action` callback receives a live `session` object — the same one you'd get from the regular `joinSession()` call. That means your slash command can use `session.send()`, subscribe to events, call custom tools, inject context, or do anything else the full SDK supports. There's no artificial limitation on what a slash command can do.
+1. **Custom Agents** — `@agentname` gives you specialized behavior with a specific prompt and tool set
+2. **Skills** — the `/skills` system already registers actual slash commands from skill directories
+3. **Tool-based workflows** — define tools that the agent calls on your behalf
 
-### Why This Matters Beyond Convenience
+Custom agents are the closest equivalent today. Each one is effectively a named entry point with its own prompt, tools, and MCP servers.
 
-Custom slash commands do something hooks and tools can't: they give extension functionality a **predictable, user-triggered interface**. Hooks fire automatically (on tool use, on prompt submit). Tools get called by the agent when it decides they're relevant. Slash commands get called by you, when you decide.
+## Scaffolding a New Extension
 
-This matters for workflows that don't fit neatly into the agent lifecycle:
+The fastest path from zero to working extension:
 
-- **Team-specific code review**: `/review-security`, `/review-arch`, `/review-perf` — each calls the agent with your team's specific checklist
-- **Context injection on demand**: `/load-runbook`, `/load-incident-context` — pull in external documentation exactly when you need it
-- **Workflow shortcuts**: `/deploy-staging`, `/open-pr`, `/sync-main` — standardize multi-step operations across the whole team
-- **Debugging aids**: `/explain-error`, `/trace-dependency` — custom analysis prompts your team has refined over time
+1. In a Copilot CLI session, have the agent call `extensions_manage({ operation: "scaffold", name: "my-ext" })` — creates `.github/extensions/my-ext/extension.mjs` with a skeleton.
 
-Previously, you'd either write these as hooks (too automatic) or explain them to the agent in natural language every session (too inconsistent). Custom slash commands hit the right point on that spectrum.
+2. For user-scoped extensions, add `location: "user"`.
 
-## UI Elicitation Dialogs
+3. Edit the generated file. Add your tools and hooks.
 
-The other major new capability is `session.ui.elicitation()` — a way for extensions to show structured dialogs and collect input from users.
+4. Reload with `extensions_reload({})` — loads immediately, mid-session.
 
-The canonical use case: your extension needs a decision before proceeding. Instead of injecting a message into the conversation and hoping the agent asks the user, you can show a proper dialog:
+5. Verify with `extensions_manage({ operation: "list" })` and `extensions_manage({ operation: "inspect", name: "my-ext" })`.
 
-```js
-const result = await session.ui.elicitation({
-  title: "Deploy to Production?",
-  description: "This will deploy the current changes to the production environment.",
-  fields: [
-    {
-      name: "environment",
-      type: "select",
-      label: "Target Environment",
-      options: ["staging", "production", "canary"],
-      required: true,
-    },
-    {
-      name: "runTests",
-      type: "boolean",
-      label: "Run integration tests before deploy",
-      default: true,
-    },
-    {
-      name: "changeDescription",
-      type: "string",
-      label: "Change description for audit log",
-      required: true,
-    },
-  ],
-});
+The whole cycle — scaffold, edit, reload, test — happens in one session without losing context.
 
-if (result.confirmed && result.values.environment === "production") {
-  await triggerDeployment(result.values);
-}
-```
+## What to Build
 
-This is particularly powerful for governance workflows. If your extension enforces a deployment policy, you don't want the agent making that call — you want a human explicitly confirming it. Elicitation dialogs make that interaction structured and audit-friendly.
+Given what the SDK *actually* offers today:
 
-It also means extensions can collect information that's awkward to gather through the conversational flow. API keys, environment selectors, confirmation of destructive operations — things that should be explicit and require a human decision, not an inferred intent.
+**Security guardrails via `onPreToolUse`**: Intercept every tool call. Block dangerous shell commands. Deny writes to protected paths. Log everything. This is the highest-value extension pattern — it directly addresses the "AI agent ran amok" risk that keeps security teams up at night.
 
-## In-Session Extension Management with `/extensions`
+**Domain-specific tools via MCP**: Stand up an MCP server in whatever language your team uses. Expose internal APIs, database queries, monitoring dashboards as tools the agent can call. The extension registers the MCP server; the agent gets access to your entire internal toolchain.
 
-Shipped in v1.0.5, the `/extensions` command makes extension management a first-class part of the session. The basic commands:
+**Custom agents for specialized workflows**: A `@security-reviewer` agent, a `@db-admin` agent, a `@docs-writer` agent — each with a focused prompt and restricted tool set. Users switch between them during the session.
 
-```
-/extensions list          — Show all installed extensions and their status
-/extensions enable <name> — Enable a specific extension
-/extensions disable <name>— Disable without removing
-/extensions reload        — Hot-reload all active extensions
-/extensions info <name>   — Show extension details, tools, and registered commands
-```
+**Prompt enrichment via `onUserPromptSubmitted`**: Automatically inject team context, coding standards, or relevant documentation into every prompt. The user types their question; your hook adds what they'd otherwise forget.
 
-Before this, managing extensions meant editing config files and restarting the session — which meant losing all your session context. With `/extensions reload`, you can make changes to your extension code and reload mid-session. The context survives. The conversation history survives. Only the extension process restarts.
-
-The practical value: **iterative extension development is now viable**. You can scaffold an extension, test it in a live session, modify it based on real feedback, and reload without the context-reset cost. For teams building shared team extensions, this also means you can update shared tooling while developers are actively using it.
-
-> One nuance: reloading resets extension-local state (in-memory counters, tracked file lists, anything you're holding in variables). The session context survives, but the extension's runtime state doesn't. Design your extensions to be stateless where possible, or serialize state to files that survive reload.
-
-## The Multi-Language SDK
-
-The [Copilot SDK](https://github.com/github/copilot-sdk) is now available in four languages: **Node.js, Python, Go, and .NET**. This matters for extension development in two ways.
-
-**First**, it means teams with Python or Go expertise don't need to write extensions in JavaScript. The JSON-RPC protocol and architecture are identical — you still write an `extension.mjs`-equivalent entry point, but you can shell out to Python, import Go binaries, or call .NET code from your extension. The Node.js process handles the SDK communication; your language handles the business logic.
-
-**Second**, the SDK being multi-language signals that it's now a stable API, not an internal implementation detail. The original extension system was undocumented partly because the API wasn't stable. When GitHub invests in four language SDKs, they're committing to that surface. Breaking changes get harder to make. Documentation follows.
-
-For reference, here's the same `security-check` slash command using the Python SDK:
-
-```python
-from copilot_sdk.extension import join_session
-
-async def security_check_action(session, params):
-    files = params.get("files", [])
-    await session.send({
-        "prompt": f"Run a security review of: {', '.join(files)}"
-    })
-
-await join_session(
-    slash_commands=[
-        {
-            "name": "security-check",
-            "description": "Run a security audit of the current session's changes",
-            "action": security_check_action,
-        }
-    ]
-)
-```
-
-The API shape is consistent across languages — `join_session`, `slash_commands`, `action` callback, `session.send()`. The naming conventions follow each language's idioms, but the concepts are directly portable.
-
-## The `skipPermission` Flag
-
-A smaller but meaningful addition: the `skipPermission` flag on tool definitions. When set to `true`, the CLI skips the permission prompt for that tool entirely. It's designed for low-risk read-only tools that shouldn't interrupt the user's flow:
-
-```js
-tools: [
-  {
-    name: "get_git_status",
-    description: "Get the current git status",
-    parameters: { type: "object", properties: {} },
-    skipPermission: true,  // No prompt — just run it
-    handler: async () => {
-      return execSync("git status --porcelain").toString();
-    },
-  },
-],
-```
-
-Use this for read-only operations — checking status, reading files, querying APIs that don't have side effects. Don't use it for anything that modifies the filesystem or executes commands with write effects. The goal is to reduce friction for safe operations, not bypass safety for risky ones.
-
-## Experimental: Embedding-Based Extension Retrieval
-
-Buried in the latest changelog is an experimental feature that signals where the extension ecosystem is heading: **embedding-based dynamic retrieval of MCP and skill instructions per turn**.
-
-Right now, when Copilot CLI loads your extensions, it loads all of their instruction context upfront. That works fine with two or three extensions, but it doesn't scale. Context windows have limits. Irrelevant extension context just adds noise.
-
-Embedding-based retrieval solves this by dynamically pulling in only the instruction context relevant to the current prompt. If you're working on Kubernetes manifests, the CLI loads Kubernetes-related extension context. If you switch to database queries, it swaps in SQL-related tooling. The context stays focused.
-
-Enable it with `/experimental on`, then toggle the specific flag:
-
-```
-/experimental embedding-retrieval on
-```
-
-It's not production-ready yet — responses sometimes lag while embeddings are computed, and very short prompts can retrieve irrelevant context. But the direction is clear: the extension ecosystem can scale to dozens of extensions without degrading response quality, once this feature stabilizes.
-
-This matters for [agentic workflows at scale](/articles/agentic-devops-next-evolution-of-shift-left). An agent managing a complex infrastructure might need 20 different extensions — deployment tools, monitoring integrations, secrets management, compliance checks. Today, loading all of those upfront would overwhelm the context window. With embedding retrieval, the agent loads only what's relevant to the current task.
-
-## What to Build Now
-
-Given these new capabilities, here's what I'd prioritize building:
-
-**Team onboarding extension**: A set of custom slash commands that walks new engineers through your codebase. `/learn-auth` explains the authentication system. `/learn-deployments` pulls in deployment docs and explains the pipeline. `/start-task <ticket>` loads the relevant context for a Jira or Linear ticket. This doesn't require complex hooks — just well-crafted prompts surfaced as slash commands.
-
-**Compliance guardrails with elicitation**: Extend the [agent hook pattern](/articles/agent-hooks-controlling-ai-codebase) with proper dialogs. When the agent tries to write to a production config, don't just block it — surface a dialog that requires explicit confirmation and a change description for your audit log. Use elicitation to collect the information compliantly, not just as friction.
-
-**Language-specific linters as tools**: Use the Go or Python SDK to expose language-specific analysis tools that the agent can call directly. A Python extension can run `ruff`, `mypy`, or custom static analysis and inject results as context. The extension handles the subprocess management; the agent sees clean, structured output.
-
-**Cross-session governance**: Use the multi-language SDK to build a shared governance layer that multiple sessions report to. Each developer's session runs an extension that logs tool use to a central store. Your security team gets an audit trail. Developers get no additional friction.
+**Governance workflows via elicitation events**: When agents need human decisions — deployment targets, destructive operations, environment selection — listen for `elicitation.requested` events and build structured approval flows instead of relying on natural language.
 
 ## The Bottom Line
 
-Nine days ago, extensions were a powerful secret. Now they're a documented, multi-language, slash-command-capable platform with in-session management and structured UI dialogs.
+The Copilot CLI extension SDK is genuinely powerful. `joinSession()` with custom tools, six lifecycle hooks, MCP integration, custom agents, event-based elicitation, permission control, and real in-session extension management covers serious ground.
 
-The architecture hasn't changed — child process, JSON-RPC, `joinSession()`, hooks, tools. What changed is the *surface area*: custom slash commands add a user-triggered interface alongside the agent-triggered tool interface. Elicitation dialogs add structured human input alongside the natural language conversation. Multi-language SDKs make the platform accessible to teams with any backend expertise.
-
-The [original extensions guide](/articles/github-copilot-cli-extensions-complete-guide) showed you what was hidden in the CLI. This update shows what GitHub intends to build on top of it. The extension system isn't a side feature anymore — it's the foundation of the Copilot CLI platform strategy.
-
-Start with a custom slash command. Pick one workflow your team types in natural language every session — a specific code review pattern, a context-loading ritual, a standards check — and give it a `/` command. That's the entry point. Everything else builds from there.
+Custom slash commands for extensions are confirmed coming. Until they ship, custom agents (`@agentname`) and the skills system cover the same use case from different angles. The foundation is here. Build on what's real — there's plenty of it.
