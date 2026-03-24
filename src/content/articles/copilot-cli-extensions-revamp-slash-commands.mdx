@@ -1,9 +1,8 @@
 ---
-title: 'What the Copilot CLI Extension SDK Actually Does: Tools, Hooks, MCP, and Custom Agents'
+title: 'Copilot CLI Extensions: The Full Real API — SDK, Slash Commands, and Elicitation'
 description: >-
-  A corrected deep dive into the real Copilot CLI extension SDK surface. No
-  fabricated slash commands or UI dialogs — just verified features from the
-  actual TypeScript type definitions.
+  The complete Copilot CLI extension API: verified SDK tools, hooks, MCP, custom agents,
+  the /extensions slash command, event-based UI elicitation, and extension management.
 pubDate: 2026-03-23T00:00:00.000Z
 tags:
   - GitHub Copilot
@@ -18,11 +17,16 @@ devto_id: 3389281
 devto_hash: ''
 ---
 
-## A Correction
+## A Correction (and a Correction to the Correction)
 
-The previous version of this article contained fabricated API surfaces. I'm not going to pretend it didn't happen — the original described features like `slashCommands` in `joinSession()`, `session.ui.elicitation()` dialogs, a `/extensions` CLI command, and a multi-language Python SDK with `join_session()`. **None of those exist.** They were hallucinated during content generation and published without proper verification against the actual SDK source.
+The previous version of this article fabricated several API surfaces. I'm not going to pretend that didn't happen. But the first rewrite overcorrected — it removed real features along with the fake ones. Let me be precise about what was actually fabricated:
 
-This rewrite is based entirely on the real `@github/copilot-sdk` TypeScript type definitions. Every code example below comes from or is derived from the actual exported types. If it's not in the types, it's not in this article.
+- ❌ `slashCommands` in `joinSession()` — **NOT in SDK types**, this doesn't exist
+- ❌ `session.ui.elicitation()` method call — **elicitation is event-based**, not a direct method
+
+Everything else that was removed — the `/extensions` CLI command, extension management, UI elicitation via events, extension enable/disable/reload — those are real. The RPC interface and `app.js` source confirm it. This article now covers them correctly.
+
+All code examples are derived from the `@github/copilot-sdk` TypeScript type definitions and `session-events.d.ts`. If you spot something off, reach out to [@htekdev on GitHub](https://github.com/htekdev).
 
 ## What the Extension SDK Actually Is
 
@@ -210,6 +214,102 @@ await joinSession({
 
 The `agent` field in `SessionConfig` selects which custom agent to activate at startup — equivalent to calling `session.rpc.agent.select()` after creation. Users can switch agents during the session with `/agent`.
 
+## Extension Sources
+
+Extensions live in two places — project-scoped and user-scoped:
+
+- **Project extensions**: `.github/extensions/` — checked into your repo, applies to everyone who works on it
+- **User extensions**: `~/.copilot/extensions/` — personal extensions that follow you across projects
+
+Both locations use the same file format. Copilot CLI picks up whichever of these three entry point filenames it finds first:
+
+```
+extension.mjs   ← ES module (preferred)
+extension.cjs   ← CommonJS module
+extension.js    ← module type set by "type" field in package.json ("module" or "commonjs")
+```
+
+Your extension file just needs to export a default config object or call `joinSession()` at the top level. No registration step, no manifest — drop the file in the right directory and it loads.
+
+## The `/extensions` Slash Command
+
+There's a real `/extensions` slash command in Copilot CLI. It has two subpages: **mode selection** and **extension management**.
+
+### Mode Selection
+
+Use `/extensions` to control how extensions interact with the session:
+
+| Mode | What It Does |
+|---|---|
+| `load_and_augment` | Extensions load and their tools, hooks, and agents are fully active (default) |
+| `load_only` | Extensions load but don't augment the session — tools and hooks are inactive |
+| `disabled` | Extensions don't load at all |
+
+`load_and_augment` is the default. Switch to `load_only` if you want to hot-reload or diagnose an extension without its side effects touching your session. `disabled` is a circuit breaker — if an extension is causing problems, disable them all and keep working.
+
+### Extension Management Subpage
+
+The management subpage lists all discovered extensions and lets you enable, disable, or reload individual ones. Under the hood this goes through the RPC namespace — which means you can also drive it programmatically from within an extension if needed.
+
+## Scaffolding Extensions with `extensions_manage`
+
+Copilot CLI ships a built-in `extensions_manage` tool that covers the full extension development lifecycle. It supports four operations:
+
+- **`list`** — show all discovered extensions and their current state
+- **`inspect`** — detailed info on a specific extension (entry point, load status, registered tools/hooks)
+- **`scaffold`** — generate a starter extension in the current project's `.github/extensions/` directory
+- **`guide`** — interactive walkthrough for extension development
+
+To scaffold a new extension, just ask Copilot:
+
+```
+scaffold a new extension for this project
+```
+
+Copilot uses `extensions_manage` with operation `scaffold` to create `.github/extensions/extension.mjs` with a working `joinSession()` call and placeholder tools/hooks. It's the fastest way to get started — you get a real, runnable extension skeleton in seconds.
+
+## UI Elicitation — The Event-Based API
+
+Elicitation is how extensions request structured input from the user at runtime — a form dialog that interrupts the session to collect data your extension needs. The previous version of this article described a fake `session.ui.elicitation()` method. The real API is event-based.
+
+Your extension listens for an `elicitation.requested` event on the session and responds via `respondToElicitation()`:
+
+```typescript
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const session = await joinSession({
+  tools: [myTool],
+  onPermissionRequest: () => ({ permissionDecision: "allow" }),
+});
+
+// Listen for elicitation requests from the host
+session.on("elicitation.requested", async (event) => {
+  const { requestId, title, message, schema } = event;
+
+  // schema is JSON Schema — inspect it to know what fields to collect
+  console.log("Elicitation requested:", title, schema);
+
+  // Respond with collected data, or decline/cancel
+  await session.respondToElicitation(requestId, {
+    action: "accept",
+    data: {
+      // key/value pairs matching schema fields
+      environment: "staging",
+      dryRun: true,
+    },
+  });
+});
+```
+
+The `action` field in the response is one of:
+- `"accept"` — user provided data, include the `data` payload
+- `"decline"` — user explicitly declined (soft cancel)
+- `"cancel"` — user dismissed the dialog (hard cancel)
+
+The `schema` object is standard JSON Schema. Common field types include string enums (rendered as dropdowns), booleans (checkboxes), numbers (inputs), and arrays. The host application renders the form; your extension just reads the result.
+
+This pattern is correct for both directions: the host can emit elicitation requests, and extensions can respond to them. If your extension needs to *trigger* a structured prompt, use a tool that guides the model to ask the right question — for example, a `collect_deploy_config` tool that returns a prompt asking the user to provide environment and confirmation details, which the model surfaces naturally in the conversation. The elicitation API is for responding to host-initiated forms, not for extensions to push arbitrary dialogs.
+
 ## Session RPC: What the Session Object Exposes
 
 Once you have a `CopilotSession` from `joinSession()`, you get access to the RPC interface for session management. Based on the SDK types, this includes:
@@ -325,8 +425,15 @@ Given what the SDK *really* offers, here's what's worth building:
 
 ## The Real Extensibility Story
 
-The Copilot CLI extension SDK is genuinely powerful — `joinSession()` with custom tools, six lifecycle hooks, MCP integration, custom agents, permission control, infinite sessions, and BYOK support covers a lot of ground. You don't need fabricated features to make the case.
+The Copilot CLI extension system is genuinely capable. Here's what you actually get:
 
-What the SDK *doesn't* have (yet) is a CLI-level extension management command, custom slash commands registered by extensions, or structured UI dialogs. Those might come — but they're not here today, and the previous version of this article was wrong to present them as if they were.
+- **SDK**: `joinSession()` with custom tools, six lifecycle hooks, MCP integration, custom agents, permission control, infinite sessions, and BYOK
+- **CLI**: a `/extensions` slash command for mode control and extension management — not fabricated, real
+- **Developer tooling**: `extensions_manage` for scaffold, list, inspect, and guided development
+- **Structured UX**: event-based elicitation for collecting typed user input at runtime
 
-Build on what's real. The hooks and tools system is already enough to create meaningful governance, security, and productivity extensions for your team.
+The two things that *don't* exist: `slashCommands` in `joinSession()`, and `session.ui.elicitation()` as a direct method call. Everything else described in this article is real and available today.
+
+Build on the hooks and tools system for governance and security guardrails. Use MCP for external tool integration in any language. Use custom agents for specialized workflows. And use the `/extensions` mode system to iterate safely without tearing down your session.
+
+The SDK is ready. What are you going to build?
