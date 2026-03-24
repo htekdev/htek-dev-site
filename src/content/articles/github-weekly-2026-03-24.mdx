@@ -1,0 +1,68 @@
+---
+title: "GitHub Weekly: Copilot Gets Smarter, Actions Gets Friendlier"
+description: "From 50% faster agent startups to timezone-aware cron jobs, GitHub shipped meaningful quality-of-life improvements this week."
+pubDate: 2026-03-24
+tags: ["GitHub Copilot", "DevOps", "Developer Experience", "AI"]
+draft: false
+---
+
+This week, GitHub focused on what I'd call "developer hygiene" — no flashy feature drops, just a steady stream of fixes that make the platform less annoying to use daily. Copilot coding agent got faster and more transparent. Actions finally supports timezones. Security got more granular controls. None of these changes are revolutionary, but they're exactly the kind of polish that separates a good platform from a great one.
+
+## Copilot Coding Agent: Speed and Visibility
+
+The biggest news is that [Copilot coding agent now starts work 50% faster](https://github.blog/changelog/2026-03-19-copilot-coding-agent-now-starts-work-50-faster/). That's not a small optimization — it's the difference between delegating a task and getting a PR in 3 minutes versus 6. When you're using `@copilot` to iterate on a PR or assigning issues to the agent, that feedback loop compounds throughout the day.
+
+GitHub also shipped [major improvements to session log visibility](https://github.blog/changelog/2026-03-19-more-visibility-into-copilot-coding-agent-sessions). You can now see:
+
+- **Built-in setup steps** like repo cloning and agent firewall initialization
+- **Custom setup step output** from your `copilot-setup-steps.yml` right in the logs (no more jumping to Actions)
+- **Subagent activity** collapsed by default with a heads-up display of current work
+
+This matters because transparency is the foundation of trust with AI agents. When Copilot spins up a research subagent before making changes, I want to know what it's looking at. When my custom setup fails, I don't want to dig through verbose Actions logs to debug it. These improvements make the agent feel less like a black box and more like a junior engineer I can actually mentor.
+
+And speaking of transparency: every commit from Copilot coding agent now includes an [`Agent-Logs-Url` trailer](https://github.blog/changelog/2026-03-20-trace-any-copilot-coding-agent-commit-to-its-session-logs) linking back to the full session logs. This is huge for code review and auditing. Six months from now, when you're debugging a subtle issue introduced by an agent-authored commit, you'll have a direct path back to understand *why* Copilot made that choice.
+
+## Model Selection Gets More Transparent
+
+If you're using auto model selection in Copilot (where the platform picks the best model for each task), you've probably noticed that [usage metrics now resolve to actual model names](https://github.blog/changelog/2026-03-20-copilot-usage-metrics-now-resolve-auto-model-selection-to-actual-models) instead of showing a generic "Auto" label.
+
+This is critical for compliance and audit workflows. When your security team asks "which models are processing our codebase?", you need real answers, not "it depends." Now you get them.
+
+GitHub also rolled out [Gemini 3.1 Pro in public preview](https://github.blog/changelog/2026-03-23-gemini-3-1-pro-is-now-available-in-jetbrains-ides-xcode-and-eclipse/) across JetBrains IDEs, Xcode, and Eclipse. The model is available in Copilot Chat for agent, ask, and edit modes. Business and Enterprise admins need to opt in via policy settings before their teams see it in the model picker.
+
+## JetBrains Gets the Full Agentic Stack
+
+GitHub shipped a [massive update to Copilot for JetBrains IDEs](https://github.blog/changelog/2026-03-11-major-agentic-capabilities-improvements-in-github-copilot-for-jetbrains-ides/) that brings custom agents, sub-agents, and plan agent to general availability. If you've been building custom agents in VS Code, you can now do the same in IntelliJ, PyCharm, and the rest of the JetBrains family.
+
+Key highlights:
+
+- **Agent hooks in public preview** — run custom commands at key points during agent sessions (`userPromptSubmitted`, `preToolUse`, `postToolUse`, `errorOccurred`)
+- **Auto-approve for MCP** at both server and tool level, so you're not clicking through manual approvals constantly
+- **Expanded instruction file support** for `AGENTS.md` and `CLAUDE.md`, with automatic discovery and a generator to bootstrap your initial setup
+- **Auto model selection now GA** in JetBrains, matching feature parity with VS Code
+
+This is a signal that GitHub is serious about multi-IDE support for agentic workflows. For years, VS Code was the obvious choice if you wanted cutting-edge Copilot features. That gap is closing fast. If you're a JetBrains user who's been waiting to dive into [custom agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents) and [agentic workflows](/articles/github-agentic-workflows-hands-on-guide), now's the time.
+
+## GitHub Actions: Timezones and Deployment Control
+
+Actions got two long-requested quality-of-life improvements:
+
+1. **[Timezone support for scheduled workflows](https://github.blog/changelog/2026-03-19-github-actions-late-march-2026-updates/)** — you can finally specify an IANA timezone alongside your cron expression (e.g., `timezone: "America/New_York"`). No more mental math converting to UTC.
+
+2. **[Environments without auto-deployment](https://github.blog/changelog/2026-03-19-github-actions-late-march-2026-updates/)** — add `deployment: false` to an environment config and you can use secrets/variables management without creating deployments. This has been a papercut for teams that want environment-level secrets but don't need GitHub's deployment tracking.
+
+These aren't headline features, but they're the kind of "why wasn't this always like this?" improvements that make CI/CD less frustrating to manage.
+
+## Security: Granular Push Protection
+
+You can now [designate push protection exemptions directly from repository settings](https://github.blog/changelog/2026-03-23-push-protection-exemptions-from-repository-settings). Previously, you had to manage exemptions at the org or enterprise level through security configurations.
+
+This matters for teams that need fine-grained control over who can bypass secret scanning. Maybe your infra team legitimately needs to commit certain credentials as part of bootstrapping scripts, but you don't want to exempt them org-wide. Now you can scope that to the specific repos where it's needed.
+
+## The Bottom Line
+
+None of these changes will make the front page of Hacker News. But that's not the point. GitHub is methodically addressing friction points that compound over weeks and months of daily use. Faster agent startups, better session logs, timezone-aware cron, repo-level security exemptions — these are the quality-of-life improvements that make a platform feel polished and mature.
+
+If you're building [agentic DevOps workflows](/articles/agentic-devops-next-evolution-of-shift-left) or leaning into AI-assisted development, this week's updates should feel like validation. GitHub is doubling down on transparency, observability, and control for automated workflows. That's exactly the foundation you need when you're handing more responsibility to agents.
+
+What I'm watching next: agent hooks hit GA, and we see more teams building [context engineering](/articles/context-engineering-key-to-ai-development) workflows around them. The primitives are all there now. The next wave is figuring out what to build with them.
