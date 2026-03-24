@@ -1,9 +1,10 @@
 ---
-title: 'What the Copilot CLI Extension SDK Actually Does: Tools, Hooks, MCP, and Custom Agents'
+title: 'What the Copilot CLI Extension SDK Actually Does: Tools, Hooks, MCP, Custom Agents, and Elicitation'
 description: >-
-  A corrected deep dive into the real Copilot CLI extension SDK surface. No
-  fabricated slash commands or UI dialogs — just verified features from the
-  actual TypeScript type definitions.
+  A corrected deep dive into the real Copilot CLI extension SDK surface —
+  verified against the actual TypeScript type definitions and SDK docs. Custom
+  tools, lifecycle hooks, MCP integration, elicitation dialogs, extension
+  management, and more.
 pubDate: 2026-03-23T00:00:00.000Z
 tags:
   - GitHub Copilot
@@ -20,19 +21,39 @@ devto_hash: ''
 
 ## A Correction
 
-The previous version of this article contained fabricated API surfaces. I'm not going to pretend it didn't happen — the original described features like `slashCommands` in `joinSession()`, `session.ui.elicitation()` dialogs, a `/extensions` CLI command, and a multi-language Python SDK with `join_session()`. **None of those exist.** They were hallucinated during content generation and published without proper verification against the actual SDK source.
+The previous version of this article contained fabricated API surfaces. I'll be direct about what was wrong: it described `slashCommands` as a parameter in `joinSession()` and `session.ui.elicitation()` as a method you call directly. **Neither of those exist in the SDK.** They were hallucinated during content generation and published without verification.
 
-This rewrite is based entirely on the real `@github/copilot-sdk` TypeScript type definitions. Every code example below comes from or is derived from the actual exported types. If it's not in the types, it's not in this article.
+This rewrite is based entirely on the actual `@github/copilot-sdk` TypeScript type definitions and the SDK's own agent authoring documentation. Every code example below comes from or is derived from the real exported types and docs.
 
-## What the Extension SDK Actually Is
+Here's what was fabricated and what's real:
 
-The Copilot CLI extension SDK (`@github/copilot-sdk`) lets you build extensions that join an active Copilot CLI session as a child process communicating over JSON-RPC (stdio or TCP). The entry point is `joinSession()` from `@github/copilot-sdk/extension`:
+| Claim in Previous Article | Verdict |
+|---|---|
+| `slashCommands` in `joinSession()` | ❌ Fabricated — no such parameter exists |
+| `session.ui.elicitation()` direct method | ❌ Fabricated — elicitation is event-based, not a method |
+| Python SDK `join_session()` with `slash_commands` | ❌ Fabricated — no Python SDK with this API |
+| Multi-language SDK (Go, .NET) | ❌ Unverified |
+| Embedding-based extension retrieval | ❌ Unverified |
+| UI elicitation dialogs (the concept) | ✅ Real — but event-based (`elicitation.requested` → `respondToElicitation()`) |
+| `/extensions` slash command | ✅ Real — with mode and manage subpages |
+| Extension modes (load_and_augment, load_only, disabled) | ✅ Real |
+| Extension scaffold, list, inspect via `extensions_manage` tool | ✅ Real |
+| `skipPermission` flag | ✅ Real |
+| Everything about tools, hooks, MCP, custom agents | ✅ Real |
 
-```typescript
+Now, let's cover what the extension SDK actually offers — and it's plenty.
+
+## The Extension Model
+
+Copilot CLI extensions are Node.js processes that join an active session via JSON-RPC (stdio). You create an `extension.mjs` file, place it in `.github/extensions/<name>/` (project-scoped) or `~/.copilot/extensions/<name>/` (user-scoped), and the CLI discovers and launches it automatically.
+
+The entry point is `joinSession()` from `@github/copilot-sdk/extension`:
+
+```js
 import { joinSession } from "@github/copilot-sdk/extension";
 
 const session = await joinSession({
-  tools: [/* your custom tools */],
+  tools: [/* custom tools */],
   hooks: {/* lifecycle hooks */},
   customAgents: [/* agent definitions */],
   mcpServers: {/* MCP server configs */},
@@ -40,13 +61,38 @@ const session = await joinSession({
 });
 ```
 
-That's the real API. The config accepts `tools`, `hooks`, `customAgents`, `mcpServers`, `systemMessage`, `availableTools`, `excludedTools`, `skillDirectories`, `infiniteSessions`, and a few other fields. There is no `slashCommands` property. There is no `ui` property on the session object.
+That's the real API. The config accepts `tools`, `hooks`, `customAgents`, `mcpServers`, `systemMessage`, `availableTools`, `excludedTools`, `skillDirectories`, `infiniteSessions`, and more. There is no `slashCommands` property.
+
+### Extension Discovery and Management
+
+Extensions live in two places:
+
+- **Project extensions:** `.github/extensions/<name>/extension.mjs` — scoped to the repo
+- **User extensions:** `~/.copilot/extensions/<name>/extension.mjs` — available everywhere
+
+Project extensions shadow user extensions on name collision. Only `.mjs` files are supported — no TypeScript, no CommonJS.
+
+The CLI provides a real `/extensions` slash command for managing extensions in-session, and an `extensions_manage` tool that agents (and extensions themselves) can call:
+
+```
+extensions_manage({ operation: "list" })           // List all loaded extensions
+extensions_manage({ operation: "inspect", name: "my-ext" })  // Extension details
+extensions_manage({ operation: "scaffold", name: "my-ext" }) // Create skeleton
+extensions_manage({ operation: "guide" })           // Get authoring guidance
+```
+
+Extensions support three modes:
+- **`load_and_augment`** — loaded and active (tools and hooks registered)
+- **`load_only`** — loaded but not contributing tools/hooks
+- **`disabled`** — not loaded at all
+
+You can reload all extensions mid-session with `extensions_reload({})` — no context loss, no restart. Only the extension processes restart. This makes iterative development viable: edit your `extension.mjs`, reload, test, repeat — all in the same conversation.
 
 ## Custom Tools with `skipPermission`
 
-Tools are the primary way extensions add capabilities. Each tool gets a name, description, optional parameter schema (raw JSON Schema or Zod), and a handler function:
+Tools are the primary way extensions add capabilities. Each tool gets a name, description, optional parameter schema (raw JSON Schema or Zod), and a handler:
 
-```typescript
+```js
 import { joinSession, defineTool } from "@github/copilot-sdk/extension";
 import { z } from "zod";
 
@@ -57,6 +103,7 @@ const gitStatusTool = defineTool("get_git_status", {
   }),
   skipPermission: true, // No permission prompt for read-only ops
   handler: async ({ short }) => {
+    const { execSync } = await import("child_process");
     const flag = short ? "--porcelain" : "";
     return execSync(`git status ${flag}`).toString();
   },
@@ -68,73 +115,149 @@ await joinSession({
 });
 ```
 
-The `skipPermission: true` flag is real and useful — it tells the CLI to execute the tool without prompting the user. Use it for read-only, side-effect-free operations. For anything that writes files or runs arbitrary commands, leave it off and let the permission system do its job.
+The `skipPermission: true` flag tells the CLI to execute the tool without prompting the user. Use it for read-only, side-effect-free operations. For anything that writes files or runs arbitrary commands, leave it off.
 
-You can also set `overridesBuiltInTool: true` if you intentionally want to replace a built-in tool with your own implementation.
+You can also set `overridesBuiltInTool: true` if you intentionally want to replace a built-in tool with your own implementation — without it, a name collision with a built-in tool is an error.
+
+**Important constraint:** Tool names must be globally unique across all loaded extensions. If two extensions register the same tool name, the second extension fails to initialize. Plan your naming accordingly.
+
+### Tool Results
+
+Handlers can return a simple string (treated as success) or a structured `ToolResultObject`:
+
+```js
+handler: async (args) => {
+  // Simple: just return a string
+  return "Operation completed successfully";
+
+  // Structured: more control over what the agent sees
+  return {
+    textResultForLlm: "Found 3 security issues",
+    resultType: "success",  // "success" | "failure" | "rejected" | "denied"
+    sessionLog: "Scanned 42 files",
+    binaryResultsForLlm: [{
+      data: base64EncodedImage,
+      mimeType: "image/png",
+      type: "image",
+      description: "Security scan results chart",
+    }],
+  };
+}
+```
 
 ## Lifecycle Hooks
 
-The `hooks` object in `SessionConfig` gives you six interception points:
+The `hooks` object gives you six interception points in the session lifecycle:
 
-```typescript
+```js
 await joinSession({
   hooks: {
     onPreToolUse: async (input) => {
       // Called before any tool executes
       // Can modify args, override permission, add context
-      if (input.toolName === "shell_exec" && containsDangerousCommand(input.toolArgs)) {
+      if (input.toolName === "shell_exec" && isDangerous(input.toolArgs)) {
         return {
           permissionDecision: "deny",
-          permissionDecisionReason: "Command blocked by security policy",
+          permissionDecisionReason: "Blocked by security policy",
         };
       }
+      // Can also modify args before execution:
+      // return { modifiedArgs: { ...input.toolArgs, safe: true } };
     },
 
     onPostToolUse: async (input) => {
-      // Called after tool execution with the result
-      // Can modify result, add context, suppress output
-      console.log(`Tool ${input.toolName} completed: ${input.toolResult.resultType}`);
+      // Called after tool execution with the full result
+      // input.toolResult has: textResultForLlm, resultType, error
+      if (input.toolResult.resultType === "failure") {
+        await logFailure(input.toolName, input.toolResult.error);
+      }
+      // Can modify the result before the agent sees it:
+      // return { modifiedResult: { ...input.toolResult, textResultForLlm: "sanitized" } };
     },
 
     onUserPromptSubmitted: async (input) => {
-      // Called when user sends a message
-      // Can modify the prompt or inject additional context
+      // Called when the user sends a message
+      // input.prompt contains the raw user input
       return {
         additionalContext: "Remember: follow the team's coding standards.",
+        // Or modify the prompt entirely:
+        // modifiedPrompt: `${input.prompt}\n\nContext: we use ESLint strict mode`,
       };
     },
 
     onSessionStart: async (input) => {
-      // source: "startup" | "resume" | "new"
-      console.log(`Session started via ${input.source}`);
+      // input.source: "startup" | "resume" | "new"
+      // input.initialPrompt: the first prompt (if any)
+      await session.log("Security extension active");
+      return { additionalContext: "Security policies loaded." };
     },
 
     onSessionEnd: async (input) => {
-      // reason: "complete" | "error" | "abort" | "timeout" | "user_exit"
+      // input.reason: "complete" | "error" | "abort" | "timeout" | "user_exit"
       if (input.reason === "error") {
-        await logError(input.error);
+        await reportError(input.error);
       }
+      return { sessionSummary: "Session completed with 3 tool invocations" };
     },
 
     onErrorOccurred: async (input) => {
-      // errorContext: "model_call" | "tool_execution" | "system" | "user_input"
+      // input.errorContext: "model_call" | "tool_execution" | "system" | "user_input"
+      // input.recoverable: boolean
       if (input.recoverable) {
         return { errorHandling: "retry", retryCount: 2 };
       }
-      return { errorHandling: "abort" };
+      return {
+        errorHandling: "abort",
+        userNotification: `Fatal error: ${input.error}`,
+      };
     },
   },
   onPermissionRequest: () => ({ permissionDecision: "allow" }),
 });
 ```
 
-The `onPreToolUse` hook is the most powerful — it can allow, deny, or defer to the user (`"ask"`) on a per-invocation basis, modify tool arguments before execution, and inject additional context. This is where you build guardrails.
+The `onPreToolUse` hook is the most powerful — it can allow, deny, or defer to the user (`"ask"`) on a per-invocation basis, modify arguments before execution, and inject additional context. This is where you build security guardrails.
+
+## Elicitation: Structured User Input (Event-Based)
+
+This is a real feature, but the previous article got the API wrong. Elicitation is **event-based**, not a method call. The agent triggers an `elicitation.requested` event, the client/extension listens for it and presents a form to the user, then responds via `respondToElicitation()`.
+
+The event carries a JSON Schema describing the form fields:
+
+```js
+session.on("elicitation.requested", async (event) => {
+  const { requestId, message, requestedSchema } = event.data;
+  // requestedSchema is a JSON Schema with:
+  //   type: "object"
+  //   properties: { fieldName: { type, description, ... }, ... }
+  //   required: ["fieldName", ...]
+
+  console.error(`Agent asks: ${message}`);
+  console.error(`Fields:`, JSON.stringify(requestedSchema.properties, null, 2));
+
+  // Collect user input somehow, then respond:
+  await session.respondToElicitation(requestId, {
+    // key-value pairs matching the requestedSchema
+    environment: "production",
+    confirmDeploy: true,
+  });
+});
+
+// When the agent is done with the form:
+session.on("elicitation.completed", (event) => {
+  // event.data.requestId — dismiss any UI for this request
+});
+```
+
+The canonical use case: the agent needs a structured decision before proceeding. Instead of hoping the user types the right thing in natural language, the agent requests specific fields — environment selectors, confirmation booleans, change descriptions. The schema enforces structure; the event flow keeps it non-blocking.
+
+This is particularly valuable for governance workflows: when the agent tries to deploy or modify production configs, you want explicit, structured confirmation — not an inferred intent from a chat message.
 
 ## MCP Server Integration
 
 Extensions can register MCP (Model Context Protocol) servers — local processes or remote endpoints:
 
-```typescript
+```js
 await joinSession({
   mcpServers: {
     // Local process over stdio
@@ -151,7 +274,7 @@ await joinSession({
       type: "http",
       url: "https://internal.example.com/mcp",
       headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
-      tools: ["search_docs", "get_runbook"], // expose only specific tools
+      tools: ["search_docs", "get_runbook"], // only specific tools
       timeout: 30000,
     },
 
@@ -166,13 +289,13 @@ await joinSession({
 });
 ```
 
-MCP is the real extensibility story for bringing external tools into Copilot CLI. It's an open standard — any MCP-compatible server works, regardless of what language it's written in. This is the "multi-language" story, not a mythical Python SDK.
+MCP is the real multi-language extensibility story. An MCP server can be written in any language — Python, Go, Rust, whatever implements the protocol. The extension handles the SDK communication in Node.js; MCP servers handle the business logic in whatever makes sense.
 
 ## Custom Agents
 
 The `customAgents` config lets you define specialized agents with their own prompts, tool restrictions, and MCP servers:
 
-```typescript
+```js
 await joinSession({
   customAgents: [
     {
@@ -186,7 +309,7 @@ await joinSession({
         - Missing input validation
         Report findings with severity levels.`,
       tools: ["read_file", "search_files", "get_git_diff"],
-      infer: true,
+      infer: true, // available for model inference
     },
     {
       name: "db-admin",
@@ -203,76 +326,109 @@ await joinSession({
       },
     },
   ],
-  agent: "security-reviewer", // activate this agent on session start
+  agent: "security-reviewer", // activate on session start
   onPermissionRequest: () => ({ permissionDecision: "allow" }),
 });
 ```
 
-The `agent` field in `SessionConfig` selects which custom agent to activate at startup — equivalent to calling `session.rpc.agent.select()` after creation. Users can switch agents during the session with `/agent`.
+The `agent` field selects which custom agent to activate at startup — equivalent to calling `session.rpc.agent.select()` after creation. Users switch between agents during the session with `/agent`.
 
-## Session RPC: What the Session Object Exposes
+## The Session Object
 
-Once you have a `CopilotSession` from `joinSession()`, you get access to the RPC interface for session management. Based on the SDK types, this includes:
+After `joinSession()` resolves, you get a `CopilotSession` with these capabilities:
 
-- **Model switching** — change the active model mid-session
-- **Plan management** — create and manage implementation plans
-- **Workspace operations** — file and directory operations scoped to the session
-- **Fleet mode** — parallel subagent execution
-- **Agent selection** — switch between custom agents
-- **Compaction** — summarize conversation to manage context window
-- **Shell execution** — run commands within the session's permission scope
+### Sending Messages
 
-The `InfiniteSessionConfig` is worth calling out — it enables automatic context compaction when you hit thresholds:
+```js
+// Fire and forget — returns message ID
+await session.send({ prompt: "Analyze the test results." });
 
-```typescript
-await joinSession({
-  infiniteSessions: {
-    enabled: true,
-    backgroundCompactionThreshold: 0.80, // start compacting at 80% context usage
-    bufferExhaustionThreshold: 0.95,      // block until compaction at 95%
-  },
-  onPermissionRequest: () => ({ permissionDecision: "allow" }),
+// Send with file attachments
+await session.send({
+  prompt: "Review this file",
+  attachments: [{ type: "file", path: "./src/index.ts" }],
 });
+
+// Send and wait for the agent to finish (blocks until session.idle)
+const response = await session.sendAndWait(
+  { prompt: "What is 2+2?" },
+  60000 // timeout in ms
+);
+console.error(response?.data.content); // "4"
+```
+
+### Logging to the Timeline
+
+```js
+await session.log("Extension ready");
+await session.log("Rate limit approaching", { level: "warning" });
+await session.log("Connection failed", { level: "error" });
+await session.log("Debug info", { ephemeral: true }); // transient, not persisted
+```
+
+**Important:** Don't use `console.log()` — stdout is reserved for JSON-RPC. Use `session.log()` to surface messages, or `console.error()` for debug output.
+
+### Event Subscription
+
+```js
+const unsub = session.on("assistant.message", (event) => {
+  console.error("Agent:", event.data.content);
+});
+
+// Key event types:
+// assistant.message — agent's response
+// tool.execution_start / tool.execution_complete — tool lifecycle
+// user.message — user input
+// session.idle — agent finished processing
+// session.error — something went wrong
+// permission.requested — permission check needed
+// elicitation.requested / elicitation.completed — structured user input
+// session.shutdown — session ending
+
+// Unsubscribe when done
+unsub();
+```
+
+### Model Switching and RPC
+
+```js
+await session.setModel("gpt-4.1");
+
+// Low-level RPC access for advanced operations:
+// session.rpc — typed access to model, plan, workspace, agent, compaction APIs
 ```
 
 ## The Permission System
 
-Permissions in Copilot CLI are tool-level and path-level, not extension-level. The `onPermissionRequest` handler receives requests with a `kind` field:
+Permissions are tool-level and path-level. The `onPermissionRequest` handler receives requests with a `kind` field:
 
-- `"shell"` — shell command execution
-- `"write"` — file write operations
-- `"read"` — file read operations
-- `"mcp"` — MCP tool invocations
-- `"url"` — URL access
-- `"custom-tool"` — your extension's custom tools
-
-You can use the built-in `approveAll` helper for development, or implement granular logic:
-
-```typescript
+```js
 import { approveAll } from "@github/copilot-sdk";
 
-// For development:
+// For development — approve everything:
 await joinSession({ onPermissionRequest: approveAll });
 
-// For production:
+// For production — granular control:
 await joinSession({
   onPermissionRequest: (request) => {
-    if (request.kind === "shell") {
-      return { permissionDecision: "deny" };
+    // request.kind: "shell" | "write" | "read" | "mcp" | "url" | "custom-tool"
+    switch (request.kind) {
+      case "shell":
+        return { permissionDecision: "deny" }; // no shell access
+      case "write":
+        return { permissionDecision: "ask" };  // let user decide
+      default:
+        return { permissionDecision: "allow" };
     }
-    if (request.kind === "write") {
-      return { permissionDecision: "ask" }; // let user decide
-    }
-    return { permissionDecision: "allow" };
   },
 });
 ```
 
 ## System Message Control
 
-You can append to or fully replace the system message:
+You get two modes — append to or fully replace the system message:
 
-```typescript
+```js
 // Append mode (default) — adds to the SDK's built-in system message
 await joinSession({
   systemMessage: {
@@ -282,7 +438,7 @@ await joinSession({
   onPermissionRequest: approveAll,
 });
 
-// Replace mode — full control, removes SDK guardrails
+// Replace mode — full control, removes ALL SDK guardrails
 await joinSession({
   systemMessage: {
     mode: "replace",
@@ -292,41 +448,75 @@ await joinSession({
 });
 ```
 
-Replace mode is powerful but risky — it removes all SDK-managed safety instructions. Use it only when you know what you're doing.
+Replace mode is powerful but risky — it removes all SDK-managed safety instructions. Know what you're doing.
 
-## BYOK: Bring Your Own Key
+## Infinite Sessions
 
-The `provider` config lets you point the session at your own API endpoint:
+The `InfiniteSessionConfig` enables automatic context compaction — the session manages its own context window:
 
-```typescript
+```js
 await joinSession({
-  provider: {
-    type: "openai",      // or "azure" or "anthropic"
-    baseUrl: "http://localhost:11434/v1", // Ollama, for example
-    apiKey: "optional-for-local",
+  infiniteSessions: {
+    enabled: true,
+    backgroundCompactionThreshold: 0.80, // start compacting at 80%
+    bufferExhaustionThreshold: 0.95,      // block until done at 95%
   },
   onPermissionRequest: approveAll,
 });
 ```
 
-This works with any OpenAI-compatible API. Azure gets its own config with `apiVersion`. Anthropic is supported as a provider type. You can also set `wireApi: "responses"` for the newer Responses API format.
+When enabled, sessions persist state to a workspace directory (`session.workspacePath`) with checkpoints, a plan file, and working files.
 
-## What to Actually Build
+## BYOK: Bring Your Own Key
 
-Given what the SDK *really* offers, here's what's worth building:
+Point the session at any OpenAI-compatible API:
 
-**Security guardrails via `onPreToolUse`**: Intercept every tool call. Block dangerous shell commands. Deny writes to protected paths. Log everything. This is the highest-value extension pattern — it works today, it's straightforward, and it directly addresses the "AI agent ran amok" risk.
+```js
+await joinSession({
+  provider: {
+    type: "openai",      // or "azure" or "anthropic"
+    baseUrl: "http://localhost:11434/v1", // Ollama, etc.
+    apiKey: "optional-for-local",
+    wireApi: "completions", // or "responses" for the newer API format
+  },
+  onPermissionRequest: approveAll,
+});
+```
 
-**Domain-specific tools via MCP**: Stand up an MCP server in whatever language your team uses. Expose your internal APIs, database queries, monitoring dashboards as tools the agent can call. MCP is the real multi-language story.
+## Scaffolding a New Extension
 
-**Custom agents for specialized workflows**: Define a `security-reviewer` agent, a `db-admin` agent, a `docs-writer` agent. Each gets a focused prompt and restricted tool set. Users switch between them with `/agent` based on what they're doing.
+The fastest path from zero to working extension:
 
-**Prompt enrichment via `onUserPromptSubmitted`**: Automatically inject team context, coding standards, or relevant documentation into every prompt. The user types their question; your hook adds the context they'd otherwise forget to include.
+1. In a Copilot CLI session, the agent can call `extensions_manage({ operation: "scaffold", name: "my-ext" })` — this creates `.github/extensions/my-ext/extension.mjs` with a working skeleton.
+
+2. For user-scoped extensions (available across all repos), add `location: "user"`.
+
+3. Edit the generated file. Add your tools and hooks.
+
+4. Reload with `extensions_reload({})` — the extension loads immediately, mid-session.
+
+5. Verify with `extensions_manage({ operation: "list" })` and `extensions_manage({ operation: "inspect", name: "my-ext" })`.
+
+The whole cycle — scaffold, edit, reload, test — happens in one session without losing context.
+
+## What to Build
+
+Given what the SDK *actually* offers:
+
+**Security guardrails via `onPreToolUse`**: Intercept every tool call. Block dangerous shell commands. Deny writes to protected paths. Log everything. This is the highest-value extension pattern — it directly addresses the "AI agent ran amok" risk.
+
+**Domain-specific tools via MCP**: Stand up an MCP server in whatever language your team uses. Expose internal APIs, database queries, monitoring dashboards as tools the agent can call.
+
+**Custom agents for specialized workflows**: A `security-reviewer` agent, a `db-admin` agent, a `docs-writer` agent — each with a focused prompt and restricted tool set. Users switch with `/agent`.
+
+**Structured decisions via elicitation**: When your extension needs explicit human confirmation — deployment targets, destructive operations, environment selection — listen for `elicitation.requested` events and present structured forms instead of relying on natural language.
+
+**Prompt enrichment via `onUserPromptSubmitted`**: Automatically inject team context, coding standards, or relevant documentation into every prompt. The user types their question; your hook adds what they'd otherwise forget.
 
 ## The Real Extensibility Story
 
-The Copilot CLI extension SDK is genuinely powerful — `joinSession()` with custom tools, six lifecycle hooks, MCP integration, custom agents, permission control, infinite sessions, and BYOK support covers a lot of ground. You don't need fabricated features to make the case.
+The Copilot CLI extension SDK is genuinely powerful. `joinSession()` with custom tools, six lifecycle hooks, MCP integration, custom agents, event-based elicitation, permission control, infinite sessions, BYOK support, and real in-session extension management covers serious ground.
 
-What the SDK *doesn't* have (yet) is a CLI-level extension management command, custom slash commands registered by extensions, or structured UI dialogs. Those might come — but they're not here today, and the previous version of this article was wrong to present them as if they were.
+What the SDK *doesn't* have is custom slash commands registered by extensions or a direct `session.ui.elicitation()` method call. The previous article was wrong to claim those. But what *is* here — tools, hooks, MCP, custom agents, structured elicitation events, and a full extension lifecycle with scaffold/reload/inspect — is more than enough to build meaningful governance, security, and productivity extensions.
 
-Build on what's real. The hooks and tools system is already enough to create meaningful governance, security, and productivity extensions for your team.
+Build on what's real. There's plenty of it.
