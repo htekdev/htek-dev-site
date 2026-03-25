@@ -1,0 +1,200 @@
+---
+title: "VS Code Weekly: Browser Debugging, MCP Sandboxing, and the Chat Customizations Editor"
+description: "Two weekly releases bring integrated browser debugging, MCP server sandboxing, nested subagents, and a unified customizations UI."
+pubDate: 2026-03-25
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+## Two Weeks, Two Major Drops
+
+Microsoft shipped VS Code [1.112 on March 18](https://code.visualstudio.com/updates/v1_112) and [1.113 today](https://code.visualstudio.com/updates/v1_113) — the second and third weekly stable releases. Both are packed with agent autonomy improvements, security hardening, and developer experience polish. The weekly cadence is delivering exactly what it promised: incremental, focused updates instead of monthly batching.
+
+What stands out this week isn't any single headline feature — it's the **breadth of parallel improvements** across agent tooling, security, and editor UX. Microsoft is shipping production-ready features at a pace that would've taken 2-3 monthly releases under the old model. Let's break down what landed.
+
+## Integrated Browser Debugging Ships to Stable
+
+VS Code's integrated browser can now **start debugging sessions** directly from the editor. You can set breakpoints, step through code, inspect variables, and interact with your web app without ever leaving VS Code.
+
+The new `editor-browser` debug type supports both Launch and Attach configurations. Most options from existing `msedge` and `chrome` debug configurations work out of the box — migrating is often just a matter of changing the `type` field in `launch.json`.
+
+**Why this matters**: The integrated browser was already useful for previewing apps and letting agents interact with web UIs. Adding debugging closes the loop. You can now build, run, debug, and test web apps entirely within VS Code, using the same browser instance agents drive for verification.
+
+This is a direct shot at external browser debugging workflows. If you're building a React or Next.js app, you no longer need Chrome DevTools open in a separate window. The integrated browser handles UI interaction, and VS Code handles debugging. One window, one workflow.
+
+UX improvements shipped alongside debugging:
+
+- **Independent zoom controls** — zoom browser content without affecting editor font size
+- **Context menus** with copy/paste, open in new tab, and inspect element
+- **Self-signed certificate support** (1.113) — trust local HTTPS certificates for development
+- **Quick Open Browser Tab** command (⇧⌘A / Ctrl+Shift+A) for fast tab switching
+- **Close All Browser Tabs** for tab management
+
+The integrated browser is evolving from "preview feature" to "viable alternative to external browsers for full-stack development." If you're building web apps and haven't tried it yet, this release makes it worth reconsidering.
+
+## MCP Server Sandboxing on macOS and Linux
+
+Local MCP servers can now run in a **sandboxed environment** with restricted file system and network access on macOS and Linux. This addresses one of the biggest security concerns with MCP adoption: servers running with full user permissions.
+
+To enable sandboxing, add `"sandboxEnabled": true` to a server definition in your `mcp.json` file. When a sandboxed server needs access to a folder or domain it doesn't have permission for, VS Code prompts you to grant access and updates the sandbox configuration. All servers in the same `mcp.json` file share the sandbox config.
+
+**Why this matters**: [MCP adoption is accelerating](https://github.com/modelcontextprotocol/servers) — the ecosystem already has 50+ server integrations. But running third-party MCP servers with full file system and network access is a non-starter for security-conscious teams. Sandboxing makes it safe to run MCP servers from the community without trusting them completely.
+
+This is Microsoft hedging against the MCP supply chain risk. As more developers install MCP servers from npm, PyPI, and GitHub, the attack surface grows. Sandboxing limits the blast radius if a server is compromised or malicious.
+
+Windows support isn't available yet, but macOS and Linux coverage handles most developer workstations. For organizations with compliance requirements, this makes MCP servers a viable option where they weren't before.
+
+## Copilot CLI Gets Full Agent Parity
+
+Copilot CLI sessions now support **MCP servers**, **message steering and queueing**, **permission levels**, and **agent debug logs** — bringing background agents to feature parity with local agents.
+
+Previously, these capabilities were only available for agents running in the chat UI. Now CLI agents (which run in separate processes and can be delegated long-running tasks) have the same control surface:
+
+- **MCP support**: CLI agents inherit your MCP server configurations automatically
+- **Steering**: Send follow-up messages mid-execution to redirect the agent without waiting
+- **Permission levels**: Choose Default, Bypass Approvals, or Autopilot per session
+- **Debug logs**: Troubleshoot CLI agent behavior with the same debug panel as local agents
+
+The UX for delegating tasks to CLI also improved. When you have uncommitted changes and delegate a task, the Chat view now **shows pending changes inline**, so you can preview what will be copied to the CLI agent's worktree before confirming.
+
+Copilot CLI file paths in terminal output are now **clickable links** that open the referenced file directly in the editor. This eliminates the copy-paste step when agents reference config files, logs, or source code.
+
+**The takeaway**: Local agents and CLI agents are behaviorally consistent now. The only difference is execution context (embedded vs. separate process), not capabilities. This makes it easier to decide when to use each without worrying about feature gaps.
+
+## Nested Subagents and Multi-Step Workflows
+
+Subagents can now invoke other subagents via the new `chat.subagents.allowInvocationsFromSubagents` setting, enabling **multi-step agent workflows** where one agent delegates to another.
+
+Previously, subagents couldn't call other subagents to prevent infinite recursion. This was a safe default, but it limited composability. If you wanted an agent to orchestrate multiple specialized agents (e.g., a "code review" agent calling a "security audit" agent and a "performance analysis" agent), you had to manually chain them.
+
+With nested subagents, you can build recursive workflows like:
+
+- A **test generator** agent that calls a **type inference** subagent to determine function signatures before generating test cases
+- A **PR reviewer** agent that delegates to **linting**, **security**, and **docs** subagents in sequence
+- A **monorepo migration** agent that calls a **package analyzer** subagent for each package before generating migration scripts
+
+This opens up agent orchestration patterns that were previously impossible. You can now build "meta-agents" that coordinate work across specialized subagents without manually scripting the workflow.
+
+## Chat Customizations Editor (Preview)
+
+VS Code 1.113 introduces a **unified customizations editor** for managing all chat-related customizations from a single UI. The editor organizes customization types into tabs: custom instructions, prompt files, custom agents, agent skills, MCP servers, and plugins.
+
+Key features:
+
+- **Embedded code editor** with syntax highlighting and validation
+- **AI-generated templates** — use an agent to generate initial customizations based on your project
+- **Marketplace browsing** — add MCP servers and plugins directly from the editor
+- **Centralized management** — no more hunting through `.copilot/`, `.github/`, and workspace settings
+
+To open it, click the **Configure Chat (gear icon)** in the Chat view or run **Chat: Open Chat Customizations** from the Command Palette.
+
+**Why this matters**: Customization discovery has been a pain point since agents launched. Instructions can live in `copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`, or workspace settings. Skills and prompts might be in `.copilot/skills/` or `.github/copilot/`. MCP servers are in `mcp.json`. Plugins are installed via Extensions view or command palette.
+
+The customizations editor consolidates this. If you're onboarding a team to agent-driven workflows, you can now point them to a single UI instead of a 10-step setup guide. This lowers the barrier to adoption significantly.
+
+## Configurable Thinking Effort in Model Picker
+
+Models that support reasoning (Claude Sonnet 4.6, GPT-5.4) now show a **Thinking Effort submenu** directly in the model picker. You can control how much reasoning the model applies to each request without navigating to settings.
+
+VS Code remembers the effort level per model across conversations. The model picker label displays the current effort level (e.g., "GPT-5.3-Codex · Medium") so you can see what's active at a glance.
+
+This deprecates the old `github.copilot.chat.anthropic.thinking.effort` and `github.copilot.chat.responsesApiReasoningEffort` settings in favor of per-model UI controls.
+
+**The practical impact**: Reasoning effort significantly affects response time and token cost. Being able to toggle it from the UI instead of settings means you can switch between "quick responses for boilerplate" and "deep reasoning for architecture questions" without context switching. This is one of those small UX improvements that compounds over time.
+
+## Image Carousel Gets Full Preview Experience
+
+When you attach images to chat or agents generate images via tool calls, you can now click any image to open it in a **full image viewer** with zoom, pan, and navigation.
+
+The viewer supports:
+
+- **Navigation** via arrow buttons, keyboard shortcuts, or thumbnail strip
+- **Sections** — images grouped by conversation turn
+- **Zoom & pan** — click to zoom, scroll/pinch for continuous zoom, pan at high zoom levels
+
+The image carousel is also available from the Explorer view context menu. Right-click an image file or folder and select **Open in Images Preview** to browse images outside of chat.
+
+This is a direct response to visual debugging workflows. If you're asking agents to generate architecture diagrams, UI mockups, or screenshot diffs, the carousel lets you compare them side-by-side without re-reading the entire chat transcript.
+
+## New Default Themes: VS Code Light and Dark
+
+VS Code 1.113 ships with refreshed default themes — **VS Code Light** and **VS Code Dark**. These replace the "Modern" themes as the default for new users and OS theme syncing.
+
+The new themes are designed to be modern and accessible while maintaining familiarity with the previous defaults. For existing users, nothing changes unless you opt in via the theme picker.
+
+This is a minor update for most developers, but it's worth noting because default themes shape first impressions. Microsoft is betting on a cleaner, less saturated color palette as the new baseline.
+
+## Monorepo Customizations Discovery
+
+The `chat.useCustomizationsInParentRepositories` setting now lets VS Code discover chat customizations from parent directories up to the repository root.
+
+**The use case**: In monorepos, you often open a package subdirectory instead of the repo root. Before this, customizations defined at the monorepo level weren't discovered. Now VS Code walks up the directory tree until it finds a git root and loads customizations from there.
+
+This applies to:
+
+- Always-on instructions (`copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`)
+- Instruction files, prompt files, custom agents, skills, and hooks
+
+Small change, big impact for monorepo users. You can now share repository-wide agent guidance across packages without duplicating files.
+
+## The /troubleshoot Skill for Agent Debugging (Preview)
+
+A new `/troubleshoot` skill analyzes agent debug logs directly in chat and provides insights into unexpected behavior. Type `/troubleshoot` followed by a question or description of the issue.
+
+The skill reads JSONL debug log files exported from chat sessions and can help you understand:
+
+- Why tools or subagents were used or skipped
+- Why instructions or skills didn't load
+- What contributed to slow response times
+- Whether network connectivity problems occurred
+
+To enable it, turn on these settings and reload VS Code:
+
+- `github.copilot.chat.agentDebugLog.enabled`
+- `github.copilot.chat.agentDebugLog.fileLogging.enabled`
+
+You can also **export and import agent debug logs** to share them with others or analyze offline. This is useful for troubleshooting agent behavior across teams.
+
+**Why this matters**: Agent debugging is still opaque. When an agent doesn't follow instructions or skips a tool, it's hard to diagnose why. The `/troubleshoot` skill makes debug logs actionable by summarizing them in natural language instead of forcing you to parse raw JSON.
+
+## Plugin Marketplace Management and URL Handlers
+
+VS Code 1.113 adds a new **Chat: Manage Plugin Marketplaces** command that lists all configured plugin marketplaces. You can browse plugins, open their local directories, and remove them.
+
+Plugin installation via **URL handlers** is also supported. You can trigger installation with:
+
+```
+vscode://chat-plugin/add-marketplace?ref=<source>
+vscode://chat-plugin/install?source=<source>
+```
+
+Where `source` is a GitHub `repo/owner` or base64-encoded Git URI.
+
+This enables one-click plugin installation from documentation sites, blog posts, or team wikis. Instead of telling teammates "clone this repo, then run this command, then install via Extensions view," you can just send them a URL.
+
+## What These Two Weeks Signal
+
+VS Code shipped **20+ features** across two weekly releases, proving the new cadence isn't just marketing — it's producing consistent velocity without sacrificing quality.
+
+The distribution of updates is telling:
+
+- **Security**: MCP sandboxing, plugin marketplace management
+- **Agent control**: Nested subagents, thinking effort picker, permission levels for CLI
+- **UX polish**: Chat customizations editor, integrated browser debugging, image carousel
+- **Extensibility**: Monorepo customizations discovery, URL handlers for plugins
+
+This is Microsoft's strategy in action: **make agents reliable through tooling, not model improvements**. They can't control when OpenAI or Anthropic ship better models, but they can control how agents interact with your codebase, how you debug failures, and how you sandbox third-party tools.
+
+The MCP sandboxing bet is particularly strategic. By supporting the protocol early and making it safe to use, Microsoft positions VS Code as the agent platform that "just works" with the growing MCP ecosystem. If MCP becomes the standard (and it's trending that way), VS Code gets first-mover advantage on integrations.
+
+## The Bottom Line
+
+Two weeks into the weekly release model, Microsoft has shipped integrated browser debugging, MCP server sandboxing, nested subagents, and a unified customizations editor — features that would've taken 2-3 monthly releases under the old model.
+
+The quality bar is holding. No half-baked features, no regressions, no "oops we broke Git" moments. Just incremental, focused improvements that make agents more reliable, more secure, and easier to customize.
+
+For developers, this means faster access to production-ready features. For enterprises, this means tighter QA cycles and more frequent compatibility testing. For the ecosystem, this means VS Code is iterating at the same pace as purpose-built agent IDEs like Cursor — without abandoning stability guarantees.
+
+The open question is sustainability. Can Microsoft maintain this pace for months without shipping breaking changes or degrading quality? Two weeks is too early to declare victory, but the trajectory looks good. If the quality bar holds through Q2 2026, VS Code's agent platform becomes significantly harder to compete with — not because of any single killer feature, but because the feedback loop from user request to shipped improvement compresses from months to days.
+
+That's the real advantage of weekly releases. And so far, Microsoft is executing.
