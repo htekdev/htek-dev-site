@@ -1,0 +1,86 @@
+---
+title: "Azure Weekly: Microsoft Goes All-In on Agentic Infrastructure"
+description: "Foundry Agent Service hits GA, Azure launches agentic modernization tools, and the cloud gets a database savings plan. Here's what shipped."
+pubDate: 2026-03-25
+tags: ["Azure", "AI", "DevOps", "Developer Experience"]
+draft: false
+---
+
+## What Shipped This Week
+
+Azure had a major week. Three significant announcements dropped that signal where Microsoft is placing its infrastructure bets: production-ready agentic frameworks, end-to-end modernization automation, and database cost optimization that finally mirrors what AWS has offered for months.
+
+If you're building on Azure—or evaluating whether to—this is the signal that matters.
+
+## Foundry Agent Service Hits GA with Private Networking
+
+On March 16, Microsoft [shipped Foundry Agent Service to general availability](https://devblogs.microsoft.com/foundry/foundry-agent-service-ga). This isn't a prototype tooling release. It's a production-grade agent runtime with the enterprise networking, auth, and observability that compliance-heavy orgs actually need.
+
+What's new:
+- **Responses API-based runtime**: Wire-compatible with OpenAI's Responses API, meaning you can swap models (DeepSeek, xAI, Meta) or orchestration frameworks (LangChain, LangGraph) without changing your agent's contract
+- **End-to-end private networking**: BYO VNet with no public egress. Agent traffic—including tool invocations to MCP servers, Azure AI Search, and Fabric data agents—stays inside your network boundary
+- **MCP authentication expansion**: Key-based, Entra Agent Identity, Managed Identity, and OAuth Identity Passthrough. The last one is critical—when users delegate their own credentials (OneDrive, Salesforce) to an agent, you want identity passthrough, not a shared service account
+- **Voice Live (preview)**: Fully managed real-time speech-to-speech runtime with semantic voice activity detection, barge-in support, and server-side noise suppression. No more stitching together STT → LLM → TTS with three latency hops
+- **Evaluations GA**: Out-of-the-box evaluators (coherence, relevance, groundedness) plus custom eval support. The real win is continuous production monitoring—Foundry samples live traffic, runs your eval suite, and surfaces degraded quality signals through Azure Monitor before your users notice
+
+The enterprise networking piece is the differentiator. If your data classification policies prohibit external routing of query content or retrieved documents, unmanaged network paths are a showstopper. Foundry now covers agent inference calls *and* tool connectivity under private networking—so retrieval and action surfaces sit inside your boundary.
+
+If you've been running agents in production and dealing with ad-hoc observability, fragmented auth, or public-internet-only tool calls, this is the platform layer you were building yourself.
+
+## Agentic Modernization: Azure Copilot Meets GitHub Copilot
+
+Microsoft [announced agentic modernization capabilities](https://azure.microsoft.com/en-us/blog/many-agents-one-team-scaling-modernization-on-azure/) that bridge the divide between infrastructure migration planning and application code transformation. Azure Copilot's migration agent (public preview) and GitHub Copilot's modernization agent (public preview) now work as a connected system.
+
+Here's what changes: Azure Copilot migration agent ingests GitHub Copilot's application code assessment reports. That means Azure's migration planning—landing zones, networking, governance, cost projections—now incorporates real code-level issues, warnings, and readiness signals. No more "we planned the infrastructure without knowing how the app would actually run."
+
+On the GitHub side, the modernization agent orchestrates multi-application transformation. It runs assessments across multiple repos, builds unique modernization plans per app, and executes automated framework and runtime upgrades. Developers stay in the loop to guide and validate, but the agent handles the orchestration at scale.
+
+Forrester's Q1 2026 survey found that 91% of IT leaders see application modernization as necessary for enabling AI advancements. The problem is that manual modernization planning takes months, and disconnected tools mean IT and developers work in parallel without a shared view. Microsoft's agentic approach collapses that timeline. One customer reduced total modernization effort by 70% using GitHub Copilot's .NET and Java upgrade capabilities that went GA last fall.
+
+What I appreciate here: Microsoft isn't positioning this as "agents replace your migration team." It's "agents automate the toil so your team can focus on decisions that actually matter." The human stays in control. The agent handles dependency mapping, plan generation, and execution—work that's tedious, error-prone, and doesn't require judgment.
+
+This is [agentic DevOps](/articles/agentic-devops-next-evolution-of-shift-left) in practice. The shift from "agent as a single-purpose tool" to "multi-agent orchestration across infrastructure and code."
+
+## Azure HorizonDB: PostgreSQL for Extreme Scale
+
+Microsoft introduced Azure HorizonDB (private preview), a cloud-native PostgreSQL service built for workloads that need extreme performance and scale. We're talking 3,072 vCores, 128 TB of auto-scaling storage, sub-millisecond multi-zone commit latencies, and up to 3x higher throughput than self-managed PostgreSQL.
+
+This is Microsoft's answer to enterprises leaving Oracle due to escalating licensing costs, performance bottlenecks, and inflexibility. [Apollo Hospitals migrated from Oracle to Azure Database for PostgreSQL](https://azure.microsoft.com/en-us/blog/from-legacy-to-leadership-how-postgresql-on-azure-powers-enterprise-agility-and-innovation/) and saw a 60% reduction in operational costs, 3x performance improvement, and 99.95% uptime. Deployment timelines dropped 40%.
+
+Microsoft also shipped an AI-assisted Oracle-to-PostgreSQL migration tool (preview) in the VS Code PostgreSQL extension. It's powered by GitHub Copilot and a multi-agent system that converts Oracle schemas, stored procedures, and application code (Java, .NET) to PostgreSQL-compatible syntax. The tool generates automated unit tests, runs post-conversion validation, and produces side-by-side comparisons.
+
+Why this matters: stored procedure conversion is one of the biggest barriers to Oracle migration. Enterprise apps often have thousands of PL/SQL functions that don't map cleanly to PostgreSQL. Manually rewriting and validating them is expensive and error-prone. Automating that with [context-aware AI](/articles/context-engineering-key-to-ai-development) removes the bottleneck.
+
+Azure HorizonDB is PostgreSQL-compatible, so you can start with Azure Database for PostgreSQL today and migrate to HorizonDB later if you need the scale. No replatforming. No application rewrites. That's the right migration path.
+
+## Azure Savings Plan for Databases
+
+On March 19, Microsoft [announced Savings Plan for Databases](https://cloudywithachanceoflicensing.com/2026/03/19/microsoft-announces-azure-savings-plan-for-databases/), a flexible commitment model that sits alongside Reserved Instances. Instead of committing to a specific service, region, or SKU, you commit to an hourly spend level that applies across Azure Database services.
+
+AWS launched their version in December 2025. Azure is catching up. The trade-off: Savings Plans offer lower discount rates than Reserved Instances, but you get flexibility when your database footprint changes—different engines, different regions, different SKUs.
+
+This is worth considering if you have predictable baseline database spend but your environment isn't static. If you're running multiple database engines or migrating between regions, Savings Plans unlock cost savings without the lock-in risk of RIs.
+
+## Developer Tooling Updates: Bicep and Azure Developer CLI
+
+Azure Bicep v0.41.2 shipped with the `bicep snapshot` command reaching GA. This generates a normalized snapshot of Bicep-defined resources that you can store and visually compare across deployments. It's useful for understanding how expressions are evaluated in complex templates and tracking infrastructure evolution over time.
+
+Azure Developer CLI (azd) released February updates with JMESPath query support for filtering JSON output, deployment slot support for Azure App Service, and `requiredAzdVersion` for extension compatibility. Small quality-of-life improvements, but they add up.
+
+## AKS: GPU Expansion and Flatcar Deprecation
+
+Azure Linux expanded GPU support to NVIDIA A100, H100, and H200 VMs. If you're running AI/ML workloads on AKS, you now have access to the latest NVIDIA hardware on a lightweight, Microsoft-managed Linux distro.
+
+Flatcar Container Linux for AKS (preview) is being retired on June 8, 2026. Existing node pools continue working until September 8, when AKS removes Flatcar images entirely. If you're using Flatcar, plan your migration to Azure Linux or another supported distro now.
+
+## What This Week Signals
+
+Microsoft is aligning its cloud infrastructure around production-grade agentic systems. Foundry Agent Service GA gives developers the enterprise networking and observability layer they need to ship agents without building their own platform. Agentic modernization connects Azure and GitHub Copilot into a single workflow that spans infrastructure and code. Azure HorizonDB positions PostgreSQL as the database for enterprises leaving Oracle.
+
+These aren't experimental features. They're production capabilities designed to handle compliance requirements, scale, and operational reality. If you've been waiting for Azure to mature its agent infrastructure, this is the inflection point.
+
+## The Bottom Line
+
+Azure is moving faster on agentic infrastructure than any other hyperscaler. Foundry Agent Service GA with private networking, MCP auth, and continuous evaluations gives you the platform layer you'd otherwise build yourself. Agentic modernization bridges the gap between infrastructure planning and code transformation—work that used to take months now takes minutes of conversation and a data-driven plan.
+
+If your team is evaluating where to build AI workloads, Azure just raised the bar on what "production-ready" means. The tooling is shipping. The migration paths are clear. The question isn't whether to adopt agentic infrastructure—it's whether you're ready to move this fast.
