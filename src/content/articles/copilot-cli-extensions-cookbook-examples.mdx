@@ -1,0 +1,949 @@
+---
+title: "Copilot CLI Extensions Cookbook: 15 Production-Ready Examples You Can Copy Today"
+description: "From security shields to CI status checkers — complete, working Copilot CLI extension examples organized by category. Copy, paste, reload, done."
+pubDate: 2026-03-25
+tags:
+  - GitHub Copilot
+  - AI
+  - Developer Experience
+  - Automation
+  - DevOps
+draft: false
+---
+
+I've been building Copilot CLI extensions for weeks now, and I keep discovering patterns I wish I'd had from day one. Not theory — actual working code that solves real problems. Every time I cracked a new pattern, I thought "someone should just publish a cookbook." So here it is.
+
+If you want the full architecture breakdown and API reference, check out the [complete guide](/articles/github-copilot-cli-extensions-complete-guide). This article is the companion cookbook — all code, all examples, ready to copy. No hand-waving, no pseudocode. Every snippet here is a complete, working extension you can drop into your project right now.
+
+The setup is the same for every example: create a file at `.github/extensions/<name>/extension.mjs` in your repo. The `@github/copilot-sdk` package is auto-resolved by the CLI runtime — no `npm install` needed. After creating or editing an extension, run `extensions_reload` in your session or type `/clear` to activate it. That's it. Let's build.
+
+## Governance Extensions
+
+These extensions enforce rules automatically. They intercept tool calls, block bad behavior, and keep the agent honest — all without you having to micromanage every prompt.
+
+### Example 1: Test Enforcer
+
+This is the extension I reach for first on every project. It tracks which source files the agent modifies and blocks `git commit` if any of those files don't have corresponding test changes. Simple concept, massive impact.
+
+```js
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const modifiedSourceFiles = new Set();
+const modifiedTestFiles = new Set();
+
+const TEST_PATTERNS = [
+  /\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/,
+  /test_.*\.py$/, /.*_test\.py$/,
+  /.*_test\.go$/, /.*Tests?\.cs$/,
+];
+const SOURCE_EXTENSIONS = /\.(ts|tsx|js|jsx|mjs|py|go|cs|java|rb)$/;
+const IGNORE_PATTERNS = [
+  /node_modules/, /\.git\//, /dist\//, /build\//,
+  /\.config\.[jt]s$/, /\.d\.ts$/,
+];
+
+function isTestFile(filePath) {
+  return TEST_PATTERNS.some((p) => p.test(filePath));
+}
+function isSourceFile(filePath) {
+  return SOURCE_EXTENSIONS.test(filePath)
+    && !isTestFile(filePath)
+    && !IGNORE_PATTERNS.some((p) => p.test(filePath));
+}
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onPostToolUse: async (input) => {
+      if (input.toolName === "edit" || input.toolName === "create") {
+        const filePath = String(input.toolArgs?.path || "");
+        if (isTestFile(filePath)) {
+          modifiedTestFiles.add(filePath);
+        } else if (isSourceFile(filePath)) {
+          modifiedSourceFiles.add(filePath);
+          return {
+            additionalContext:
+              `[test-enforcer] Source file modified: ${filePath}. ` +
+              `Remember: write or update tests before committing.`,
+          };
+        }
+      }
+    },
+    onPreToolUse: async (input) => {
+      if (input.toolName !== "powershell") return;
+      const cmd = String(input.toolArgs?.command || "");
+      if (!/\bgit\b.*\bcommit\b/.test(cmd)) return;
+
+      const untestedFiles = [...modifiedSourceFiles].filter((src) => {
+        const base = src.replace(/\.[^.]+$/, "");
+        return ![...modifiedTestFiles].some(
+          (t) => t.includes(base) || t.includes(base.split(/[\\/]/).pop())
+        );
+      });
+
+      if (untestedFiles.length > 0) {
+        return {
+          permissionDecision: "deny",
+          permissionDecisionReason:
+            `[test-enforcer] BLOCKED: Source files modified without tests:\n` +
+            untestedFiles.map((f) => `  - ${f}`).join("\n") +
+            `\n\nWrite or update tests for these files first.`,
+        };
+      }
+    },
+  },
+  tools: [],
+});
+```
+
+The key insight here is using two `Set` collections — one for source files, one for test files. The `onPostToolUse` hook catches every file edit in real time and categorizes it. When the agent tries to commit, the `onPreToolUse` hook compares the two sets and blocks if there's a mismatch. The matching logic is fuzzy by design: it checks if the test filename contains the source file's base name, which handles most naming conventions across languages.
+
+### Example 2: Security Shield
+
+This one runs on every project I touch. It blocks destructive shell commands, catches hardcoded secrets before they hit disk, and announces itself at session start so the agent knows the rules from the beginning.
+
+```js
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const DANGEROUS_COMMANDS = [
+  { pattern: /rm\s+-rf\s+\/(?!\w)/i, reason: "Recursive delete from root" },
+  { pattern: /Remove-Item\s+[A-Z]:\\\s*-Recurse/i, reason: "Recursive delete of drive root" },
+  { pattern: /DROP\s+(DATABASE|TABLE)\s/i, reason: "Destructive database operation" },
+  { pattern: /git\s+push\s+.*--force\s+(origin\s+)?(main|master|production)/i, reason: "Force push to protected branch" },
+  { pattern: /mkfs\./i, reason: "Filesystem format command" },
+];
+
+const SECRET_PATTERNS = [
+  { pattern: /(?:AKIA|ABIA|ACCA|ASIA)[0-9A-Z]{16}/g, type: "AWS Access Key" },
+  { pattern: /ghp_[a-zA-Z0-9]{36}/g, type: "GitHub PAT" },
+  { pattern: /gho_[a-zA-Z0-9]{36}/g, type: "GitHub OAuth Token" },
+  { pattern: /sk-[a-zA-Z0-9]{20}T3BlbkFJ[a-zA-Z0-9]{20}/g, type: "OpenAI API Key" },
+  { pattern: /xox[bpors]-[0-9]{10,13}-[a-zA-Z0-9-]+/g, type: "Slack Token" },
+  { pattern: /-----BEGIN (RSA |EC )?PRIVATE KEY-----/g, type: "Private Key" },
+  { pattern: /(?:password|passwd|pwd)\s*[:=]\s*["'][^"']{8,}["']/gi, type: "Hardcoded Password" },
+];
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onSessionStart: async () => ({
+      additionalContext:
+        "[repo-shield] Security extension active. " +
+        "Never hardcode secrets. Use environment variables for all credentials.",
+    }),
+    onPreToolUse: async (input) => {
+      if (input.toolName === "powershell") {
+        const cmd = String(input.toolArgs?.command || "");
+        for (const { pattern, reason } of DANGEROUS_COMMANDS) {
+          if (pattern.test(cmd)) {
+            return {
+              permissionDecision: "deny",
+              permissionDecisionReason: `[repo-shield] BLOCKED: ${reason}.\nCommand: ${cmd}`,
+            };
+          }
+        }
+      }
+
+      if (input.toolName === "create" || input.toolName === "edit") {
+        const content = String(input.toolArgs?.file_text || input.toolArgs?.new_str || "");
+        const detected = [];
+        for (const { pattern, type } of SECRET_PATTERNS) {
+          pattern.lastIndex = 0;
+          if (pattern.test(content)) detected.push(type);
+        }
+        if (detected.length > 0) {
+          return {
+            permissionDecision: "deny",
+            permissionDecisionReason:
+              `[repo-shield] BLOCKED: Potential secrets detected:\n` +
+              detected.map((s) => `  - ${s}`).join("\n") +
+              `\nUse environment variables instead.`,
+          };
+        }
+      }
+    },
+  },
+  tools: [],
+});
+```
+
+Two layers of defense in one extension. The command blocklist catches the obvious catastrophes — `rm -rf /`, force pushes to main, `DROP DATABASE`. The secret scanner runs regex patterns against every file write and blocks before the content ever reaches disk. The `onSessionStart` hook sets the tone by telling the agent "security is active, act accordingly." I've seen this single extension prevent three accidental secret leaks in one week.
+
+### Example 3: Architecture Enforcer
+
+Every codebase has import rules that nobody writes down. Controllers shouldn't import from the database layer. Shared modules shouldn't depend on route handlers. This extension makes those invisible rules visible — and enforceable.
+
+```js
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const BOUNDARY_RULES = [
+  { from: /^src\/controllers\//, cannotImport: /^src\/database\//, reason: "Controllers must not import directly from database layer. Use services instead." },
+  { from: /^src\/shared\//, cannotImport: /^src\/(controllers|routes)\//, reason: "Shared modules cannot depend on controllers or routes." },
+  { from: /^src\//, cannotImport: /^\.\.\/\.\.\//, reason: "Deep relative imports are not allowed. Use path aliases." },
+];
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onPostToolUse: async (input) => {
+      if (input.toolName !== "edit" && input.toolName !== "create") return;
+      const filePath = String(input.toolArgs?.path || "").replace(/\\/g, "/");
+      const content = String(input.toolArgs?.new_str || input.toolArgs?.file_text || "");
+
+      const imports = content.match(/(?:import|require)\s*\(?['"]([^'"]+)['"]\)?/g) || [];
+      const violations = [];
+
+      for (const rule of BOUNDARY_RULES) {
+        if (!rule.from.test(filePath)) continue;
+        for (const imp of imports) {
+          const target = imp.match(/['"]([^'"]+)['"]/)?.[1] || "";
+          if (rule.cannotImport.test(target)) {
+            violations.push(`${rule.reason} (import: ${target})`);
+          }
+        }
+      }
+
+      if (violations.length > 0) {
+        return {
+          additionalContext:
+            `[arch-enforcer] Architecture violations in ${filePath}:\n` +
+            violations.map((v) => `  ⚠ ${v}`).join("\n") +
+            `\nFix these before proceeding.`,
+        };
+      }
+    },
+  },
+  tools: [],
+});
+```
+
+This one uses `onPostToolUse` as an advisory check rather than a hard block. After the agent writes code, the extension scans for import statements that cross boundaries. It returns `additionalContext` so the agent sees the warnings and self-corrects on the next edit. Customize the `BOUNDARY_RULES` array for your project's module structure — the pattern is regex-based, so it adapts to any layout.
+
+## Developer Experience Extensions
+
+These extensions don't enforce rules — they make the agent smarter, faster, and more integrated with your workflow. Think of them as quality-of-life upgrades.
+
+### Example 4: Lint on Edit
+
+Why wait until the build to discover lint errors? This extension auto-detects your project's linter and runs it after every file edit, injecting results directly into the agent's context so it self-corrects immediately.
+
+```js
+import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const isWindows = process.platform === "win32";
+
+function findProjectRoot(startPath) {
+  let dir = dirname(startPath);
+  for (let i = 0; i < 10; i++) {
+    if (existsSync(resolve(dir, "package.json")) ||
+        existsSync(resolve(dir, "pyproject.toml")) ||
+        existsSync(resolve(dir, ".git"))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return process.cwd();
+}
+
+function detectLinter(filePath, projectRoot) {
+  const ext = filePath.match(/\.([^.]+)$/)?.[1];
+  if (["ts", "tsx", "js", "jsx", "mjs"].includes(ext)) {
+    if (existsSync(resolve(projectRoot, "eslint.config.mjs")) ||
+        existsSync(resolve(projectRoot, ".eslintrc.json"))) {
+      const npx = isWindows ? "npx.cmd" : "npx";
+      return { cmd: npx, args: ["eslint", "--no-error-on-unmatched-pattern", filePath] };
+    }
+  }
+  if (ext === "py") return { cmd: "ruff", args: ["check", filePath] };
+  if (ext === "cs") return { cmd: "dotnet", args: ["format", "--verify-no-changes", "--include", filePath] };
+  return null;
+}
+
+function runLinter(cmd, args, cwd) {
+  return new Promise((resolve) => {
+    execFile(cmd, args, { cwd, timeout: 30000 }, (err, stdout, stderr) => {
+      if (err) resolve(stdout || stderr || err.message);
+      else resolve(null);
+    });
+  });
+}
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onPostToolUse: async (input) => {
+      if (input.toolName !== "edit") return;
+      const filePath = String(input.toolArgs?.path || "");
+      if (!filePath) return;
+
+      const projectRoot = findProjectRoot(filePath);
+      const linter = detectLinter(filePath, projectRoot);
+      if (!linter) return;
+
+      const result = await runLinter(linter.cmd, linter.args, projectRoot);
+      if (result) {
+        return {
+          additionalContext: `[lint-on-edit] Issues in ${filePath}:\n${result}\nFix these before proceeding.`,
+        };
+      }
+    },
+  },
+  tools: [],
+});
+```
+
+The `detectLinter` function walks the project looking for config files — `eslint.config.mjs` for JavaScript/TypeScript, `ruff` for Python, `dotnet format` for C#. Add your own detection logic for Go (`golangci-lint`), Rust (`clippy`), or any language. The 30-second timeout prevents a stuck linter from blocking the session.
+
+### Example 5: Auto-Open in VS Code
+
+Small but delightful. Every time the agent creates or edits a file, it opens automatically in VS Code. You never have to hunt for what changed.
+
+```js
+import { exec } from "node:child_process";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+function openInEditor(filePath) {
+  exec(`code "${filePath}"`, () => {});
+}
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onPostToolUse: async (input) => {
+      if (input.toolName === "create" || input.toolName === "edit") {
+        const filePath = input.toolArgs?.path;
+        if (filePath) openInEditor(String(filePath));
+      }
+    },
+  },
+  tools: [],
+});
+
+await session.log("Auto-opener ready — files will open in VS Code");
+```
+
+Dead simple. The `exec` call fires asynchronously with an empty callback — we don't care about the result because VS Code handles its own errors gracefully. If you use a different editor, swap `code` for `cursor`, `subl`, `vim`, or whatever your CLI launcher is.
+
+### Example 6: Clipboard Copy Tool
+
+Sometimes the agent generates exactly what you need and you just want it on your clipboard. This extension adds a `copy_to_clipboard` tool the agent can use, plus it watches for the word "copy" in your prompts.
+
+```js
+import { execFile } from "node:child_process";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const isWindows = process.platform === "win32";
+
+function copyToClipboard(text) {
+  const cmd = isWindows ? "clip" : "pbcopy";
+  const proc = execFile(cmd, [], () => {});
+  proc.stdin.write(text);
+  proc.stdin.end();
+}
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onUserPromptSubmitted: async (input) => {
+      if (/\bcopy\b/i.test(input.prompt)) {
+        return {
+          additionalContext:
+            "[clipboard] The user wants content copied. Use the copy_to_clipboard tool for the relevant output.",
+        };
+      }
+    },
+  },
+  tools: [
+    {
+      name: "copy_to_clipboard",
+      description: "Copies text to the system clipboard",
+      parameters: {
+        type: "object",
+        properties: {
+          text: { type: "string", description: "Text to copy" },
+        },
+        required: ["text"],
+      },
+      handler: async (args) => {
+        return new Promise((resolve) => {
+          const proc = execFile(isWindows ? "clip" : "pbcopy", [], (err) => {
+            if (err) resolve(`Error: ${err.message}`);
+            else resolve("Copied to clipboard.");
+          });
+          proc.stdin.write(args.text);
+          proc.stdin.end();
+        });
+      },
+    },
+  ],
+});
+```
+
+The dual approach is intentional. The `onUserPromptSubmitted` hook injects context when it detects "copy" in the prompt, nudging the agent to use the tool. The tool itself handles the actual clipboard write through platform-native commands — `clip` on Windows, `pbcopy` on macOS. On Linux, swap in `xclip -selection clipboard`.
+
+### Example 7: Context Injector — Team Standards
+
+Every prompt the agent processes gets your team's coding standards injected into context. No more repeating "use 2-space indents" or "follow our error handling pattern" — the extension handles it automatically.
+
+```js
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+let teamStandards = "";
+
+const standardsPath = resolve(process.cwd(), ".github/CODING_STANDARDS.md");
+if (existsSync(standardsPath)) {
+  teamStandards = readFileSync(standardsPath, "utf-8");
+}
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onUserPromptSubmitted: async () => {
+      if (teamStandards) {
+        return {
+          additionalContext:
+            `[team-standards] Follow these coding standards:\n${teamStandards}`,
+        };
+      }
+    },
+  },
+  tools: [],
+});
+```
+
+Drop a `CODING_STANDARDS.md` file in your `.github/` directory and this extension does the rest. The standards are loaded once at startup and injected into every prompt via `onUserPromptSubmitted`. Keep the file concise — token limits are real, and you don't want your standards doc consuming half the context window.
+
+## Custom Tool Extensions
+
+Extensions aren't just hooks — they can register entirely new tools that the agent can call. This is where things get really powerful.
+
+### Example 8: GitHub PR Creator with UTF-8 Support
+
+If you've ever had the agent create a PR through PowerShell on Windows, you've probably hit encoding issues. Emojis turn into question marks, special characters get mangled. This extension solves it by writing PR bodies to temp files with explicit UTF-8 encoding.
+
+```js
+import { execFile } from "node:child_process";
+import { writeFileSync, unlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { randomBytes } from "node:crypto";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+function tempFile(content) {
+  const name = join(tmpdir(), `gh-pr-${randomBytes(6).toString("hex")}.md`);
+  writeFileSync(name, content, "utf-8");
+  return name;
+}
+
+function gh(args) {
+  return new Promise((resolve) => {
+    execFile("gh", args, { timeout: 30000 }, (err, stdout, stderr) => {
+      if (err) resolve(`Error: ${stderr || err.message}`);
+      else resolve(stdout.trim());
+    });
+  });
+}
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  tools: [
+    {
+      name: "create_github_pr",
+      description: "Create a GitHub pull request with proper UTF-8 encoding",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "PR title" },
+          body: { type: "string", description: "PR body in Markdown" },
+          base: { type: "string", description: "Base branch (default: repo default)" },
+          draft: { type: "boolean", description: "Create as draft PR" },
+          labels: { type: "string", description: "Comma-separated labels" },
+        },
+        required: ["title", "body"],
+      },
+      handler: async (args) => {
+        const bodyFile = tempFile(args.body);
+        const ghArgs = ["pr", "create", "--title", args.title, "--body-file", bodyFile];
+        if (args.base) ghArgs.push("--base", args.base);
+        if (args.draft) ghArgs.push("--draft");
+        if (args.labels) ghArgs.push("--label", args.labels);
+        try {
+          return await gh(ghArgs);
+        } finally {
+          try { unlinkSync(bodyFile); } catch {}
+        }
+      },
+    },
+    {
+      name: "edit_github_pr",
+      description: "Edit an existing PR's title and/or body",
+      parameters: {
+        type: "object",
+        properties: {
+          pr: { type: "string", description: "PR number or URL" },
+          title: { type: "string", description: "New PR title" },
+          body: { type: "string", description: "New PR body in Markdown" },
+        },
+        required: ["pr"],
+      },
+      handler: async (args) => {
+        const ghArgs = ["pr", "edit", args.pr];
+        if (args.title) ghArgs.push("--title", args.title);
+        if (args.body) {
+          const bodyFile = tempFile(args.body);
+          ghArgs.push("--body-file", bodyFile);
+          try { return await gh(ghArgs); }
+          finally { try { unlinkSync(bodyFile); } catch {} }
+        }
+        return await gh(ghArgs);
+      },
+    },
+  ],
+  hooks: {},
+});
+```
+
+The trick is `--body-file` instead of `--body`. By writing content to a temporary file with explicit `utf-8` encoding first, we bypass PowerShell's encoding pipeline entirely. The `finally` block ensures cleanup even if the `gh` command fails. I use this on every Windows project — it just works.
+
+### Example 9: API Integration Tools
+
+Custom tools can query external APIs, giving the agent access to information it wouldn't otherwise have. Here's one that checks npm package info and another that queries GitHub Actions status — both through the `gh` CLI.
+
+```js
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  tools: [
+    {
+      name: "check_npm_package",
+      description: "Check npm package info — latest version, description, weekly downloads",
+      parameters: {
+        type: "object",
+        properties: {
+          package: { type: "string", description: "npm package name" },
+        },
+        required: ["package"],
+      },
+      handler: async (args) => {
+        try {
+          const res = await fetch(`https://registry.npmjs.org/${args.package}`);
+          if (!res.ok) return `Package "${args.package}" not found (HTTP ${res.status})`;
+          const data = await res.json();
+          const latest = data["dist-tags"]?.latest || "unknown";
+          return [
+            `Package: ${data.name}`,
+            `Latest: ${latest}`,
+            `Description: ${data.description || "none"}`,
+            `License: ${data.license || "unknown"}`,
+            `Homepage: ${data.homepage || "none"}`,
+          ].join("\n");
+        } catch (err) {
+          return `Error fetching package info: ${err.message}`;
+        }
+      },
+    },
+    {
+      name: "check_github_actions_status",
+      description: "Check the latest GitHub Actions workflow run status for the current repo",
+      skipPermission: true,
+      parameters: {
+        type: "object",
+        properties: {
+          workflow: { type: "string", description: "Workflow filename (e.g., ci.yml)" },
+        },
+        required: ["workflow"],
+      },
+      handler: async (args) => {
+        const { execFile } = await import("node:child_process");
+        return new Promise((resolve) => {
+          execFile("gh", [
+            "run", "list", "--workflow", args.workflow,
+            "--limit", "3", "--json", "status,conclusion,headBranch,createdAt",
+          ], { timeout: 15000 }, (err, stdout) => {
+            if (err) resolve(`Error: ${err.message}`);
+            else resolve(stdout.trim() || "No runs found");
+          });
+        });
+      },
+    },
+  ],
+  hooks: {},
+});
+```
+
+The npm tool uses the public registry API — no auth needed for read-only queries. The Actions status tool uses `gh run list` with `--json` for structured output. Notice `skipPermission: true` on the Actions tool — that tells the CLI to run it without asking the user for confirmation, since it's a read-only operation.
+
+## Advanced Patterns
+
+These extensions push the boundaries of what's possible. They combine multiple hooks, react to external events, and handle edge cases that simpler extensions can't.
+
+### Example 10: Smart Error Recovery
+
+When tools fail, the default behavior is to show the error and stop. This extension adds configurable retry logic with per-context tracking — model call failures get 3 retries, tool execution failures get 2, and everything else gets skipped with a notification.
+
+```js
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const errorCounts = new Map();
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onErrorOccurred: async (input) => {
+      if (!input.recoverable) {
+        return {
+          errorHandling: "abort",
+          userNotification: `Unrecoverable error: ${input.error}`,
+        };
+      }
+
+      const key = input.errorContext;
+      const count = (errorCounts.get(key) || 0) + 1;
+      errorCounts.set(key, count);
+
+      if (input.errorContext === "model_call" && count <= 3) {
+        await session.log(`Model call failed (attempt ${count}/3), retrying...`, { level: "warning" });
+        return { errorHandling: "retry", retryCount: 3 };
+      }
+
+      if (input.errorContext === "tool_execution" && count <= 2) {
+        await session.log(`Tool execution failed (attempt ${count}/2), retrying...`, { level: "warning" });
+        return { errorHandling: "retry", retryCount: 2 };
+      }
+
+      return {
+        errorHandling: "skip",
+        userNotification: `Skipping after ${count} failures: ${input.error}`,
+      };
+    },
+  },
+  tools: [],
+});
+```
+
+The `errorCounts` map prevents infinite retry loops — each error context gets tracked independently. `model_call` errors (API timeouts, rate limits) get more retries because they're usually transient. `tool_execution` errors get fewer because they tend to be deterministic — if a tool failed twice, a third attempt probably won't help.
+
+### Example 11: File Change Detector
+
+This one watches the filesystem and detects when *you* manually edit files — as opposed to the agent's edits. When it spots a user-initiated change, it sends a prompt to the agent asking it to review.
+
+```js
+import { watch, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const agentEditPaths = new Set();
+const IGNORE = new Set(["node_modules", ".git", "dist", "build", ".next"]);
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {},
+  tools: [],
+});
+
+const cwd = process.cwd();
+
+session.on("tool.execution_start", (event) => {
+  if (event.data.toolName === "edit" || event.data.toolName === "create") {
+    const p = String(event.data.arguments?.path || "");
+    if (p) agentEditPaths.add(resolve(p));
+  }
+});
+
+session.on("tool.execution_complete", (event) => {
+  setTimeout(() => agentEditPaths.clear(), 3000);
+});
+
+const debounce = new Map();
+
+watch(cwd, { recursive: true }, (eventType, filename) => {
+  if (!filename || eventType !== "change") return;
+  if (filename.split(/[\\/]/).some((p) => IGNORE.has(p))) return;
+
+  if (debounce.has(filename)) clearTimeout(debounce.get(filename));
+  debounce.set(filename, setTimeout(() => {
+    debounce.delete(filename);
+    const fullPath = join(cwd, filename);
+    if (agentEditPaths.has(resolve(fullPath))) return;
+
+    try { if (!statSync(fullPath).isFile()) return; } catch { return; }
+    const relPath = relative(cwd, fullPath);
+    session.send({
+      prompt: `The user manually edited \`${relPath}\`. Review the changes.`,
+      attachments: [{ type: "file", path: fullPath }],
+    });
+  }, 500));
+});
+
+await session.log("File watcher active — user edits will be detected");
+```
+
+The critical piece is the `agentEditPaths` set. When the agent edits a file, the extension tracks it via the `tool.execution_start` event and clears it 3 seconds later. Any filesystem changes *not* in that set are assumed to be user edits. The 500ms debounce prevents duplicate notifications from editors that save in multiple steps.
+
+### Example 12: Plan.md Watcher
+
+Similar concept, but focused on the session plan file. When you edit `plan.md` manually — adding new tasks, reprioritizing, or crossing things off — this extension detects it and sends a prompt so the agent adapts to your changes.
+
+```js
+import { existsSync, watchFile, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const agentEdits = new Set();
+const recentAgentPaths = new Set();
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {},
+  tools: [],
+});
+
+const workspace = session.workspacePath;
+if (workspace) {
+  const planPath = join(workspace, "plan.md");
+  let lastContent = existsSync(planPath) ? readFileSync(planPath, "utf-8") : null;
+
+  session.on("tool.execution_start", (event) => {
+    if ((event.data.toolName === "edit" || event.data.toolName === "create")
+        && String(event.data.arguments?.path || "").endsWith("plan.md")) {
+      agentEdits.add(event.data.toolCallId);
+      recentAgentPaths.add(planPath);
+    }
+  });
+
+  session.on("tool.execution_complete", (event) => {
+    if (agentEdits.delete(event.data.toolCallId)) {
+      setTimeout(() => {
+        recentAgentPaths.delete(planPath);
+        lastContent = existsSync(planPath) ? readFileSync(planPath, "utf-8") : null;
+      }, 2000);
+    }
+  });
+
+  watchFile(planPath, { interval: 1000 }, () => {
+    if (recentAgentPaths.has(planPath) || agentEdits.size > 0) return;
+    const content = existsSync(planPath) ? readFileSync(planPath, "utf-8") : null;
+    if (content === lastContent) return;
+    const wasCreated = lastContent === null && content !== null;
+    lastContent = content;
+    if (content !== null) {
+      session.send({
+        prompt: `The plan was ${wasCreated ? "created" : "edited"} by the user. Review the changes.`,
+      });
+    }
+  });
+
+  await session.log("Plan watcher active");
+}
+```
+
+This uses `watchFile` with polling (1-second interval) instead of `fs.watch` because `watchFile` is more reliable for single-file monitoring across platforms. The `lastContent` comparison ensures we only trigger on actual content changes, not metadata updates.
+
+### Example 13: Result Redactor
+
+Tool outputs sometimes contain sensitive data — environment variable dumps, config files with credentials, API responses with tokens. This extension scans every tool result and strips secrets before the LLM processes them.
+
+```js
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const REDACT_PATTERNS = [
+  { pattern: /(?:AKIA|ABIA|ACCA|ASIA)[0-9A-Z]{16}/g, replacement: "[AWS_KEY_REDACTED]" },
+  { pattern: /ghp_[a-zA-Z0-9]{36}/g, replacement: "[GITHUB_TOKEN_REDACTED]" },
+  { pattern: /sk-[a-zA-Z0-9]{20}T3BlbkFJ[a-zA-Z0-9]{20}/g, replacement: "[OPENAI_KEY_REDACTED]" },
+  { pattern: /(?:password|passwd|pwd)\s*[:=]\s*["'][^"']+["']/gi, replacement: "[PASSWORD_REDACTED]" },
+  { pattern: /Bearer\s+[a-zA-Z0-9._-]{20,}/g, replacement: "Bearer [TOKEN_REDACTED]" },
+];
+
+function redact(text) {
+  if (typeof text !== "string") return { text, wasRedacted: false };
+  let result = text;
+  let wasRedacted = false;
+  for (const { pattern, replacement } of REDACT_PATTERNS) {
+    pattern.lastIndex = 0;
+    const replaced = result.replace(pattern, replacement);
+    if (replaced !== result) wasRedacted = true;
+    result = replaced;
+  }
+  return { text: result, wasRedacted };
+}
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onPostToolUse: async (input) => {
+      const resultStr = typeof input.toolResult === "string"
+        ? input.toolResult
+        : JSON.stringify(input.toolResult);
+      
+      const { text, wasRedacted } = redact(resultStr);
+      if (wasRedacted) {
+        await session.log("[redactor] Sensitive data removed from tool output", { level: "warning" });
+        return {
+          modifiedResult: { textResultForLlm: text, resultType: "success" },
+          additionalContext: "[redactor] Some values were redacted for security. Do not attempt to recover them.",
+        };
+      }
+    },
+  },
+  tools: [],
+});
+```
+
+The `modifiedResult` return value is the key — it replaces what the LLM sees without changing the actual tool output. The agent gets a sanitized version while the real data stays in the tool's execution log. This is defense-in-depth: even if the security shield misses something on write, the redactor catches it on read.
+
+### Example 14: Multi-Feature Extension — The Kitchen Sink
+
+Sometimes you want one extension that does a bit of everything — session stats, standard injection, command blocking, auto-open, error recovery. Here's the pattern for combining multiple concerns into a single cohesive extension.
+
+```js
+import { execFile, exec } from "node:child_process";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const isWindows = process.platform === "win32";
+let editCount = 0;
+let toolCallCount = 0;
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onSessionStart: async () => ({
+      additionalContext: "Team standards: 2-space indent, no console.log in production code, always handle errors.",
+    }),
+    onUserPromptSubmitted: async (input) => ({
+      additionalContext: `Session stats: ${editCount} files edited, ${toolCallCount} tool calls.`,
+    }),
+    onPreToolUse: async (input) => {
+      toolCallCount++;
+      if (input.toolName === "powershell") {
+        const cmd = String(input.toolArgs?.command || "");
+        if (/npm\s+publish/i.test(cmd)) {
+          return {
+            permissionDecision: "deny",
+            permissionDecisionReason: "Publishing is handled by CI/CD. Never publish manually.",
+          };
+        }
+      }
+    },
+    onPostToolUse: async (input) => {
+      if (input.toolName === "create" || input.toolName === "edit") {
+        editCount++;
+        const filePath = String(input.toolArgs?.path || "");
+        if (isWindows) exec(`code "${filePath}"`, () => {});
+        else execFile("code", [filePath], () => {});
+      }
+    },
+    onErrorOccurred: async (input) => {
+      if (input.recoverable && input.errorContext === "model_call") {
+        return { errorHandling: "retry", retryCount: 2 };
+      }
+    },
+  },
+  tools: [
+    {
+      name: "session_stats",
+      description: "Get current session statistics",
+      skipPermission: true,
+      parameters: { type: "object", properties: {} },
+      handler: async () => {
+        return `Files edited: ${editCount}\nTool calls: ${toolCallCount}`;
+      },
+    },
+  ],
+});
+
+session.on("session.shutdown", (event) => {
+  session.log(`Session complete: ${editCount} edits, ${toolCallCount} tool calls`);
+});
+
+await session.log("Kitchen sink extension loaded");
+```
+
+This demonstrates every extension capability in one file: `onSessionStart` for initial context, `onUserPromptSubmitted` for per-prompt injection, `onPreToolUse` for blocking, `onPostToolUse` for side effects, `onErrorOccurred` for recovery, a custom tool, and event listeners. In practice, I'd split these into separate focused extensions — but this is a great reference for seeing all the hooks working together.
+
+### Example 15: Keyword-Triggered Workflow Extension
+
+Sometimes you want specific workflows triggered by a keyword in the user's prompt — security audits, coverage analysis, or session summaries. Use `onUserPromptSubmitted` to detect keywords and `session.send()` to inject detailed follow-up prompts.
+
+```js
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const WORKFLOWS = [
+  {
+    keyword: /\bsecurity audit\b/i,
+    prompt:
+      "Run a security audit: check for hardcoded secrets, insecure dependencies, " +
+      "and common vulnerabilities in all files changed in this session. " +
+      "Report findings in a structured format.",
+  },
+  {
+    keyword: /\btest coverage\b/i,
+    prompt:
+      "Analyze the test coverage for all source files modified in this session. " +
+      "Identify any files missing tests and write tests for them.",
+  },
+  {
+    keyword: /\bsession summary\b/i,
+    prompt:
+      "Provide a detailed summary of everything accomplished in this session: " +
+      "files created, files edited, tests written, and any issues encountered.",
+  },
+];
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onUserPromptSubmitted: async (input) => {
+      for (const workflow of WORKFLOWS) {
+        if (workflow.keyword.test(input.prompt)) {
+          setTimeout(() => session.send({ prompt: workflow.prompt }), 0);
+          return {
+            additionalContext: `[workflows] Triggered workflow: ${workflow.keyword}. A detailed follow-up prompt is being sent.`,
+          };
+        }
+      }
+    },
+  },
+  tools: [],
+});
+
+await session.log("Workflow triggers active: 'security audit', 'test coverage', 'session summary'");
+```
+
+Each workflow is a structured prompt injection — when the user mentions "security audit", the extension sends a detailed, actionable prompt to the agent through `session.send()`. The `setTimeout` wrapper avoids the infinite-loop gotcha where `session.send()` retriggers `onUserPromptSubmitted`. The prompts are specific, not vague — "check for hardcoded secrets, insecure dependencies, and common vulnerabilities" gives the agent a clear checklist.
+
+## Building Your Own
+
+Every extension in this cookbook follows the same pattern. Here's the quick-start checklist:
+
+1. Create `.github/extensions/<name>/extension.mjs`
+2. Import from `@github/copilot-sdk/extension` — it's auto-resolved, no install needed
+3. Call `joinSession()` with your hooks and/or tools
+4. Run `extensions_reload` or `/clear` to activate
+5. Verify with `extensions_manage({ operation: "list" })` to confirm it loaded
+
+A few gotchas I've learned the hard way. **Don't use `console.log`** — the extension's stdout is a JSON-RPC channel. Use `session.log()` instead. **Tool names must be globally unique** across all extensions — if two extensions register a tool with the same name, the second one wins silently. **State resets on reload** — your `Set` collections, counters, and maps all start fresh when you run `extensions_reload`.
+
+These 15 examples cover the patterns I use most, but they're starting points. The real power comes from combining them and adapting them to your specific workflow. The [complete API guide](/articles/github-copilot-cli-extensions-complete-guide) has the full reference for every hook, event, and tool parameter. Start with one extension, prove the value, then layer on more as the patterns click.
+
+The extension ecosystem is still young, but the API surface is surprisingly capable. Every week I discover a new pattern that makes the agent meaningfully better at its job. The best part? These extensions survive across sessions, across repos, and across team members. Write it once, and every Copilot CLI session in that repo benefits from it.

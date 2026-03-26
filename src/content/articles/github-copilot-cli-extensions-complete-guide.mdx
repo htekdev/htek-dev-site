@@ -6,7 +6,7 @@ description: >-
   Copilot CLI extensions let you create custom tools, intercept every agent
   action, and hot-reload governance logic — all from a single .mjs file. Here's
   the complete guide.
-pubDate: 2026-03-14T00:00:00.000Z
+pubDate: 2026-03-26
 tags:
   - GitHub Copilot
   - AI
@@ -14,6 +14,7 @@ tags:
   - Software Architecture
   - DevOps
 draft: false
+updatedDate: 2026-03-25
 devto_id: 3353461
 devto_hash: 1518e521b5b2ff64
 hashnode_id: 69b631b37795ceb8f8fbaa92
@@ -259,7 +260,10 @@ const session = await joinSession({
         },
         required: ["title", "body"],
       },
-      handler: async (args) => {
+      handler: async (args, invocation) => {
+        // invocation.sessionId  — current session ID
+        // invocation.toolCallId — unique ID for this tool call
+        // invocation.toolName   — "create_pr"
         const bodyFile = tempFile(args.body);
         try {
           return await gh(["pr", "create", "--title", args.title,
@@ -273,7 +277,57 @@ const session = await joinSession({
 });
 ```
 
-The agent now has a `create_pr` tool. It shows up in the tool list. The agent decides when to use it. The JSON Schema parameters tell the LLM exactly what arguments are expected.
+The agent now has a `create_pr` tool. It shows up in the tool list. The agent decides when to use it. The JSON Schema parameters tell the LLM exactly what arguments are expected. Notice the `handler` receives a second `invocation` argument with metadata about the current call — the session ID, a unique tool call ID, and the tool name. This is invaluable for logging, tracing, and correlating tool executions across a session.
+
+### skipPermission — Trusted Tools
+
+By default, every custom tool triggers a user permission prompt before executing. For read-only or low-risk tools, that's unnecessary friction. The **`skipPermission`** flag (v1.0.5+) lets you mark a tool as trusted:
+
+```js
+{
+  name: "read_config",
+  description: "Read project configuration files",
+  skipPermission: true,
+  parameters: {
+    type: "object",
+    properties: {
+      configPath: { type: "string", description: "Path to config file" },
+    },
+    required: ["configPath"],
+  },
+  handler: async (args) => {
+    const content = readFileSync(args.configPath, "utf-8");
+    return content;
+  },
+}
+```
+
+No user prompt. The tool runs directly. Use this for tools that only read data or perform safe operations.
+
+### Return Types
+
+Tool handlers can return values in two ways:
+
+- **String** — treated as a successful text result. The agent sees it as tool output.
+- **Structured object** — gives you control over how the agent interprets the result:
+
+```js
+handler: async (args) => {
+  const result = await runSecurityScan(args.target);
+  if (result.vulnerabilities.length > 0) {
+    return {
+      textResultForLlm: `Found ${result.vulnerabilities.length} vulnerabilities:\n${result.details}`,
+      resultType: "failure",
+    };
+  }
+  return {
+    textResultForLlm: "Security scan passed — no vulnerabilities found.",
+    resultType: "success",
+  };
+}
+```
+
+The `resultType` field accepts `"success"`, `"failure"`, `"rejected"`, or `"denied"`. This tells the agent whether the tool completed normally or hit an issue, which influences how it plans its next action.
 
 You can build tools for anything: API calls, database queries, deployment triggers, clipboard operations, file watchers, CI status checks. If Node.js can do it, your extension can expose it as a tool.
 
@@ -344,15 +398,250 @@ After spending weeks with this system, here are the extensions I think every tea
 A few things I learned the hard way:
 
 - **stdout is reserved for JSON-RPC.** Use `session.log()` instead of `console.log()`. Writing to stdout corrupts the protocol and crashes the extension.
-- **Tool name collisions are fatal.** If two extensions register the same tool name, the second one fails to load entirely.
+- **Tool name collisions are fatal.** If two extensions register the same tool name, the second one fails to load entirely. Tool names must be **globally unique** across all extensions — plan your naming convention.
 - **Don't call `session.send()` synchronously from `onUserPromptSubmitted`.** You'll create an infinite loop. Use `setTimeout(() => session.send(...), 0)`.
 - **State resets on `/clear`.** Extensions are reloaded when the session clears. Any in-memory state (tracked files, counters) is lost.
 - **Only `.mjs` is supported.** No TypeScript yet. Write plain JavaScript with ES module syntax.
+- **Hook overwrite bug.** If multiple extensions register hooks, only the **last-loaded extension's hooks fire**. The others are silently overwritten. Workaround: designate one extension as your "hooks extension" and have the rest use tools and `session.on()` event listeners instead. See [#2076](https://github.com/github/copilot-cli/issues/2076) for the tracking issue.
+- **`onSessionStart` additionalContext may be silently ignored.** In CLI versions before v1.0.11, the `additionalContext` returned from `onSessionStart` was fire-and-forget — the hook completed but the context was never injected. This was fixed in v1.0.11. If your session start context isn't reaching the agent, check your CLI version.
+- **Tool name collisions across extensions are silent until load.** You won't get a warning until the second extension tries to register. Use a naming prefix per extension (e.g., `myext_tool_name`) to avoid collisions.
+
+## Session Events: Your Extension's Eyes and Ears
+
+The existing hooks — `onPreToolUse`, `onPostToolUse`, and friends — intercept the agent at specific lifecycle points. But hooks are about *control*: you block, modify, or inject. **Session events** are about *observation*: you subscribe to a stream of everything happening in the session and react however you want.
+
+The `session.on()` API gives you access to 10+ event types. Here's the complete catalog:
+
+| Event Type | Key Data Fields | When It Fires |
+|---|---|---|
+| `assistant.message` | `content`, `messageId`, `toolRequests` | Agent produces a response |
+| `assistant.turn_start` | `turnId` | Agent begins a new turn |
+| `assistant.streaming_delta` | `totalResponseSizeBytes` | Each streaming chunk (ephemeral) |
+| `tool.execution_start` | `toolCallId`, `toolName`, `arguments` | Tool begins executing |
+| `tool.execution_complete` | `toolCallId`, `toolName`, `success`, `result`, `error` | Tool finishes |
+| `user.message` | `content`, `attachments`, `source` | User sends a message |
+| `session.idle` | `backgroundTasks` | Session waiting for input |
+| `session.error` | `errorType`, `message`, `stack` | Unhandled error occurs |
+| `session.shutdown` | `shutdownType`, `totalPremiumRequests`, `codeChanges` | Session ending |
+| `permission.requested` | `requestId`, `permissionRequest.kind` | Permission prompt shown |
+
+Here's how you subscribe:
+
+```js
+session.on("assistant.message", (event) => {
+  console.error(`Agent said: ${event.data.content.substring(0, 100)}...`);
+  if (event.data.toolRequests?.length > 0) {
+    console.error(`Requesting tools: ${event.data.toolRequests.map(t => t.name).join(", ")}`);
+  }
+});
+
+session.on("tool.execution_start", (event) => {
+  console.error(`[TOOL START] ${event.data.toolName} (${event.data.toolCallId})`);
+});
+
+session.on("tool.execution_complete", (event) => {
+  const status = event.data.success ? "✓" : "✗";
+  console.error(`[TOOL ${status}] ${event.data.toolName}`);
+  if (event.data.error) {
+    console.error(`  Error: ${event.data.error}`);
+  }
+});
+
+session.on("user.message", (event) => {
+  console.error(`User: ${event.data.content}`);
+  if (event.data.attachments?.length) {
+    console.error(`  Attachments: ${event.data.attachments.length}`);
+  }
+});
+
+session.on("session.shutdown", (event) => {
+  console.error(`Session ending (${event.data.shutdownType}). Premium requests: ${event.data.totalPremiumRequests}`);
+});
+```
+
+Every `session.on()` call returns an **unsubscribe function**, so you can clean up listeners when you no longer need them:
+
+```js
+const unsub = session.on("tool.execution_complete", (event) => {
+  if (event.data.toolName === "powershell") {
+    recordShellExecution(event.data);
+  }
+});
+
+// Later, when you no longer need this listener:
+unsub();
+```
+
+And if you want to see *everything* — pass a handler without an event type to listen to all events:
+
+```js
+session.on((event) => {
+  console.error(`[${event.type}] ${JSON.stringify(event.data).substring(0, 200)}`);
+});
+```
+
+This wildcard subscription is useful for building session recorders, audit logs, or debugging extensions during development. I use it heavily when building new extensions — it's the fastest way to understand what the CLI is doing at every step.
+
+The key insight: **hooks are for control, events are for observation.** Use `onPreToolUse` to block a dangerous command. Use `session.on("tool.execution_complete")` to log every command that ran. They complement each other, and the best extensions use both.
+
+## UI Elicitation: Structured Dialogs
+
+Sometimes an extension needs structured input from the user — not a free-text chat message, but a specific set of fields with types, validation, and defaults. **UI elicitation** (v1.0.5+) lets you present a structured dialog:
+
+```js
+const result = await session.ui.elicitation({
+  title: "Deploy to Production?",
+  description: "This will deploy the current branch to production. Please confirm the details.",
+  fields: [
+    {
+      name: "environment",
+      type: "select",
+      label: "Target Environment",
+      options: ["staging", "production"],
+      required: true,
+    },
+    {
+      name: "runTests",
+      type: "boolean",
+      label: "Run full test suite first",
+      default: true,
+    },
+    {
+      name: "changeDescription",
+      type: "string",
+      label: "Change description for the deploy log",
+      required: true,
+    },
+  ],
+});
+
+if (result.confirmed && result.values.environment === "production") {
+  if (result.values.runTests) {
+    await session.send({ prompt: "Run the full test suite. If all tests pass, proceed with deployment." });
+  }
+  await triggerDeployment(result.values);
+  await session.log(`Deployed to ${result.values.environment}: ${result.values.changeDescription}`);
+} else {
+  await session.log("Deployment cancelled by user.");
+}
+```
+
+The `result` object tells you whether the user confirmed or cancelled, and the `values` map contains their responses keyed by field name. Field types include `string`, `boolean`, and `select` (dropdown).
+
+This is a massive improvement over the old pattern of parsing free-text answers. Instead of the agent asking "which environment?" and hoping the user types something parseable, you present a proper form with constrained inputs. I use this in my deployment extensions — the structured input eliminates the "I accidentally deployed to prod because the agent misread my message" failure mode.
+
+## Permission and Input Handlers
+
+The `approveAll` import is convenient for development, but production extensions need granular permission control. The `onPermissionRequest` callback lets you write **custom permission logic** that evaluates each request:
+
+```js
+const session = await joinSession({
+  onPermissionRequest: async (request) => {
+    if (request.kind === "shell") {
+      const cmd = request.fullCommandText || "";
+      // Allow read-only commands, deny destructive ones
+      if (/^(cat|ls|find|grep|git\s+(status|log|diff))\b/.test(cmd)) {
+        return { kind: "approved" };
+      }
+      if (/\b(rm|del|format|mkfs)\b/.test(cmd)) {
+        return { kind: "denied-by-rules" };
+      }
+      // Everything else — ask the user
+      return { kind: "ask-user" };
+    }
+    if (request.kind === "write") {
+      return { kind: "approved" };
+    }
+    return { kind: "denied-by-rules" };
+  },
+  onUserInputRequest: async (request) => {
+    // Handle the agent's ask_user questions programmatically
+    // Useful for CI environments where no human is present
+    if (request.question?.includes("proceed")) {
+      return { answer: "yes", wasFreeform: false };
+    }
+    return { answer: "skip", wasFreeform: false };
+  },
+  tools: [],
+  hooks: {},
+});
+```
+
+The `onPermissionRequest` handler receives a `request` with a `kind` field (`"shell"`, `"write"`, `"read"`, etc.) and returns one of three decisions:
+
+- **`approved`** — tool executes immediately, no user prompt
+- **`denied-by-rules`** — tool is blocked, agent sees denial reason
+- **`ask-user`** — falls through to the standard user confirmation prompt
+
+The `onUserInputRequest` handler is equally powerful. When the agent uses `ask_user` to pose a question (like "Should I proceed with the refactor?"), your extension can intercept and answer programmatically. This is critical for **headless CI/CD environments** where no human is watching the terminal. Instead of the session hanging on a prompt, your handler provides the answer automatically.
+
+## Extension Management Commands
+
+The CLI includes built-in commands for managing extensions during a session (v1.0.5+). These are the commands I use constantly:
+
+```
+/extensions list           — Show all installed extensions and their status
+/extensions enable <name>  — Enable a specific extension
+/extensions disable <name> — Disable an extension without removing the files
+/extensions reload         — Hot-reload all active extensions
+/extensions info <name>    — Show extension details: registered tools, hooks, commands
+```
+
+The `/extensions disable` command is particularly useful during development. If an extension is misbehaving — crashing on every tool call, injecting bad context, or creating infinite loops — you can disable it without deleting the code. Fix the issue, then `/extensions enable` it again.
+
+`/extensions info` shows you exactly what an extension registered: tool names, hook types, and event subscriptions. When debugging "why isn't my hook firing?" — this is the first place to check. If the hooks aren't listed, the extension didn't register them (or another extension [overwrote them](#the-gotchas)).
+
+## The Multi-Language SDK
+
+Everything I've shown so far uses JavaScript, but the Copilot SDK isn't limited to Node.js. The SDK is available in **four languages**:
+
+| Language | Install | Import |
+|---|---|---|
+| **JavaScript/Node.js** | Auto-resolved by CLI | `import { joinSession } from "@github/copilot-sdk/extension"` |
+| **Python** | `pip install github-copilot-sdk` | `from copilot_sdk.extension import join_session` |
+| **Go** | `go get github.com/github/copilot-sdk/go` | `copilot.JoinSession(opts)` |
+| **.NET** | `dotnet add package GitHub.Copilot.SDK` | `using GitHub.Copilot.SDK` |
+
+All four SDKs communicate over the same **JSON-RPC protocol**. The wire format is identical — the CLI doesn't care what language your extension is written in. The API surface is the same: tools, hooks, events, messaging. The naming follows each language's idiomatic conventions (`joinSession` in JS, `join_session` in Python, `JoinSession` in Go and C#).
+
+This means your extension can be written in whatever language your team is strongest in. Building a Python extension that wraps a PyTorch model for code analysis? Go for it. A Go extension that talks to your internal gRPC services with near-zero latency? Absolutely. A .NET extension for teams already deep in the Microsoft ecosystem? Makes sense.
+
+The JavaScript SDK has the most mature documentation since it's the primary path, but the others are fully functional and share the same release cycle.
+
+## Known Bugs and Workarounds
+
+The extension system is powerful but still maturing. Here are the real bugs I've hit in production, with workarounds:
+
+### Hook Overwrite Bug
+
+**The issue:** If multiple extensions register hooks, only the **last-loaded** extension's hooks actually fire. The others are silently overwritten. There's no error, no warning — your `onPreToolUse` hook simply never executes.
+
+**Why it happens:** The CLI stores hooks in a single map keyed by hook type. Each extension registration overwrites the previous entry instead of chaining handlers.
+
+**Workaround:** Designate one extension as your "hooks extension" — the single source of truth for `onPreToolUse`, `onPostToolUse`, `onSessionStart`, etc. All other extensions should use **tools** and **`session.on()` event listeners** instead of hooks. This is the most reliable architecture until the bug is fixed.
+
+**Tracking:** [github/copilot-cli#2076](https://github.com/github/copilot-cli/issues/2076)
+
+### onSessionStart Context Silently Dropped
+
+**The issue:** In CLI versions before v1.0.11, the `additionalContext` returned from `onSessionStart` was fire-and-forget. The hook executed, your string was returned, and the CLI threw it away. The agent never saw your injected context.
+
+**Workaround:** Update to CLI v1.0.11 or later. If you're stuck on an older version, move your startup context injection to `onUserPromptSubmitted` instead — it fires on the first user message and the context injection works reliably there.
+
+**Tracking:** [github/copilot-cli#2142](https://github.com/github/copilot-cli/issues/2142)
+
+### Extension Load Order is Undefined
+
+**The issue:** The order in which extensions are discovered and loaded from `.github/extensions/` is not guaranteed. Combined with the hook overwrite bug, this means which extension's hooks actually fire can change between sessions.
+
+**Workaround:** Don't rely on load order. Use the "one hooks extension" pattern. If you need guaranteed ordering, consolidate related hooks into a single extension.
 
 ## The Bottom Line
 
-[Agent harnesses](/articles/agent-harnesses-controlling-ai-agents-2026) are how you control AI agents in production. Copilot CLI extensions give you a harness-level control surface *inside the CLI itself* — custom tools, lifecycle hooks, event streams, and programmatic messaging, all in a single `.mjs` file that hot-reloads mid-session.
+[Agent harnesses](/articles/agent-harnesses-controlling-ai-agents-2026) are how you control AI agents in production. Copilot CLI extensions give you a harness-level control surface *inside the CLI itself* — custom tools, lifecycle hooks, event streams, structured UI dialogs, and programmatic messaging, all in a single `.mjs` file that hot-reloads mid-session.
 
 Claude Code hooks are a great start — shell commands that fire at lifecycle points. But Copilot CLI extensions are playing a different game. You're not scripting around the agent. You're extending the agent harness with persistent processes that participate in the loop, modify arguments, rewrite prompts, and make permission decisions with structured data.
+
+What excites me most is the trajectory. In the few months since I first reverse-engineered this system, the SDK has added UI elicitation dialogs, multi-language SDKs (Python, Go, .NET), and improved event granularity. The extension surface is growing fast — and with multi-language support, teams aren't locked into JavaScript anymore. If you want to see these capabilities in action, I put together [the full cookbook with 10+ production-ready examples](/articles/copilot-cli-extensions-cookbook-examples) covering everything from secret scanners to deployment gates.
 
 The fact that this exists with essentially zero public documentation is genuinely shocking to me. This is the most powerful developer extensibility surface I've seen in any AI coding tool — and almost nobody knows it's there. Now you do.
