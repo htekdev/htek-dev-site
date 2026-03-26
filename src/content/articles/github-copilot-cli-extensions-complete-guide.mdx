@@ -368,7 +368,7 @@ const response = await session.sendAndWait(
 );
 ```
 
-This is what enables self-healing workflows. Your extension can watch for test failures, send the agent a message to fix them, wait for the response, and verify the fix — all programmatically.
+This is what enables self-healing workflows. Your extension can watch for test failures, send the agent a message to fix them, wait for the response, and verify the fix — all programmatically. The most powerful pattern I've found is the **REPL loop**: listen for `session.idle`, run your validation (tests, lint, build), and if it fails, `session.send()` the failures back to the agent. It keeps looping until everything passes or hits a max iteration limit. I have a [full working example in the cookbook](/articles/copilot-cli-extensions-cookbook-examples).
 
 ## The Hot Reload Workflow
 

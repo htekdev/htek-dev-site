@@ -1,7 +1,5 @@
 ---
-title: >-
-  Copilot CLI Extensions Cookbook: 15 Production-Ready Examples You Can Copy
-  Today
+title: "Copilot CLI Extensions Cookbook: 16 Production-Ready Examples You Can Copy Today"
 description: >-
   From security shields to CI status checkers — complete, working Copilot CLI
   extension examples organized by category. Copy, paste, reload, done.
@@ -940,6 +938,102 @@ await session.log("Workflow triggers active: 'security audit', 'test coverage', 
 
 Each workflow is a structured prompt injection — when the user mentions "security audit", the extension sends a detailed, actionable prompt to the agent through `session.send()`. The `setTimeout` wrapper avoids the infinite-loop gotcha where `session.send()` retriggers `onUserPromptSubmitted`. The prompts are specific, not vague — "check for hardcoded secrets, insecure dependencies, and common vulnerabilities" gives the agent a clear checklist.
 
+### Example 16: The REPL Loop — Self-Healing Until Green
+
+This is the pattern that changed how I think about agentic development. The idea is simple: when the agent finishes a turn, check if a condition is met (tests pass, lint is clean, build succeeds). If not, **send the agent back to work**. The extension becomes a REPL loop — Read the result, Evaluate the condition, Print the feedback, Loop until done.
+
+```js
+import { execFile } from "node:child_process";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+const isWindows = process.platform === "win32";
+let loopEnabled = false;
+let loopCount = 0;
+const MAX_LOOPS = 5;
+
+function runCommand(cmd, args, cwd) {
+  return new Promise((resolve) => {
+    execFile(cmd, args, { cwd, timeout: 120000 }, (err, stdout, stderr) => {
+      resolve({
+        success: !err,
+        output: (stdout || "") + (stderr || ""),
+        exitCode: err?.code ?? 0,
+      });
+    });
+  });
+}
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onUserPromptSubmitted: async (input) => {
+      if (/\b(fix|implement|refactor|write|update|change)\b/i.test(input.prompt)) {
+        loopEnabled = true;
+        loopCount = 0;
+        return {
+          additionalContext:
+            "[repl-loop] Self-healing mode active. After you finish, " +
+            "I'll run the test suite. If tests fail, I'll send you " +
+            "back the failures to fix. Max " + MAX_LOOPS + " iterations.",
+        };
+      }
+    },
+  },
+  tools: [],
+});
+
+session.on("session.idle", async () => {
+  if (!loopEnabled) return;
+
+  loopCount++;
+  if (loopCount > MAX_LOOPS) {
+    loopEnabled = false;
+    await session.log(
+      `[repl-loop] Max iterations (${MAX_LOOPS}) reached. Stopping.`,
+      { level: "warning" }
+    );
+    return;
+  }
+
+  await session.log(
+    `[repl-loop] Iteration ${loopCount}/${MAX_LOOPS} — running tests...`,
+    { ephemeral: true }
+  );
+
+  const shell = isWindows ? "powershell" : "bash";
+  const shellArgs = isWindows
+    ? ["-NoProfile", "-Command", "npm test 2>&1"]
+    : ["-c", "npm test 2>&1"];
+
+  const result = await runCommand(shell, shellArgs, process.cwd());
+
+  if (result.success) {
+    loopEnabled = false;
+    await session.log(
+      `[repl-loop] All tests passing after ${loopCount} iteration(s).`
+    );
+    return;
+  }
+
+  const failureOutput = result.output.slice(-2000);
+  await session.send({
+    prompt:
+      `Tests failed (iteration ${loopCount}/${MAX_LOOPS}). ` +
+      `Fix the failures and try again. Here's the output:\n\n` +
+      "```\n" + failureOutput + "\n```",
+  });
+});
+
+await session.log("[repl-loop] Self-healing loop ready");
+```
+
+The magic is `session.on("session.idle")`. This event fires every time the agent finishes a turn and has nothing left to do. The extension checks if it's in loop mode, runs the test suite, and if tests fail, sends the failures right back to the agent as a new message. The agent reads the test output, fixes the code, finishes its turn, and `session.idle` fires again. Rinse and repeat.
+
+The `MAX_LOOPS` guard is critical — without it, a genuinely broken test could spin the agent forever. Five iterations is usually enough. If the agent can't fix it in five tries, a human needs to look.
+
+You can swap `npm test` for any validation: `npm run lint`, `npm run build`, `go vet ./...`, `pytest`, a curl health check — anything with a pass/fail exit code. I've used this pattern to get the agent to write a feature, run the tests, fix failures, re-run, and ship — all from a single prompt.
+
 ## Building Your Own
 
 Every extension in this cookbook follows the same pattern. Here's the quick-start checklist:
@@ -952,6 +1046,6 @@ Every extension in this cookbook follows the same pattern. Here's the quick-star
 
 A few gotchas I've learned the hard way. **Don't use `console.log`** — the extension's stdout is a JSON-RPC channel. Use `session.log()` instead. **Tool names must be globally unique** across all extensions — if two extensions register a tool with the same name, the second one wins silently. **State resets on reload** — your `Set` collections, counters, and maps all start fresh when you run `extensions_reload`.
 
-These 15 examples cover the patterns I use most, but they're starting points. The real power comes from combining them and adapting them to your specific workflow. The [complete API guide](/articles/github-copilot-cli-extensions-complete-guide) has the full reference for every hook, event, and tool parameter. Start with one extension, prove the value, then layer on more as the patterns click.
+These 16 examples cover the patterns I use most, but they're starting points. The real power comes from combining them and adapting them to your specific workflow. The [complete API guide](/articles/github-copilot-cli-extensions-complete-guide) has the full reference for every hook, event, and tool parameter. Start with one extension, prove the value, then layer on more as the patterns click.
 
 The extension ecosystem is still young, but the API surface is surprisingly capable. Every week I discover a new pattern that makes the agent meaningfully better at its job. The best part? These extensions survive across sessions, across repos, and across team members. Write it once, and every Copilot CLI session in that repo benefits from it.
