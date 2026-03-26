@@ -486,47 +486,39 @@ The key insight: **hooks are for control, events are for observation.** Use `onP
 
 ## UI Elicitation: Structured Dialogs
 
-Sometimes an extension needs structured input from the user — not a free-text chat message, but a specific set of fields with types, validation, and defaults. **UI elicitation** (v1.0.5+) lets you present a structured dialog:
+Sometimes an extension needs structured input from the user — not a free-text chat message, but a specific set of fields with types, validation, and defaults. **UI elicitation** lets you present a structured form via `session.rpc.ui.elicitation()`:
 
 ```js
-const result = await session.ui.elicitation({
-  title: "Deploy to Production?",
-  description: "This will deploy the current branch to production. Please confirm the details.",
-  fields: [
-    {
-      name: "environment",
-      type: "select",
-      label: "Target Environment",
-      options: ["staging", "production"],
-      required: true,
+const result = await session.rpc.ui.elicitation({
+  message: "Deploy to production? Please confirm the details below.",
+  requestedSchema: {
+    type: "object",
+    properties: {
+      environment: {
+        type: "string",
+        title: "Target Environment",
+        enum: ["staging", "production"],
+        default: "staging",
+      },
+      changeDescription: {
+        type: "string",
+        title: "Change description for the deploy log",
+        description: "Briefly describe what's being deployed",
+      },
     },
-    {
-      name: "runTests",
-      type: "boolean",
-      label: "Run full test suite first",
-      default: true,
-    },
-    {
-      name: "changeDescription",
-      type: "string",
-      label: "Change description for the deploy log",
-      required: true,
-    },
-  ],
+  },
 });
 
-if (result.confirmed && result.values.environment === "production") {
-  if (result.values.runTests) {
-    await session.send({ prompt: "Run the full test suite. If all tests pass, proceed with deployment." });
-  }
-  await triggerDeployment(result.values);
-  await session.log(`Deployed to ${result.values.environment}: ${result.values.changeDescription}`);
-} else {
+if (result.action === "accept" && result.content?.environment === "production") {
+  await session.send({ prompt: "Run the full test suite. If all tests pass, proceed with deployment." });
+  await triggerDeployment(result.content);
+  await session.log(`Deployed to ${result.content.environment}: ${result.content.changeDescription}`);
+} else if (result.action === "decline" || result.action === "cancel") {
   await session.log("Deployment cancelled by user.");
 }
 ```
 
-The `result` object tells you whether the user confirmed or cancelled, and the `values` map contains their responses keyed by field name. Field types include `string`, `boolean`, and `select` (dropdown).
+The `result.action` is `"accept"`, `"decline"`, or `"cancel"`. When accepted, `result.content` contains the form values keyed by field name. The `requestedSchema` uses standard **JSON Schema** — the same format the agent's `ask_user` tool uses — so if you've defined form fields there, the pattern is identical.
 
 This is a massive improvement over the old pattern of parsing free-text answers. Instead of the agent asking "which environment?" and hoping the user types something parseable, you present a proper form with constrained inputs. I use this in my deployment extensions — the structured input eliminates the "I accidentally deployed to prod because the agent misread my message" failure mode.
 
