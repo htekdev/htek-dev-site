@@ -583,22 +583,20 @@ The `/extensions disable` command is particularly useful during development. If 
 
 `/extensions info` shows you exactly what an extension registered: tool names, hook types, and event subscriptions. When debugging "why isn't my hook firing?" — this is the first place to check. If the hooks aren't listed, the extension didn't register them (or another extension [overwrote them](#the-gotchas)).
 
-## The Multi-Language SDK
+## The Copilot SDK Beyond Extensions
 
-Everything I've shown so far uses JavaScript, but the Copilot SDK isn't limited to Node.js. The SDK is available in **four languages**:
+Everything in this article uses the `@github/copilot-sdk/extension` import — the extension mode that attaches to a running CLI session. But the same [Copilot SDK](https://github.com/github/copilot-sdk) also has a **standalone mode** for embedding Copilot's agent runtime directly into your own applications. And that mode is available in **four languages**:
 
-| Language | Install | Import |
+| Language | Install | Entry Point |
 |---|---|---|
-| **JavaScript/Node.js** | Auto-resolved by CLI | `import { joinSession } from "@github/copilot-sdk/extension"` |
-| **Python** | `pip install github-copilot-sdk` | `from copilot_sdk.extension import join_session` |
-| **Go** | `go get github.com/github/copilot-sdk/go` | `copilot.JoinSession(opts)` |
-| **.NET** | `dotnet add package GitHub.Copilot.SDK` | `using GitHub.Copilot.SDK` |
+| **JavaScript/Node.js** | `npm install @github/copilot-sdk` | `new CopilotClient()` |
+| **Python** | `pip install github-copilot-sdk` | `CopilotClient()` |
+| **Go** | `go get github.com/github/copilot-sdk/go` | `copilot.NewClient()` |
+| **.NET** | `dotnet add package GitHub.Copilot.SDK` | `new CopilotClient()` |
 
-All four SDKs communicate over the same **JSON-RPC protocol**. The wire format is identical — the CLI doesn't care what language your extension is written in. The API surface is the same: tools, hooks, events, messaging. The naming follows each language's idiomatic conventions (`joinSession` in JS, `join_session` in Python, `JoinSession` in Go and C#).
+**Important distinction:** these multi-language SDKs are for building **standalone applications** that spawn and control a Copilot CLI server process. They use `CopilotClient` to create sessions, send messages, and register tools. This is different from `.github/extensions/`, which must be `.mjs` files using `joinSession()` — the CLI only forks Node.js processes for extensions.
 
-This means your extension can be written in whatever language your team is strongest in. Building a Python extension that wraps a PyTorch model for code analysis? Go for it. A Go extension that talks to your internal gRPC services with near-zero latency? Absolutely. A .NET extension for teams already deep in the Microsoft ecosystem? Makes sense.
-
-The JavaScript SDK has the most mature documentation since it's the primary path, but the others are fully functional and share the same release cycle.
+All four SDKs communicate over the same JSON-RPC protocol, so the concepts (tools, hooks, events, messaging) translate directly. If you've mastered extensions, you already understand the SDK's API surface — you'd just use `CopilotClient` instead of `joinSession()` and manage the CLI process lifecycle yourself.
 
 ## Known Bugs and Workarounds
 
