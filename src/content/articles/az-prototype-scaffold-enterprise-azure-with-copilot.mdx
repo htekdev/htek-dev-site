@@ -1,7 +1,7 @@
 ---
 title: az prototype — Scaffold Enterprise Azure Solutions with Copilot
 description: >-
-  az prototype is a new Azure CLI extension that uses an 11-agent AI team to
+  az prototype is a new Azure CLI extension that uses a 12-agent AI team to
   take you from idea to deployed Azure infrastructure in four commands. Here's
   what it can do and why enterprise teams should pay attention.
 pubDate: 2026-03-23T00:00:00.000Z
@@ -31,7 +31,7 @@ az prototype build
 az prototype deploy
 ```
 
-That's not a toy demo. Behind those four commands is an 11-agent AI team, support for three AI providers (GitHub Copilot, GitHub Models, Azure OpenAI), enterprise-grade naming conventions, Infrastructure as Code generation in Terraform or Bicep, and policy-enforced security scanning before anything touches your subscription. If you work in enterprise cloud or partner solution delivery, this matters.
+That's not a toy demo. Behind those four commands is a 12-agent AI team, support for three AI providers (GitHub Copilot, GitHub Models, Azure OpenAI), enterprise-grade naming conventions, Infrastructure as Code generation in Terraform or Bicep, and policy-enforced security scanning before anything touches your subscription. If you work in enterprise cloud or partner solution delivery, this matters.
 
 ## What's Actually Happening Under the Hood
 
@@ -39,7 +39,7 @@ The extension was created by [Joshua Davis](https://github.com/a11smiles/), and 
 
 The [GitHub repository](https://github.com/Azure/az-prototype) describes it plainly: "rapid Azure prototype generation powered by AI agent teams." The key phrase is *agent teams*. This isn't a single model being asked to write Terraform. It's a multi-agent workflow where specialized agents collaborate across distinct phases of the prototyping lifecycle.
 
-### The 11 Built-In Agents
+### The 12 Built-In Agents
 
 Each agent has a defined role and operates as a specialized persona within the pipeline:
 
@@ -56,6 +56,7 @@ Each agent has a defined role and operates as a specialized persona within the p
 | `project-manager` | Coordination | Scope management and task assignment |
 | `security-reviewer` | Security | Pre-deployment IaC security scanning |
 | `monitoring-agent` | Observability | Monitoring and alerting configuration |
+| `governor` | Governance | Policy enforcement across all stages |
 
 This is the architecture that makes the tool genuinely useful for enterprise teams rather than just demos. A single model asked "build me a secure Azure data pipeline" will produce something that looks right but misses governance, skips cost analysis, and leaves monitoring as an afterthought. An agent team that routes design through an architect, security through a dedicated reviewer, and cost through an analyst produces something you can actually defend in an architecture review board.
 
@@ -226,8 +227,52 @@ az prototype deploy
 
 The command reference is in the [COMMANDS.md](https://github.com/Azure/az-prototype/blob/main/COMMANDS.md) file in the repo. The lab repository from [Arturo Quiroga](https://github.com/Arturo-Quiroga-MSFT/az-prototype-lab) has hands-on examples and additional scenarios including a VS Code integration and an MCP server wrapper that exposes 16 CLI tools for programmatic access.
 
+## Update: v0.2.1b5 and v0.2.1b6
+
+The preview builds have been moving fast. Here's what's landed since the initial article.
+
+### The Governor Agent
+
+The agent roster grew from 11 to 12 with the addition of a dedicated `governor` agent. This one's important. Previously, governance policies were enforced by weaving constraints into each agent's system prompt — which worked, but meant governance was distributed and implicit. The governor centralizes policy enforcement into a single agent that oversees the entire pipeline.
+
+This is the right architectural move. In enterprise environments, "every agent is responsible for governance" means no agent is. A dedicated governor creates an explicit control point — the same pattern that makes architecture review boards effective in traditional orgs. One agent owns the policy stance; every other agent can focus on its domain.
+
+### Neural Embeddings for Governance Policies
+
+This is the change I'm most excited about from a [context engineering](/articles/context-engineering-key-to-ai-development) perspective.
+
+The governance policies in `az prototype` previously consumed approximately 40KB of request context. That's a massive chunk of your context window burned on policy text — and GitHub Copilot doesn't have built-in embedding support, so there was no obvious way to reduce it.
+
+The solution: generate neural embeddings of governance policies at build-time, then have the governor agent retrieve only the relevant policies for each request. The result? Policy context dropped from ~40KB to ~1-2KB per request. And because the governor is now passing *relevant* policy instead of *all* policy, result quality actually improved.
+
+This is a textbook context engineering win. The constraint wasn't "we need more context window" — it was "we need *better* context." Smaller, more targeted context beats larger, noisier context every time. If you're building multi-agent systems and haven't thought about embedding your governance artifacts, this should be the example that convinces you.
+
+### PRU Tracking
+
+Token usage was already displayed in the TUI, but v0.2.1b6 adds PRU (Premium Request Unit) tracking based on model multipliers. If you're running this on a GitHub Copilot Business or Enterprise license, PRU consumption is the number your finance team cares about — not raw token counts. Having it visible during prototyping means no surprise bills and better capacity planning.
+
+### Debug Mode
+
+Set `DEBUG_PROTOTYPE=true` as an environment variable and you'll get a verbose debug log written to your project's home folder. Simple, but essential for troubleshooting agent behavior and improving output quality. When an agent produces unexpected results, the debug log tells you exactly what context it received and what decisions it made.
+
+### Backlog and Spec Kit Enrichment (v0.2.1b5)
+
+The `generate backlog` command now produces full Azure DevOps-aligned work items with proper hierarchy: Feature → User Story → Task. It also includes a Production Readiness epic — acknowledging that prototypes aren't done when they "work," they're done when they're production-ready. This is the kind of opinionated default that separates enterprise tooling from toy demos.
+
+Similarly, `generate speckit` now produces enriched outputs using spec-kit-specific templates: `constitution.md`, `spec.md`, `plan.md`, and `tasks.md`. These aren't generic documents — they're structured artifacts designed to survive an architecture review.
+
+### JSON Output and TUI Improvements
+
+All 24 commands now support a `--json` flag for machine-readable output. This is table stakes for automation and CI/CD integration, but it's also how you compose `az prototype` into larger agentic workflows — pipe JSON output into downstream agents or dashboards.
+
+The TUI also received multiple fixes and improvements for a smoother interactive experience.
+
+### Hardening Progress
+
+Test coverage (what the team calls "hardening") increased from 24% to 32%, with the full design stage now complete. Stable release is still tracking for next week. The incremental approach is the right one — hardening a 12-agent pipeline isn't something you rush.
+
 ## The Bottom Line
 
-`az prototype` is what happens when you take multi-agent AI seriously and point it at a real enterprise workflow instead of a toy demo. The four-stage pipeline, 11-agent team, built-in naming strategies, and provider flexibility aren't complexity for its own sake — they're the direct result of running this workflow with actual enterprise customers and learning what matters.
+`az prototype` is what happens when you take multi-agent AI seriously and point it at a real enterprise workflow instead of a toy demo. The four-stage pipeline, 12-agent team, built-in naming strategies, and provider flexibility aren't complexity for its own sake — they're the direct result of running this workflow with actual enterprise customers and learning what matters.
 
-I've written about [how agentic DevOps changes the engineering process](/articles/agentic-devops-next-evolution-of-shift-left) and [why context engineering is the foundational skill for AI-assisted work](/articles/context-engineering-key-to-ai-development). `az prototype` is a concrete answer to the question: what does that look like in practice, for Azure, at enterprise scale? The answer is four commands and eleven agents. Try it.
+I've written about [how agentic DevOps changes the engineering process](/articles/agentic-devops-next-evolution-of-shift-left) and [why context engineering is the foundational skill for AI-assisted work](/articles/context-engineering-key-to-ai-development). `az prototype` is a concrete answer to the question: what does that look like in practice, for Azure, at enterprise scale? The answer is four commands and twelve agents. Try it.
