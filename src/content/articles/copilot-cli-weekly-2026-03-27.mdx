@@ -1,0 +1,57 @@
+---
+title: "Copilot CLI Weekly: MCP Servers Get LLM Access"
+description: "Three releases this week brought MCP sampling, a redesigned model picker, and 28 stability fixes. The CLI is becoming a platform."
+pubDate: 2026-03-27
+tags: ["GitHub Copilot", "Developer Experience", "AI", "Open Source"]
+draft: false
+---
+
+## MCP Sampling Lands in v1.0.13-0
+
+The most significant change this week is buried in a prerelease tag: **MCP servers can now request LLM inference**. [Version 1.0.13-0](https://github.com/github/copilot-cli/releases/tag/v1.0.13-0), released today, adds sampling support to the Model Context Protocol implementation. MCP servers can call the user's LLM through a permission prompt, eliminating the need for servers to maintain their own API subscriptions.
+
+This is a shift in how MCP servers work. Before this, an MCP server was a tool provider — it exposed functions the agent could call, but it couldn't reason on its own. Now, with sampling, an MCP server can delegate reasoning back to the user's LLM mid-execution. A recipe generator can ask the LLM to format output. A code analysis server can ask for natural language summaries. The user approves each request via a review prompt, maintaining control over what their LLM processes.
+
+The feature has been in the MCP spec since [VS Code shipped it last summer](https://github.com/microsoft/vscode/issues/244162), but adoption has been slow. Copilot CLI supporting it means the entire GitHub-integrated toolchain now has access to this capability. If you're building MCP servers, you can now lean on the user's model instead of spinning up your own inference backend.
+
+## Model Picker Gets a Full Redesign
+
+[Version 1.0.12](https://github.com/github/copilot-cli/releases/tag/v1.0.12) landed March 26 with 28 improvements and fixes, but the UX standout is the **full-screen model picker with inline reasoning effort controls**. Previously, selecting a model and adjusting reasoning effort were separate steps. Now, the picker opens in full-screen mode, and you adjust reasoning effort with arrow keys (`←` / `→`) while browsing models.
+
+The picker also reorganizes models into three tabs: **Available**, **Blocked/Disabled**, and **Upgrade**. This solves the confusion around which models are accessible based on your plan and organization policy. If you're on a free tier and wondering why you can't select opus-4.6, the picker now tells you explicitly instead of silently blocking the selection.
+
+The reasoning effort level also displays in the header next to the model name (e.g., `claude-sonnet-4.5 (high)`), so you always know your current configuration without running a command.
+
+## Organization Policy Enforcement and Memory Fixes
+
+v1.0.12 also included critical stability work. The CLI no longer crashes with out-of-memory errors when shell commands produce high-volume output — a real problem when running builds or test suites that generate megabytes of logs. Memory usage improvements extend to the grep tool, which now handles large files without exhausting available RAM.
+
+[Version 1.0.11](https://github.com/github/copilot-cli/releases/tag/v1.0.11), released March 23, brought **organization-level policy enforcement for third-party MCP servers**. If your organization uses an MCP allowlist, that policy now applies universally. Blocked servers no longer show up in `/mcp show`, and the CLI displays a warning when policy blocks a server from loading. This matters for enterprise deployments where security teams need to audit what external tools can access organizational data.
+
+## Skills Directory Alignment and Hook Improvements
+
+v1.0.11 also aligned the personal skills directory with VS Code's GitHub Copilot for Agents extension. The CLI now discovers skills in `~/.agents/skills/`, matching the default used by the VS Code extension. If you've been maintaining separate skill directories for the CLI and the extension, you can consolidate them.
+
+Extension hooks from multiple extensions now merge instead of overwriting each other. Previously, if two extensions defined a `sessionStart` hook, only one would fire. Now, both execute, and the `additionalContext` from `sessionStart` hooks is injected into the conversation. That's critical for [building custom agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents) that layer multiple extension behaviors.
+
+## The `/yolo` Command Gets More Precise
+
+The `/allow-all` command (aliased as `/yolo`) now supports subcommands: `/yolo on`, `/yolo off`, and `/yolo show`. This replaces the previous toggle behavior with explicit enable/disable semantics, reducing the risk of accidentally leaving permission-free mode enabled. The CLI also persists `/yolo` path permissions across `/clear` session resets, so you don't have to re-approve directories after clearing context.
+
+## What Else Shipped
+
+The other notable fixes from v1.0.12:
+
+- **Workspace MCP servers** defined in `.mcp.json` now load correctly when your working directory is the git root
+- **Sessions with active work** are no longer cleaned up by the stale session reaper (a frustrating bug if you left a session idle mid-task)
+- **Resume session** now correctly restores your previously selected custom agent
+- **Clipboard copy** works on Windows even when a non-system `clip.exe` is in `PATH`
+- **Emoji selection** in the terminal now works correctly (yes, this matters)
+
+Version 1.0.13-0 added a handful of additional fixes, including correct reasoning effort handling for Bring Your Own Model (BYOM) providers and better error messaging when using classic Personal Access Tokens.
+
+## The Platform Is Taking Shape
+
+Three releases in seven days, with one major capability (MCP sampling), a redesigned model picker, enterprise policy enforcement, and dozens of stability fixes. The pattern I've been tracking since [the biggest week yet](/articles/copilot-cli-biggest-week-yet) continues: this isn't a standalone tool anymore. It's a platform. MCP servers can now request inference, extensions can inject context into subagents, and the SDK keeps expanding with hooks and custom commands.
+
+The CLI is becoming the runtime for a growing ecosystem of agent tooling. If you're building developer tools and haven't looked at integrating with it, this is the week that makes the case.
