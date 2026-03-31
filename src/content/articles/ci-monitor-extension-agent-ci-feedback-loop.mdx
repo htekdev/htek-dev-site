@@ -1,0 +1,727 @@
+---
+title: "I Built a CI Monitor That Let Me Walk Away From My Terminal"
+description: "A Copilot CLI extension that closes the loop between agent sessions and CI/CD pipelines. Say what you want, walk away, get notified. My role shifted from babysitter to reviewer."
+pubDate: 2026-03-31
+tags:
+  - GitHub Copilot
+  - DevOps
+  - AI
+  - Automation
+  - Developer Experience
+draft: false
+---
+
+## The Problem: I Was the Middleman
+
+I was deploying [OpenClaw](https://docs.openclaw.ai/) with [OpenShell sandboxing](https://docs.openclaw.ai/gateway/sandboxing#openshell-backend) to an EC2 instance — Terraform, GitHub Actions, the whole stack. The Copilot CLI agent was doing the heavy lifting: writing Terraform configs, bash scripts, workflow YAML, pushing code. But every time it pushed, the workflow broke. And here was my job:
+
+1. Watch the agent push
+2. Switch to the browser
+3. Open the GitHub Actions tab
+4. Wait for the workflow to finish
+5. Read the logs to figure out what failed
+6. Switch back to the terminal
+7. Paste the relevant error into the session
+8. Watch the agent fix it and push again
+9. Go back to step 2
+
+I did this **fifteen times** in a single session. Seventy-eight turns. I wasn't engineering. I was a human webhook — copying CI output from one screen to another.
+
+The agent had every capability it needed to fix these failures. It could read logs, reason about bash errors, modify Terraform configs, update workflows. The only thing it couldn't do was **see the CI results**. That was my job. And it was the worst part of the entire workflow.
+
+## What I Actually Wanted
+
+The experience I wanted was simple:
+
+1. **Tell the agent what I want** — "deploy OpenClaw with OpenShell sandboxing on the POC environment"
+2. **Walk away** — go get coffee, work on something else, whatever
+3. **Get notified when CI finishes** — pass or fail, with enough detail for the agent to act
+4. **If it failed, the agent fixes it and pushes again** — I don't even need to be there
+5. **If it passed, I review the actual deployment** — health checks, is the bot responding, does the integration work
+6. **Leave feedback as PR comments** — "the bot isn't responding to Telegram messages" or "sandbox execution is timing out"
+7. **That feedback routes back into the session** — the agent picks it up and iterates
+
+My role shifts from **babysitting CI** to **reviewing quality**. I'm not debugging deployment scripts. I'm testing whether the deployed thing actually works and telling the agent what to improve. That's the job I want.
+
+## The Solution: A Copilot CLI Extension
+
+[Copilot CLI extensions](/articles/github-copilot-cli-extensions-complete-guide) can hook into agent tool calls, run background processes, and send messages back into the session. I built one called `ci-monitor` that does exactly three things:
+
+**After a push:** intercept the `git push` event, start watching CI via [`gh pr checks --watch`](https://cli.github.com/manual/gh_pr_checks), and block until all checks complete. No polling loop — the `gh` CLI handles that natively.
+
+**When CI finishes:** send the result directly into the session. If checks passed, include deployment details — health checks, verification status, the Actions run URL. If checks failed, include the failed job logs so the agent can diagnose and fix without me.
+
+**After deployment:** poll for new PR comments every 60 seconds. When I leave feedback on the PR — or when a downstream system posts a comment — the extension relays it into the session as a new message.
+
+That's it. The extension is one file (`.github/extensions/ci-monitor/extension.mjs`) that lives in the repo and loads automatically in every Copilot CLI session.
+
+## What This Actually Looked Like
+
+Here's the real output from the session. After the agent pushed a fix:
+
+```
+🚀 CI watch started for PR #27
+```
+
+I walked away. A few minutes later, the session received:
+
+```
+✅ CI PASSED — all 1 check(s) succeeded.
+
+--- VM Deployment Details ---
+✅ Deploy **SUCCESS**
+
+  Health Checks:
+    ✅ PASS: Bootstrap completed
+    ✅ PASS: OpenShell container running
+    ✅ PASS: OpenClaw gateway reachable
+    ✅ PASS: Telegram channel connected
+
+  Verification: **PASSED**
+```
+
+And when it failed — which it did, eight times — the agent got the logs automatically:
+
+```
+❌ CI FAILED — 1 check(s) failed, 0 passed.
+
+  ❌ Deploy (poc): FAILURE
+
+--- Failed Job Logs ---
+### Deploy (poc) / Deploy (poc)
+>>> Running OpenClaw host setup...
+  Waiting for OpenShell gateway to be ready...
+  WARNING: Gateway status unclear, continuing anyway...
+  openclaw onboard failed with exit code 1
+```
+
+The agent read that, identified that the `onboard` command was failing because the gateway hadn't started yet, added `--gateway-bind loopback --flow quickstart` flags, and pushed again. I didn't touch anything. The next notification was a green check.
+
+## The Feedback Loop That Changed Everything
+
+The real unlock wasn't CI monitoring — it was **PR comment polling**. After the POC deployed successfully, I had a Telegram bot running on the VM. I'd message the bot, test it, and when something was wrong, I'd leave a comment on the PR:
+
+> "Bot isn't responding to tool execution requests — sandbox seems misconfigured"
+
+The extension picked that up and sent it into the session:
+
+```
+💬 New comment on PR #27 from **@htekdev**:
+Bot isn't responding to tool execution requests — sandbox seems misconfigured
+```
+
+The agent investigated, found the sandbox config was pointing to the wrong backend, fixed it, pushed, and the cycle started again — automatically. I was testing the deployed product and giving feedback. The agent was fixing issues and redeploying. We were working in parallel with the PR as the shared surface.
+
+This is the workflow I actually wanted:
+
+```
+  ┌──────────────────────────────────────────────────┐
+  │                                                  │
+  │  "Fix the sandbox config"  ──►  Agent pushes     │
+  │                                    │              │
+  │                              CI runs (I walk away)│
+  │                                    │              │
+  │                              Extension sends      │
+  │                              results to session   │
+  │                                    │              │
+  │                         ┌──────────┴──────────┐   │
+  │                         │                     │   │
+  │                      ❌ Fail              ✅ Pass  │
+  │                      Agent fixes          I test   │
+  │                      and pushes           deployed │
+  │                         │                 thing    │
+  │                         │                     │   │
+  │                         └──────────┬──────────┘   │
+  │                                    │              │
+  │                         I leave PR comment        │
+  │                         with feedback             │
+  │                                    │              │
+  │                         Extension relays          │
+  │                         comment to session        │
+  │                                    │              │
+  │                         Agent iterates            │
+  │                                    │              │
+  └────────────────────────────────────┘              │
+                                                      │
+```
+
+## How It Works (The Short Version)
+
+The extension uses three [Copilot SDK](https://github.com/github/copilot-sdk) primitives:
+
+**`onPostToolUse` hook** — fires after every tool call. The extension watches for `git push` commands and `create_pr` calls. When it sees one, it kicks off background monitoring.
+
+**`gh pr checks --watch`** — the GitHub CLI's built-in command that blocks until all PR checks complete. No custom polling interval. The CLI handles it, exits 0 for all-pass, non-zero otherwise.
+
+**`session.send()`** — sends a message back into the active session. This is how CI results arrive as if someone typed them in. The agent processes them like any other input.
+
+```js
+// The core pattern — three lines that close the loop
+onPostToolUse: async (input) => {
+  if (/\bgit\b.*\bpush\b/i.test(input.toolArgs?.command)) {
+    startMonitoring(cwd, (msg) => {
+      session.send({ prompt: msg });  // CI result → session
+    });
+  }
+}
+```
+
+When checks fail, the extension fetches the last 3,000 characters of each failed job's log via `gh run view --log-failed`. Enough context to diagnose without flooding the context window.
+
+When checks pass and there's a `deploy.yml` workflow, the extension fetches the deploy run log and extracts a structured summary (the workflow emits it between `---DEPLOY-SUMMARY-START---` / `---DEPLOY-SUMMARY-END---` markers). That's how health checks, verification status, and deployment details show up in the session.
+
+The full extension is about 580 lines. It also registers a `check_ci_status` tool so the agent can poll CI on demand, and it auto-starts monitoring if you're already on a PR branch when the extension loads. The complete source lives at `.github/extensions/ci-monitor/extension.mjs` and loads automatically in any Copilot CLI session in the repo.
+
+## The Extension Evolved Mid-Session
+
+One of the best things about [CLI extensions](/articles/copilot-cli-extensions-cookbook-examples) is that they hot-reload. You edit the file, run `extensions_reload`, and the new behavior is active immediately. During the 78-turn session, the extension itself improved three times:
+
+**Wrong branch.** The extension was fetching the latest deploy run globally instead of filtering by current branch. It reported a different branch's deploy status. Fix: add `--branch` to the `gh run list` query. Caught and fixed in the same session.
+
+**Structured summaries.** Instead of parsing individual log lines for IP addresses and instance IDs (brittle), I asked the agent to add summary markers to the deploy workflow and extract the block. Both the workflow and extension were updated in one pass.
+
+**Clean output.** The early version prefixed everything with `[ci-monitor]`. One instruction — "just use emoji" — and the noise disappeared. `[ci-monitor] CI PASSED` became `✅ CI PASSED`.
+
+The feedback loop for improving the feedback loop was itself instant.
+
+## What Actually Changed
+
+Before this extension, I was the bottleneck. Every CI failure required my attention, my context switch, my copy-paste. The agent was blocked waiting for me to relay information.
+
+After: the agent operates in a closed loop. Push → CI → results → fix → push. I step in when the deployment is actually working and my job is to **evaluate quality** — does the bot respond? Is the sandbox executing tools correctly? Is the latency acceptable? When something's wrong, I leave a PR comment describing what I observed, and the agent gets it.
+
+In the 78-turn session, the agent handled eight deployment failures and fixed them autonomously. The failures ranged from missing CLI flags to `set -euo pipefail` edge cases to systemd service configuration. Each time, the CI logs gave the agent enough context to diagnose and fix without me. My actual contributions were higher-level: "the bot isn't responding," "we need more disk space," "remove the pre-warm step, it's not worth the complexity."
+
+That's the shift. Not from "developer" to "prompt engineer." From **CI babysitter** to **quality reviewer**.
+
+## The Bigger Picture
+
+GitHub describes [Continuous AI](https://github.blog/ai-and-ml/generative-ai/continuous-ai-in-practice-what-developers-can-automate-today-with-agentic-ci/) as "background agents that operate in your repository the way CI jobs do, but for tasks that require reasoning instead of rules." That's the direction. But most agentic development today still has a gap: the agent writes code, CI runs, and then... silence. Nobody tells the agent what happened.
+
+The `ci-monitor` extension closes that gap with no infrastructure, no webhooks, no external services. One JavaScript file that uses `gh` CLI commands and the Copilot SDK. It turns the agent session from a one-way code generator into a participant in the full delivery cycle.
+
+The pattern isn't specific to CI. Any background process whose results the agent needs — security scans, performance benchmarks, integration tests, deployment health — can follow the same shape: hook the trigger, wait for completion, send results back via `session.send()`.
+
+If you want the foundations for building extensions like this, I covered the full API in the [Copilot CLI extensions complete guide](/articles/github-copilot-cli-extensions-complete-guide) and published 16 working examples in the [extensions cookbook](/articles/copilot-cli-extensions-cookbook-examples).
+
+## Build Your Own: The Full Extension + A Prompt to Get Started
+
+The complete `ci-monitor` extension source is hosted here: [`ci-monitor-extension.mjs`](/code/ci-monitor-extension.mjs).
+
+If you want this for your project, paste this into a GitHub Copilot CLI session:
+
+```
+Follow the following prompt https://htek.dev/prompts/ci-monitor-extension.md
+```
+
+The agent will fetch the prompt, read your workflows, and generate a `ci-monitor` extension adapted to your project's pipeline. This uses the [Copilot SDK](https://github.com/github/copilot-sdk) extension system — it's specific to GitHub Copilot CLI.
+
+<details>
+<summary>Full extension source (click to expand)</summary>
+
+```js
+// Extension: ci-monitor
+// Monitors PR CI checks after push/PR creation, reports status + VM deployment
+// details back to the session regardless of success or failure.
+// Uses `gh pr checks --watch` to efficiently wait for check completion.
+
+import { execFile } from "node:child_process";
+import { approveAll } from "@github/copilot-sdk";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+let _session = null;
+
+function log(msg, level = "info") {
+  console.error(`[ci-monitor] ${msg}`);
+}
+
+function runGh(args, cwd, timeoutMs = 30_000) {
+  log(`gh ${args.join(" ")}`);
+  return new Promise((resolve, reject) => {
+    execFile("gh", args, { cwd, timeout: timeoutMs }, (err, stdout, stderr) => {
+      if (err) {
+        log(`gh command failed: ${stderr || err.message}`);
+        reject(new Error(stderr || err.message));
+      } else {
+        resolve(stdout.trim());
+      }
+    });
+  });
+}
+
+function getRepoRoot() {
+  return new Promise((resolve) => {
+    execFile("git", ["rev-parse", "--show-toplevel"], { timeout: 5_000 },
+      (err, stdout) => {
+        resolve(err ? process.cwd() : stdout.trim());
+      });
+  });
+}
+
+async function getPrNumber(cwd) {
+  try {
+    const result = await runGh(
+      ["pr", "view", "--json", "number", "--jq", ".number"], cwd
+    );
+    return result || null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Check status (uses --watch to block until all checks complete) ──
+
+async function waitForChecks(cwd, requirePending = false) {
+  log("Waiting for checks to appear before starting --watch...");
+
+  for (let i = 0; i < 120; i++) {
+    const checks = await getCheckResults(cwd);
+    if (checks && checks.length > 0) {
+      const pending = checks.filter(
+        (c) => c.state === "PENDING" || c.state === "QUEUED"
+              || c.state === "IN_PROGRESS"
+      );
+      if (pending.length > 0) {
+        log(`${checks.length} check(s) found, ${pending.length} pending`);
+        break;
+      }
+      if (requirePending) {
+        log(`All completed — waiting for new run (attempt ${i + 1}/120)...`);
+        await new Promise((r) => setTimeout(r, 30_000));
+        continue;
+      }
+      log(`${checks.length} check(s) found — starting --watch`);
+      break;
+    }
+    if (i === 119) {
+      log("No checks appeared after 1 hour — aborting", "warning");
+      return false;
+    }
+    log(`No checks yet, retrying in 30s (attempt ${i + 1}/120)...`);
+    await new Promise((r) => setTimeout(r, 30_000));
+  }
+
+  log("Running gh pr checks --watch...");
+  try {
+    await runGh(
+      ["pr", "checks", "--watch", "--interval", "15"],
+      cwd, 35 * 60 * 1000
+    );
+    log("All checks passed (--watch exited 0)");
+    return true;
+  } catch {
+    log("Some checks failed (--watch exited non-zero)", "warning");
+    return false;
+  }
+}
+
+async function getCheckResults(cwd) {
+  try {
+    const raw = await runGh(
+      ["pr", "checks", "--json", "name,state,description,link,completedAt"],
+      cwd
+    );
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+async function getFailedJobLogs(cwd, checks) {
+  const failed = (checks || []).filter(
+    (c) => c.state === "FAILURE" || c.state === "ERROR"
+  );
+  const logs = [];
+  for (const check of failed.slice(0, 3)) {
+    try {
+      const runIdMatch = check.link?.match(/\/runs\/(\d+)/);
+      if (!runIdMatch) continue;
+      const runId = runIdMatch[1];
+      const jobsRaw = await runGh(
+        ["run", "view", runId, "--json", "jobs"], cwd
+      );
+      const jobs = JSON.parse(jobsRaw).jobs || [];
+      const failedJobs = jobs.filter((j) => j.conclusion === "failure");
+      for (const job of failedJobs.slice(0, 2)) {
+        try {
+          const logText = await runGh(
+            ["run", "view", runId, "--log-failed",
+             "--job", String(job.databaseId)],
+            cwd, 60_000
+          );
+          logs.push({
+            checkName: check.name, jobName: job.name,
+            log: logText.slice(-3000),
+          });
+        } catch {
+          logs.push({
+            checkName: check.name, jobName: job.name,
+            log: "(could not retrieve logs)",
+          });
+        }
+      }
+    } catch { /* skip */ }
+  }
+  return logs;
+}
+
+// ── Deployment details extraction ──
+
+async function getLatestDeployRun(cwd) {
+  log("Fetching latest deploy workflow run for current branch...");
+  try {
+    const branch = await new Promise((resolve) => {
+      execFile("git", ["rev-parse", "--abbrev-ref", "HEAD"],
+        { cwd, timeout: 5_000 }, (err, stdout) => {
+          resolve(err ? null : stdout.trim());
+        });
+    });
+    const args = [
+      "run", "list", "--workflow", "deploy.yml", "--limit", "1",
+      "--json",
+      "databaseId,conclusion,status,url,headBranch,displayTitle,event",
+    ];
+    if (branch) {
+      args.push("--branch", branch);
+      log(`Filtering deploy runs to branch: ${branch}`);
+    }
+    const raw = await runGh(args, cwd);
+    const runs = JSON.parse(raw);
+    if (runs.length > 0) {
+      log(`Found deploy run #${runs[0].databaseId}`);
+      return runs[0];
+    }
+    log("No deploy runs found for current branch");
+    return null;
+  } catch (e) {
+    log(`Failed to fetch deploy runs: ${e.message}`);
+    return null;
+  }
+}
+
+async function getDeploymentDetails(cwd, runId) {
+  log(`Waiting for deploy run #${runId} to complete...`);
+  for (let i = 0; i < 70; i++) {
+    try {
+      const raw = await runGh(
+        ["run", "view", String(runId), "--json", "status,conclusion"], cwd
+      );
+      const run = JSON.parse(raw);
+      if (run.status === "completed") {
+        log(`Deploy run #${runId} completed`);
+        break;
+      }
+      log(`Still ${run.status}, waiting 30s (attempt ${i + 1}/70)...`);
+      await new Promise((r) => setTimeout(r, 30_000));
+    } catch (e) {
+      log(`Error polling: ${e.message}, retrying...`);
+      await new Promise((r) => setTimeout(r, 30_000));
+    }
+  }
+
+  log(`Fetching run log for deploy run #${runId}...`);
+  try {
+    const logText = await runGh(
+      ["run", "view", String(runId), "--log"], cwd, 60_000
+    );
+    log(`Run log fetched (${logText.length} chars)`);
+    const details = {
+      ip: null, instanceId: null, environment: null,
+      healthChecks: [], verificationResult: null, summary: null,
+    };
+
+    const summaryMatch = logText.match(
+      /---DEPLOY-SUMMARY-START---([\s\S]*?)---DEPLOY-SUMMARY-END---/
+    );
+    if (summaryMatch) {
+      details.summary = summaryMatch[1]
+        .split("\n")
+        .map((l) => l.replace(/^.*?\d{4}-\d{2}-\d{2}T[\d:.]+Z\s*/, ""))
+        .join("\n")
+        .replace(/\x1b\[[0-9;]*m/g, "")
+        .trim();
+    }
+
+    for (const line of logText.split("\n")) {
+      const ipMatch = line.match(/instance_ip=([\d.]+)/);
+      if (ipMatch) details.ip = ipMatch[1];
+      const idMatch = line.match(/instance_id=(i-[a-z0-9]+)/);
+      if (idMatch) details.instanceId = idMatch[1];
+      const envMatch = line.match(/environment=(\w+)/);
+      if (envMatch && !details.environment) details.environment = envMatch[1];
+      const checkMatch = line.match(/(✅ PASS|❌ FAIL): (.+)/);
+      if (checkMatch)
+        details.healthChecks.push(`${checkMatch[1]}: ${checkMatch[2]}`);
+      if (line.includes("DEPLOYMENT VERIFICATION PASSED"))
+        details.verificationResult = "PASSED";
+      if (line.includes("DEPLOYMENT VERIFICATION FAILED"))
+        details.verificationResult = "FAILED";
+    }
+    return details;
+  } catch (e) {
+    log(`Failed to fetch/parse run log: ${e.message}`);
+    return null;
+  }
+}
+
+function formatDeploySummary(run, details) {
+  const statusIcon =
+    run.conclusion === "success" ? "✅" :
+    run.conclusion === "failure" ? "❌" :
+    run.conclusion === "cancelled" ? "⚠️" : "❓";
+  let msg = `\n--- VM Deployment Details ---\n`;
+  msg += `${statusIcon} Deploy **${
+    (run.conclusion || run.status || "unknown").toUpperCase()
+  }**\n`;
+  if (details?.summary) {
+    msg += `\n${details.summary}\n`;
+  } else if (details) {
+    if (details.environment) msg += `  Environment: \`${details.environment}\`\n`;
+    if (details.ip) msg += `  Public IP: \`${details.ip}\`\n`;
+    if (details.instanceId) msg += `  Instance ID: \`${details.instanceId}\`\n`;
+    if (details.ip)
+      msg += `  SSH: \`ssh -i key.pem ubuntu@${details.ip}\`\n`;
+    if (details.healthChecks.length > 0) {
+      msg += `\n  Health Checks:\n`;
+      for (const check of details.healthChecks) msg += `    ${check}\n`;
+    }
+    if (details.verificationResult)
+      msg += `\n  Verification: **${details.verificationResult}**\n`;
+  } else {
+    msg += `  (could not extract VM details from run log)\n`;
+  }
+  if (run.url) msg += `\n  Run: ${run.url}\n`;
+  return msg;
+}
+
+// ── Monitoring ──
+
+async function monitorChecks(cwd, notify, requirePending = false) {
+  log("Starting CI monitoring (--watch mode)...");
+  await waitForChecks(cwd, requirePending);
+
+  log("Checks finished — fetching final results...");
+  const checks = await getCheckResults(cwd);
+  const failed = (checks || []).filter(
+    (c) => c.state === "FAILURE" || c.state === "ERROR"
+  );
+  const succeeded = (checks || []).filter((c) => c.state === "SUCCESS");
+  let summary = "";
+
+  if (failed.length > 0) {
+    const logs = await getFailedJobLogs(cwd, checks);
+    summary =
+      `❌ CI FAILED — ${failed.length} check(s) failed, ` +
+      `${succeeded.length} passed.\n\n` +
+      failed.map((c) =>
+        `  ❌ ${c.name}: ${c.state} — ${c.link || "no URL"}`
+      ).join("\n") +
+      (logs.length > 0
+        ? "\n\n--- Failed Job Logs ---\n" +
+          logs.map((l) =>
+            `### ${l.checkName} / ${l.jobName}\n\`\`\`\n${l.log}\n\`\`\``
+          ).join("\n\n")
+        : "");
+  } else {
+    summary = `✅ CI PASSED — all ${succeeded.length} check(s) succeeded.\n`;
+  }
+
+  log("Fetching deployment details...");
+  const deployRun = await getLatestDeployRun(cwd);
+  if (deployRun) {
+    if (lastNotifiedRunId === deployRun.databaseId) {
+      log(`Already notified for run #${deployRun.databaseId} — skipping`);
+      return;
+    }
+    const details = await getDeploymentDetails(cwd, deployRun.databaseId);
+    summary += formatDeploySummary(deployRun, details);
+    lastNotifiedRunId = deployRun.databaseId;
+  }
+
+  if (failed.length > 0) {
+    summary += "\n\nPlease fix the CI failures above and push again.";
+  }
+  notify(summary);
+
+  const prNum = await getPrNumber(cwd);
+  if (prNum) startCommentPolling(cwd, prNum, notify);
+}
+
+// ── PR Comment Polling ──
+
+let commentPollActive = false;
+
+async function getLatestComments(cwd, prNum, since) {
+  try {
+    const raw = await runGh(
+      ["pr", "view", String(prNum), "--json", "comments", "--jq",
+       `.comments | map(select(.createdAt > "${since}")) ` +
+       `| map({author: .author.login, body: .body, ` +
+       `createdAt: .createdAt})`],
+      cwd
+    );
+    return JSON.parse(raw || "[]");
+  } catch {
+    return [];
+  }
+}
+
+async function startCommentPolling(cwd, prNum, notify) {
+  if (commentPollActive) return;
+  commentPollActive = true;
+  log(`Starting PR #${prNum} comment polling (every 60s)...`);
+  let lastCheck = new Date().toISOString();
+
+  const poll = async () => {
+    while (commentPollActive) {
+      await new Promise((r) => setTimeout(r, 60_000));
+      try {
+        const newComments = await getLatestComments(cwd, prNum, lastCheck);
+        for (const comment of newComments) {
+          notify(
+            `💬 New comment on PR #${prNum} from ` +
+            `**@${comment.author}**:\n\n${comment.body}`
+          );
+          lastCheck = comment.createdAt;
+        }
+      } catch (e) {
+        log(`Comment poll error: ${e.message}`);
+      }
+    }
+  };
+  poll().catch((e) => {
+    log(`Comment polling stopped: ${e.message}`);
+    commentPollActive = false;
+  });
+}
+
+let activePoll = null;
+let lastNotifiedRunId = null;
+
+function startMonitoring(cwd, notify, requirePending = false) {
+  if (activePoll) return;
+  log("Starting background CI monitoring...");
+  activePoll = monitorChecks(cwd, notify, requirePending).finally(() => {
+    activePoll = null;
+  });
+}
+
+const session = await joinSession({
+  onPermissionRequest: approveAll,
+  hooks: {
+    onSessionStart: async () => {
+      log("Extension loaded — monitoring git push and PR creation events");
+    },
+    onPostToolUse: async (input) => {
+      if (input.toolName === "powershell") {
+        const cmd = String(input.toolArgs?.command || "");
+        if (
+          /\bgit\b.*\bpush\b/i.test(cmd) ||
+          /\bhookflow\s+git-push\b/i.test(cmd)
+        ) {
+          const cwd = await getRepoRoot();
+          const prNum = await getPrNumber(cwd);
+          if (prNum) {
+            startMonitoring(cwd, (msg) => {
+              session.send({ prompt: msg }).catch((e) =>
+                console.error("[ci-monitor] send failed:", e.message)
+              );
+            });
+            return {
+              additionalContext: `🚀 CI watch started for PR #${prNum}`,
+            };
+          }
+        }
+      }
+      if (input.toolName === "create_pr") {
+        const cwd = await getRepoRoot();
+        setTimeout(() => {
+          startMonitoring(cwd, (msg) => {
+            session.send({ prompt: msg }).catch((e) =>
+              console.error("[ci-monitor] send failed:", e.message)
+            );
+          });
+        }, 5_000);
+        return { additionalContext: "🚀 CI watch started for new PR" };
+      }
+    },
+  },
+  tools: [
+    {
+      name: "check_ci_status",
+      description:
+        "Check current CI/CD check status for the PR on the current branch.",
+      parameters: { type: "object", properties: {} },
+      skipPermission: true,
+      handler: async () => {
+        const cwd = await getRepoRoot();
+        const prNum = await getPrNumber(cwd);
+        if (!prNum) return "No PR found for the current branch.";
+        const checks = await getCheckResults(cwd);
+        if (!checks || checks.length === 0)
+          return `PR #${prNum}: No checks found yet.`;
+        const pending = checks.filter(
+          (c) => c.state === "PENDING" || c.state === "QUEUED"
+                || c.state === "IN_PROGRESS"
+        );
+        const failed = checks.filter(
+          (c) => c.state === "FAILURE" || c.state === "ERROR"
+        );
+        const succeeded = checks.filter((c) => c.state === "SUCCESS");
+        let summary = `PR #${prNum} — ${succeeded.length} passed, ` +
+          `${failed.length} failed, ${pending.length} pending\n\n`;
+        for (const c of checks) {
+          const icon = c.state === "SUCCESS" ? "✅"
+            : c.state === "FAILURE" || c.state === "ERROR" ? "❌" : "⏳";
+          summary += `${icon} ${c.name}: ${c.state}\n`;
+        }
+        if (failed.length > 0) {
+          const logs = await getFailedJobLogs(cwd, checks);
+          if (logs.length > 0) {
+            summary += "\n--- Failed Job Logs ---\n";
+            for (const l of logs) {
+              summary += `\n### ${l.checkName} / ${l.jobName}\n` +
+                `\`\`\`\n${l.log}\n\`\`\`\n`;
+            }
+          }
+        }
+        const deployRun = await getLatestDeployRun(cwd);
+        if (deployRun) {
+          const details = await getDeploymentDetails(
+            cwd, deployRun.databaseId
+          );
+          summary += formatDeploySummary(deployRun, details);
+        }
+        return summary;
+      },
+    },
+  ],
+});
+
+_session = session;
+log("ci-monitor extension initialized");
+
+// Auto-detect PR on init — start monitoring if on a PR branch
+(async () => {
+  const cwd = await getRepoRoot();
+  const prNum = await getPrNumber(cwd);
+  if (prNum) {
+    log(`PR #${prNum} found on init — starting CI monitor`);
+    startMonitoring(cwd, (msg) => {
+      session.send({ prompt: msg }).catch((e) =>
+        console.error("[ci-monitor] send failed:", e.message)
+      );
+    }, true);
+  } else {
+    log("No PR on current branch");
+  }
+})();
+```
+
+</details>
+
+## The Bottom Line
+
+The best automation doesn't just save you steps. It changes what your job is. Before this extension, my job during deployments was monitoring CI and relaying errors. After, my job was testing the deployed product and providing high-level feedback. Same session, completely different role.
+
+Build the feedback loop. Close it. Walk away.
