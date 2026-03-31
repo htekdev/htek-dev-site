@@ -1,0 +1,134 @@
+---
+title: "GitHub Weekly: Actions Gets Serious About Supply Chain Security"
+description: "GitHub ships major security roadmap for Actions, agent sessions in Issues, and Copilot PR edits — plus a controversial data usage update."
+pubDate: 2026-03-31
+tags: ["GitHub Copilot", "DevOps", "Developer Experience", "AI"]
+draft: false
+---
+
+GitHub dropped one of the most substantial platform updates I've seen in months. The headline: GitHub Actions is getting a full-stack security overhaul. But there's also meaningful movement on agent workflows, Copilot integration across Issues and Slack, and a data usage policy change that's worth understanding.
+
+Let's break down what shipped and what it means.
+
+## GitHub Actions 2026 Security Roadmap: The Big One
+
+GitHub published their [2026 security roadmap for Actions](https://github.blog/news-insights/product-news/whats-coming-to-our-github-actions-2026-security-roadmap/) this week, and it's not incremental—it's structural. If you run CI/CD on GitHub Actions (and who doesn't), this roadmap signals a major shift toward treating your build infrastructure like the critical attack surface it actually is.
+
+The context: supply chain attacks targeting CI/CD aren't slowing down. Recent incidents like **tj-actions/changed-files**, **Nx**, and **trivy-action** all followed the same playbook—compromise a dependency, exploit over-permissioned workflows, exfiltrate credentials via unrestricted network access. GitHub's response addresses each layer.
+
+### Three-Layer Security Model
+
+**1. Ecosystem: Dependency Locking for Workflows**
+
+The biggest change: GitHub is introducing workflow-level dependency locking via a new `dependencies:` section in workflow YAML. Think `go.mod` + `go.sum`, but for your entire Actions dependency graph.
+
+Today, most workflows reference actions by mutable tags (`uses: actions/checkout@v4`). That means what runs in CI isn't deterministic—if a tag gets repointed or a dependency is compromised, the change propagates immediately across every workflow that references it.
+
+With dependency locking, every direct and transitive dependency gets locked to an immutable commit SHA with cryptographic hashes. Updates show up as reviewable diffs in pull requests. Hash mismatches fail fast before jobs even run.
+
+**Timeline:** Public preview in 3-6 months, GA in 6 months.
+
+**2. Attack Surface: Policy-Driven Execution**
+
+GitHub is adding centralized workflow execution policies built on their [ruleset framework](https://docs.github.com/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets). Instead of configuring security per-workflow, you define org-level policies that control:
+
+- **Who** can trigger workflows (individual users, roles, trusted apps like Dependabot or Copilot)
+- **Which events** are allowed (prevent dangerous patterns like `pull_request_target` org-wide)
+
+This matters because many CI/CD attacks exploit confusing event behavior or unclear permission boundaries. A centralized policy model means you can block entire classes of attacks without editing thousands of workflow files.
+
+Policies support **evaluate mode** first—rules log violations without enforcement, so you can assess impact before flipping the switch.
+
+**Timeline:** Public preview in 3-6 months, GA in 6 months.
+
+**Bonus: Scoped Secrets**
+
+Secrets are getting fine-grained scoping. Instead of repository-wide or org-wide secrets that flow broadly by default, you'll be able to bind credentials to:
+
+- Specific branches, environments, or workflow paths
+- Trusted reusable workflows without requiring callers to pass secrets explicitly
+
+This eliminates implicit secret inheritance and makes trust boundaries explicit. Combined with a permission model change (write access no longer grants secret management by default), this moves Actions toward least-privilege credentials.
+
+**3. Infrastructure: Endpoint Monitoring and Egress Firewall**
+
+GitHub is treating CI/CD runners as **protected endpoints** with two new capabilities:
+
+**Actions Data Stream**: Near real-time execution telemetry streamed to your own systems (Amazon S3, Azure Event Hub, Azure Data Explorer). You get workflow execution details, dependency usage patterns, and (future) network activity logs—making CI/CD observable like any other production system.
+
+**Native Egress Firewall**: A Layer 7 firewall that operates outside the runner VM. Even if an attacker gains root inside the runner, they can't modify the firewall. You define egress policies (allowed domains, IP ranges, HTTP methods, TLS requirements), and the firewall enforces them.
+
+The firewall supports two modes: **monitor** (audit all outbound requests without blocking) and **enforce** (block anything not explicitly allowed). This gives you a safe adoption path—observe traffic first, build allowlists based on real data, then turn on enforcement.
+
+**Timeline:** Public preview in 6-9 months for both capabilities.
+
+## Custom Images for GitHub-Hosted Runners Hit GA
+
+After a public preview that started in October 2025, [custom images for GitHub-hosted runners](https://github.blog/changelog/2026-03-26-custom-images-for-github-hosted-runners-are-now-generally-available/) are now generally available.
+
+This feature lets you start with a GitHub-curated base image and build your own VM image with preinstalled tools, dependencies, certificates, and configurations. The benefit: faster workflow runs, consistent environments, and centralized control over how build environments are standardized and governed at scale.
+
+If you were already using custom images during preview, nothing changes—your workflows continue working as-is.
+
+## Agent Sessions Surface in Issues and Projects
+
+GitHub shipped [agent activity tracking directly into Issues and Projects](https://github.blog/changelog/2026-03-26-agent-activity-in-github-issues-and-projects/) this week. When a coding agent (Copilot, Claude, Codex, etc.) is assigned to an issue, its session now appears in the sidebar with live status: queued, working, waiting for review, or completed.
+
+In Projects, you can toggle on **Show agent sessions** in table and board views to see agent activity across a large body of work at a glance.
+
+This is a small but meaningful UX improvement. If you're running [agentic workflows](/articles/github-agentic-workflows-hands-on-guide) at scale, being able to see agent status directly in your planning tools closes a visibility gap.
+
+## Copilot Can Now Edit PRs Directly
+
+Instead of opening a new PR on top of your existing PR, you can now mention [`@copilot` in a pull request](https://github.blog/changelog/2026-03-24-ask-copilot-to-make-changes-to-any-pull-request/) to ask it to make changes directly. Use cases:
+
+- `@copilot Fix the failing tests`
+- `@copilot Address this comment`
+- `@copilot Add a unit test covering the case when the model argument is missing`
+
+Copilot works in a cloud-based dev environment, validates changes with your tests and linter, then pushes. If you still want the old behavior (opening a separate PR), just ask: `@copilot open a PR to fix the failing tests`.
+
+Available with all paid Copilot plans. Business and Enterprise admins need to [enable the coding agent](https://docs.github.com/copilot/concepts/agents/coding-agent/coding-agent-for-business-and-enterprise) first.
+
+## Create GitHub Issues from Slack with Copilot
+
+The [GitHub app for Slack](https://slack.com/marketplace/A01BP7R4KNY-github) now supports [creating GitHub Issues via natural language](https://github.blog/changelog/2026-03-30-create-issues-from-slack-with-copilot/). Mention `@GitHub` in any channel, describe the work, and it creates structured issues—titles, bodies, assignees, labels, milestones, even sub-issues.
+
+Key features:
+- **Conversation mode**: Iterate on issues in a Slack thread before creation
+- **Channel-level instructions**: Set default working repos with `@GitHub settings`
+- **Issue flex pane**: View created issues directly from Slack
+
+This builds on the [Copilot coding agent Slack integration](https://github.blog/changelog/2025-10-28-work-with-copilot-coding-agent-in-slack/) from last October. If your team already lives in Slack, this reduces friction between discussion and tracking.
+
+## Copilot Data Usage Policy Update: Know What You're Opting Into
+
+On March 25, GitHub announced an [update to Copilot interaction data usage](https://github.blog/news-insights/company-news/updates-to-github-copilot-interaction-data-usage-policy/). Starting April 24, interaction data from **Copilot Free, Pro, and Pro+** users will be used to train and improve AI models unless you opt out.
+
+**What gets collected** (if you don't opt out):
+- Outputs you accept or modify
+- Inputs sent to Copilot (code snippets, context around cursor)
+- Comments, documentation, file names, repo structure
+- Interactions with Copilot features (chat, inline suggestions)
+- Feedback (thumbs up/down)
+
+**What doesn't get collected**:
+- Copilot Business or Enterprise interaction data
+- Data from users who opt out
+- Content from issues, discussions, or private repos "at rest" (though Copilot does process private repo code when you're actively using it)
+
+**How to opt out**: Go to [settings](https://github.com/settings/copilot) → Privacy. If you previously opted out of data collection for product improvements, your preference is preserved.
+
+This aligns with industry practices (OpenAI, Anthropic, Google all use interaction data for training unless you opt out). GitHub says they've already seen measurable acceptance rate improvements by training on Microsoft employee interaction data, and they believe real-world data improves model quality.
+
+My take: This is a reasonable policy if you're on Free or Pro and want to contribute to model improvement. But if you work with proprietary codebases or sensitive patterns, verify your opt-out status before April 24. Business and Enterprise users are unaffected.
+
+## The Bottom Line
+
+GitHub's Actions security roadmap is the story of the week. Dependency locking, centralized execution policies, scoped secrets, and a native egress firewall represent the most significant security investment in Actions I've seen since the platform launched. If you run production CI/CD on GitHub, these changes will fundamentally alter how you think about supply chain risk.
+
+The agent and Copilot updates are iterative but useful—agent sessions in Issues solve a real visibility problem, PR edits reduce friction, and Slack integration meets teams where they already work.
+
+The data usage update is notable primarily for transparency. If you care about what happens to your interaction data, now's the time to review your settings.
+
+GitHub is clearly signaling that 2026 is the year they shift platform infrastructure—especially CI/CD—from flexible-by-default to secure-by-default. The roadmap reflects that. Whether you're ready or not, these changes are coming.
