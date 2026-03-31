@@ -15,6 +15,14 @@ function log(msg, level = "info") {
   console.error(`[ci-monitor] ${msg}`);
 }
 
+// Visible log — shown in UI but does NOT trigger an agent turn
+function logToSession(msg) {
+  if (_session?.log) {
+    _session.log(msg, { level: "info" });
+  }
+  console.error(`[ci-monitor] ${msg}`);
+}
+
 function runGh(args, cwd, timeoutMs = 30_000) {
   log(`gh ${args.join(" ")}`);
   return new Promise((resolve, reject) => {
@@ -320,6 +328,7 @@ function formatDeploySummary(run, details) {
 
 async function monitorChecks(cwd, notify, requirePending = false) {
   log("Starting CI monitoring (--watch mode)...");
+  logToSession("⏳ Watching CI checks — will notify when complete...");
 
   // --watch blocks until all checks complete
   await waitForChecks(cwd, requirePending);
