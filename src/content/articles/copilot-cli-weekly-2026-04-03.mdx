@@ -1,0 +1,88 @@
+---
+title: "Copilot CLI Weekly: /fleet Ships — Parallel Multi-Agent Execution"
+description: "GitHub just shipped /fleet for Copilot CLI, enabling parallel multi-agent workflows. Plus 4 releases, built-in skills, and Copilot cloud agent goes beyond PRs."
+pubDate: 2026-04-03
+tags: ["GitHub Copilot", "Developer Experience", "AI", "Multi-Agent Systems"]
+draft: false
+---
+
+## /fleet: The CLI Gets a Team
+
+The biggest Copilot CLI release in months landed April 1: **`/fleet` enables parallel multi-agent execution**. Instead of working through tasks sequentially, Copilot now dispatches multiple sub-agents to work on different parts of your codebase simultaneously.
+
+[GitHub's blog post](https://github.blog/ai-and-ml/github-copilot/run-multiple-agents-at-once-with-fleet-in-copilot-cli/) describes it best: when you run `/fleet Refactor the auth module, update tests, and fix the related docs`, the orchestrator decomposes your task into discrete work items, identifies what can run in parallel, and dispatches independent items as background sub-agents. Think of it as a project lead assigning work to a team.
+
+This isn't just faster sequential execution — it's fundamentally different architecture. The orchestrator plans, breaks down dependencies, dispatches waves of parallel work, and synthesizes results. Each sub-agent gets its own context window but shares the filesystem. They can't talk to each other; only the orchestrator coordinates.
+
+The key to making `/fleet` work is writing prompts that parallelize well. GitHub's guidance is clear: be specific about deliverables, set explicit boundaries (which files each track owns), and declare dependencies when they exist. Vague prompts lead to sequential execution because the orchestrator can't identify independent pieces.
+
+You can also reference custom agents defined in `.github/agents/` to assign different models or tools to different tracks. Want a heavy model for complex logic and a light one for boilerplate docs? `/fleet Use @technical-writer.md as the agent for all docs tasks and the default agent for code changes.`
+
+This is the kind of feature that changes how you think about the tool. I've been covering Copilot CLI since it shipped, and `/fleet` is the clearest signal yet that GitHub is building toward a multi-agent development platform. Cross-link to my earlier take on [agentic workflows](/articles/github-agentic-workflows-hands-on-guide) — this is what I was talking about.
+
+## Four Releases in Five Days
+
+Between March 31 and April 3, GitHub shipped **four releases** (v1.0.14, v1.0.15, v1.0.16, v1.0.17). Here's what matters:
+
+### Built-in Skills (v1.0.17 — April 3)
+
+[Built-in skills](https://github.com/github/copilot-cli/releases/tag/v1.0.17) are now included with the CLI, starting with a guide for customizing Copilot cloud agent's environment. This is the first step toward a skill ecosystem that doesn't require manual configuration. Skills are packaged instructions that agents can reference to handle specific tasks or contexts. Expect this to expand rapidly.
+
+MCP OAuth flows now support HTTPS redirect URIs via a self-signed certificate fallback, improving compatibility with OAuth providers that require HTTPS (like Slack). The `/resume` session picker also loads significantly faster with large session histories — a small quality-of-life win that adds up if you're resuming sessions daily.
+
+### MCP and Permission Hooks (v1.0.16 — April 2)
+
+[Version 1.0.16](https://github.com/github/copilot-cli/releases/tag/v1.0.16) introduced a `PermissionRequest` hook to programmatically approve or deny tool permission requests. If you're building automation workflows with the CLI SDK, this is a big deal — you can now script approval logic instead of relying on interactive prompts.
+
+MCP tool calls now display the tool name and parameter summary in the timeline, making it easier to follow what's happening when agents invoke external servers. MCP server reconnects also work correctly after directory changes, and BYOK Anthropic providers now respect `maxOutputTokens` limits.
+
+### Export to HTML, OAuth Device Flow, Config CamelCase (v1.0.15 — April 1)
+
+[Version 1.0.15](https://github.com/github/copilot-cli/releases/tag/v1.0.15) shipped alongside `/fleet` with several standout features:
+
+- **`/share html`** exports sessions and research reports as self-contained interactive HTML files. Great for sharing context with teammates who don't have CLI access or for archiving sessions outside of Copilot's storage.
+- **Device code flow (RFC 8628)** as a fallback for MCP OAuth in headless and CI environments. This closes a gap for teams running the CLI in automated pipelines.
+- **`/mcp auth`** command with re-authentication UI for MCP OAuth servers, including account switching support. Managing multiple OAuth-protected MCP servers is now a first-class workflow.
+- **Config keys now prefer camelCase** (`askUser`, `autoUpdate`, `logLevel`, etc.). Snake_case still works, but the CLI is standardizing on JavaScript conventions. A small change, but it signals ongoing maturity in the SDK and config system.
+- **The Copilot mascot now blinks** with subtle eye animations in interactive mode. Yes, really. It's a delightful detail that reminds you there's a team sweating UX polish even as they ship major features.
+
+The release also includes 15+ UX fixes: autopilot no longer continues after Escape or Ctrl+C, keystrokes typed during loading are no longer lost, the CLI exits immediately after a session ends instead of waiting up to 10 seconds, and Home/End/Page Up/Page Down now work in the diff viewer.
+
+### 27 Fixes and Improvements (v1.0.14 — March 31)
+
+[Version 1.0.14](https://github.com/github/copilot-cli/releases/tag/v1.0.14) was a cleanup release with 27 bug fixes and stability improvements. Highlights include:
+
+- Images correctly sent to Anthropic models with BYOM
+- Model picker selection now overrides the `--model` flag for the current session
+- Grep tool handles large files and long lines without running out of memory
+- CLI startup time reduced by running terminal detection, auth, and git operations in parallel
+- V8 compile cache reduces parse and compile time on repeated invocations
+- MCP registry lookups are more reliable with automatic retries and timeouts
+
+Nothing flashy, but these are the kinds of fixes that make the tool feel solid in daily use.
+
+## Copilot Cloud Agent Goes Beyond Pull Requests
+
+On March 31, GitHub [announced](https://github.blog/changelog/2026-03-31-research-plan-and-code-with-copilot-cloud-agent) that **Copilot cloud agent is no longer limited to pull-request workflows**. You can now:
+
+- **Generate code on a branch without opening a pull request**. Review the full diff, iterate with Copilot, and only create a PR when you're ready.
+- **Ask Copilot to produce an implementation plan** and review the approach before any code is written. Once approved, Copilot uses the plan to guide its implementation.
+- **Kick off deep research sessions** to answer broad questions about your codebase, grounded in repository context.
+
+This is a significant shift. Copilot cloud agent is transitioning from a "create PR" workflow to a general-purpose coding assistant that works across planning, research, and implementation modes. The CLI's `/fleet` feature and the cloud agent's new flexibility are clearly part of the same vision: enabling developers to orchestrate AI agents for complex, multi-phase workflows.
+
+For context, see my previous coverage of [Copilot CLI's biggest week](/articles/copilot-cli-biggest-week-yet) and [how to avoid common mistakes with custom agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents). The pieces are coming together.
+
+## What This Signals
+
+Five days, four releases, a major blog post, and a significant expansion of Copilot cloud agent's capabilities. The pace is relentless, and the direction is clear: **GitHub is building a multi-agent development platform**.
+
+`/fleet` isn't just a parallel execution feature — it's a programming model. You write prompts that decompose into independent tracks, each handled by a sub-agent with its own context. The orchestrator coordinates, but the agents work autonomously. This is the same pattern used in production multi-agent systems, now accessible via a CLI command.
+
+The built-in skills, permission hooks, MCP OAuth improvements, and cloud agent planning modes all point toward a future where developers compose AI workflows instead of writing code manually. We're not quite there yet, but the foundation is being laid at a rapid pace.
+
+## The Bottom Line
+
+If you haven't tried `/fleet` yet, start with something small — a refactor across multiple files, docs and tests in parallel, or a feature that spans API, UI, and tests. See how the orchestrator decomposes the work. Adjust your prompts based on what parallelizes and what doesn't. You'll quickly learn when `/fleet` pays off and when a regular prompt is simpler.
+
+The CLI shipped 27 features and 50+ fixes in five days. The tool is maturing fast, and the vision is becoming concrete: a multi-agent platform where developers orchestrate AI teams instead of writing every line themselves. That future is arriving sooner than I expected.
