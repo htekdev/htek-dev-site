@@ -1,0 +1,81 @@
+---
+title: "Visual Studio Weekly: Custom Copilot Agents Are Here"
+description: "Visual Studio's March update brings custom agents, live profiling, and smart debugging. AI extensibility finally meets enterprise workflows."
+pubDate: 2026-04-06
+tags: ["Developer Experience", "AI", "Visual Studio", "Productivity"]
+draft: false
+---
+
+Visual Studio's March 2026 update dropped last week, and it's the most significant Copilot extensibility release I've seen in the IDE. Custom agents, live profiling during debugging, and enterprise MCP governance are all here. If you've been waiting for AI tooling that actually fits your workflow instead of forcing you into a generic assistant box, this is the update.
+
+## Custom Agents: Build Copilot for Your Codebase
+
+The headline feature is custom agents. You can now define specialized Copilot agents as `.agent.md` files in your repository. Drop them in `.github/agents/` and they appear in the agent picker, ready to use with full access to workspace awareness, code understanding, tools, and MCP connections.
+
+This is what AI extensibility should look like. Instead of prompting a general-purpose assistant to "follow our coding standards" every single time, you define an agent that *knows* your standards, can run your build pipeline, query your internal docs, and enforce your team's conventions automatically.
+
+From the [Visual Studio blog](https://devblogs.microsoft.com/visualstudio/visual-studio-march-update-build-your-own-custom-agents/):
+
+> Want Copilot to follow your team's coding standards, run your build pipeline, or query your internal docs? Custom agents make that possible.
+
+The implementation is straightforward. Each agent is a markdown file with instructions, tool access, and optional MCP server connections. If you don't specify a model, it uses whatever you've selected in the model picker. The [awesome-copilot repo](https://github.com/github/awesome-copilot) has community-contributed examples you can use as starting points, though you'll need to verify tool names since they vary across GitHub Copilot platforms.
+
+This bridges the gap between generic AI assistants and the specialized workflows enterprises actually need. It's what I've been calling for in my [article on choosing the right AI SDK](/articles/choosing-the-right-ai-sdk) — AI tooling that adapts to your context instead of forcing you to adapt to it.
+
+## Agent Skills: Reusable Instruction Sets
+
+Alongside custom agents, Visual Studio now supports agent skills — reusable instruction sets that teach agents how to perform specific tasks. Skills live in `.github/skills/` in your repo or `~/.copilot/skills/` in your user profile. Each skill is a directory with a `SKILL.md` file following the Agent Skills specification.
+
+When a skill is activated, it appears in the chat so you know it's being applied. The awesome-copilot repo has community-shared skills you can pull in immediately.
+
+The difference between agents and skills: agents are complete AI personalities with full tool access and model selection. Skills are modular instruction sets that any agent can use. Think of skills as teaching Copilot a technique, while agents are purpose-built specialists.
+
+## Find_symbol Tool: Language-Aware Navigation
+
+Copilot's agent mode now includes a `find_symbol` tool that gives agents language-aware symbol navigation. Instead of searching for text patterns, the agent can find all references to a symbol, access type metadata, understand declarations and scope, and navigate your code using actual language services.
+
+This is the difference between "find all occurrences of `getUserData`" and "find all call sites of this method, understand its signature, and refactor every usage correctly." Supported languages include C++, C#, Razor, TypeScript, and any language with a supported LSP extension.
+
+For best results, use AI models that support tool-calling. Check out Microsoft's [AI model comparison](https://learn.microsoft.com/en-us/visualstudio/ide/ai-model-comparison) for details.
+
+## Live Profiling During Debugging
+
+Performance optimization used to happen after you wrote the code. Now it happens while you're debugging it.
+
+Visual Studio's new PerfTips feature integrates with the Profiler Agent to show execution time and performance signals inline as you step through code. When you spot a slow line, click the PerfTip and ask Copilot for optimization suggestions on the spot. The Profiler Agent captures elapsed time, CPU usage, and memory behavior automatically, so Copilot's suggestions are based on actual runtime data.
+
+There's also a new "Profile with Copilot" command in Test Explorer. Right-click a test, select "Profile with Copilot," and the Profiling Agent runs the test, analyzes CPU and instrumentation data, and delivers actionable performance insights. No profiler configuration required.
+
+This keeps optimization in your regular debugging workflow instead of being a separate investigation phase. I've lost track of how many times I've needed to reproduce a perf issue just to profile it properly — this eliminates that friction.
+
+## Security: Fix Vulnerabilities from Solution Explorer
+
+NuGet package vulnerabilities now surface a "Fix with GitHub Copilot" link directly in Solution Explorer. Click through, and Copilot analyzes the vulnerability, recommends targeted dependency updates, and implements them without disrupting your workflow.
+
+No more manual vulnerability research or hunting down compatible package versions. You address security issues the moment they're discovered.
+
+## Enterprise MCP Governance
+
+MCP server usage in Visual Studio now respects allowlist policies set through GitHub. Admins can specify which MCP servers are allowed within their organizations. When an allowlist is configured, only approved servers can connect. If you try to use an unauthorized server, you get an error explaining the restriction.
+
+This is critical for enterprises that need to control which external services process their code. MCP servers are powerful — they can query APIs, access databases, read documentation systems — but that power needs governance. This update provides it.
+
+If you're building custom agents with MCP connections, this is the compliance layer you need. I covered [context engineering](/articles/context-engineering-key-to-ai-development) as the key to AI-assisted development, and enterprise MCP governance is the security model that makes context engineering viable at scale.
+
+## Bookmark Studio: A New Way to Navigate Code
+
+Separately, Mads Kristensen released [Bookmark Studio](https://devblogs.microsoft.com/visualstudio/bookmark-studio-evolving-bookmarks-in-visual-studio/), an experimental extension that overhauls Visual Studio's bookmark feature with slot-based navigation, a dedicated manager tool window, labels, colors, folders, and the ability to export bookmarks as plain text, Markdown, or CSV.
+
+Bookmarks can be assigned to slots 1-9 and jumped to with shortcuts like `Alt+Shift+1` through `Alt+Shift+9`. Bookmark Studio also tracks bookmarks as text moves during editing, so they stay attached to the relevant code instead of drifting.
+
+This isn't part of the core Visual Studio release, but it's worth checking out if you navigate large codebases frequently. You can download it from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/).
+
+## What This Signals
+
+Visual Studio is betting hard on AI extensibility. Custom agents, agent skills, and enterprise MCP governance are all infrastructure for building specialized AI tooling that fits your workflow. Microsoft isn't trying to build one AI assistant that does everything — they're building a platform so you can build the assistants you need.
+
+This aligns with the broader shift toward multi-agent systems I've been tracking. GitHub's [Copilot SDK](/articles/github-copilot-sdk-agents-for-every-app) launched recently, and now Visual Studio has the extensibility layer to make custom agents practical for enterprise teams.
+
+If you're building .NET, C++, or enterprise applications in Visual Studio, this update is worth your time. Download [Visual Studio 2026 Insiders](https://visualstudio.microsoft.com/vs/preview/) and start building custom agents for your team's workflow.
+
+The era of one-size-fits-all AI assistants is over. Custom agents are here.
