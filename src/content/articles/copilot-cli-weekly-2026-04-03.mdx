@@ -16,11 +16,11 @@ This isn't just faster sequential execution — it's fundamentally different arc
 
 The key to making `/fleet` work is writing prompts that parallelize well. GitHub's guidance is clear: be specific about deliverables, set explicit boundaries (which files each track owns), and declare dependencies when they exist. Vague prompts lead to sequential execution because the orchestrator can't identify independent pieces.
 
-You can also reference custom agents defined in `.github/agents/` to assign different models or tools to different tracks. Want a heavy model for complex logic and a light one for boilerplate docs? `/fleet Use @technical-writer.md as the agent for all docs tasks and the default agent for code changes.`
+You can also reference custom agents defined in `.github/extensions/` to assign different models or tools to different tracks. Want a heavy model for complex logic and a light one for boilerplate docs? `/fleet Use @technical-writer.md as the agent for all docs tasks and the default agent for code changes.`
 
 This is the kind of feature that changes how you think about the tool. I've been covering Copilot CLI since it shipped, and `/fleet` is the clearest signal yet that GitHub is building toward a multi-agent development platform. Cross-link to my earlier take on [agentic workflows](/articles/github-agentic-workflows-hands-on-guide) — this is what I was talking about.
 
-## Four Releases in Five Days
+## Four Releases in Four Days
 
 Between March 31 and April 3, GitHub shipped **four releases** (v1.0.14, v1.0.15, v1.0.16, v1.0.17). Here's what matters:
 
@@ -46,7 +46,7 @@ MCP tool calls now display the tool name and parameter summary in the timeline, 
 - **Config keys now prefer camelCase** (`askUser`, `autoUpdate`, `logLevel`, etc.). Snake_case still works, but the CLI is standardizing on JavaScript conventions. A small change, but it signals ongoing maturity in the SDK and config system.
 - **The Copilot mascot now blinks** with subtle eye animations in interactive mode. Yes, really. It's a delightful detail that reminds you there's a team sweating UX polish even as they ship major features.
 
-The release also includes 15+ UX fixes: autopilot no longer continues after Escape or Ctrl+C, keystrokes typed during loading are no longer lost, the CLI exits immediately after a session ends instead of waiting up to 10 seconds, and Home/End/Page Up/Page Down now work in the diff viewer.
+The release also includes ~8 UX fixes: autopilot no longer continues after Escape or Ctrl+C, keystrokes typed during loading are no longer lost, the CLI exits immediately after a session ends instead of waiting up to 10 seconds, and Home/End/Page Up/Page Down now work in the diff viewer.
 
 ### 27 Fixes and Improvements (v1.0.14 — March 31)
 
@@ -75,7 +75,7 @@ For context, see my previous coverage of [Copilot CLI's biggest week](/articles/
 
 ## What This Signals
 
-Five days, four releases, a major blog post, and a significant expansion of Copilot cloud agent's capabilities. The pace is relentless, and the direction is clear: **GitHub is building a multi-agent development platform**.
+Four days, four releases, a major blog post, and a significant expansion of Copilot cloud agent's capabilities. The pace is relentless, and the direction is clear: **GitHub is building a multi-agent development platform**.
 
 `/fleet` isn't just a parallel execution feature — it's a programming model. You write prompts that decompose into independent tracks, each handled by a sub-agent with its own context. The orchestrator coordinates, but the agents work autonomously. This is the same pattern used in production multi-agent systems, now accessible via a CLI command.
 
@@ -85,4 +85,4 @@ The built-in skills, permission hooks, MCP OAuth improvements, and cloud agent p
 
 If you haven't tried `/fleet` yet, start with something small — a refactor across multiple files, docs and tests in parallel, or a feature that spans API, UI, and tests. See how the orchestrator decomposes the work. Adjust your prompts based on what parallelizes and what doesn't. You'll quickly learn when `/fleet` pays off and when a regular prompt is simpler.
 
-The CLI shipped 27 features and 50+ fixes in five days. The tool is maturing fast, and the vision is becoming concrete: a multi-agent platform where developers orchestrate AI teams instead of writing every line themselves. That future is arriving sooner than I expected.
+The CLI shipped ~55 features and fixes across four releases in four days. The tool is maturing fast, and the vision is becoming concrete: a multi-agent platform where developers orchestrate AI teams instead of writing every line themselves. That future is arriving sooner than I expected.
