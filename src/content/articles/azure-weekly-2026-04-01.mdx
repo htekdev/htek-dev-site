@@ -28,19 +28,17 @@ I've been using azd since it launched, and this release fundamentally changes th
 
 ## Azure Savings Plan for Databases: Flexible Discounts That Actually Make Sense
 
-Microsoft [launched the Azure Savings Plan for Databases to GA](https://www.cloudservus.com/blog/azure-just-launched-a-savings-plan-for-databases.-heres-what-it-leaders-need-to-know) on March 26. This is Azure's answer to AWS Savings Plans, and it's long overdue.
+On March 18, Microsoft [announced general availability of the Azure Savings Plan for Databases](https://techcommunity.microsoft.com/blog/finopsblog/announcing-savings-plan-for-databases-flexible-savings-for-modern-evolving-workl/4503107). The premise is simple: commit to a fixed hourly spend for one year, and Azure applies up to 35% discounts across your database usage automatically. No region lock, no service lock, no SKU lock.
 
-**The model**: Commit to a fixed hourly spend amount for one year, and Azure applies discounted pricing (up to 35% off pay-as-you-go) to your eligible database usage. No region lock. No service lock. No configuration lock. Azure automatically prioritizes the usage that yields the greatest savings each hour.
+**What's covered**: Azure SQL Database (including Hyperscale and serverless tiers), SQL Managed Instance, Azure Database for PostgreSQL, Azure Database for MySQL, Azure Cosmos DB, and SQL Server on Azure VMs or Arc-enabled servers. SQL Server licensing on VMs is billed at standard rates and not discounted under the plan.
 
-**Eligible services**: Azure SQL Database (including Hyperscale and serverless), SQL Managed Instance, PostgreSQL, MySQL, Cosmos DB, DocumentDB, and SQL Server on Azure VMs or Arc-enabled instances. SQL Server licensing on VMs is covered at standard hourly rates, not discounted rates.
+**Why the flexibility matters**: Traditional Azure Reservations are powerful but punishing if your architecture changes. You lock a discount to a specific service, region, and configuration—great for stable workloads, painful for anything in motion. In practice, most teams operating in 2026 are mid-migration from on-prem SQL Server to Azure SQL, scaling PostgreSQL across new regions, or shifting to Cosmos DB to support AI retrieval patterns. A reservation that penalizes you for evolving is a reservation that fights your roadmap.
 
-**Why this matters more than it sounds**: Azure Reservations work great when your environment is stable—known service, known region, known tier. But most database estates in 2026 don't fit that profile. Teams are mid-migration from on-prem SQL Server to Azure SQL. Architectures are evolving to support AI workloads. PostgreSQL deployments are expanding across regions. Locking cost commitments to a specific configuration creates friction when you need to change course.
+The Savings Plan flips this. You commit a dollar amount per hour, and Azure applies discounts to whichever eligible services you actually run—in whatever configuration, across whatever regions. When your Cosmos DB usage grows at the expense of SQL MI, your savings commitment follows the usage automatically.
 
-The Savings Plan model solves this. You commit to spending $500/hour on databases, and Azure figures out the best way to apply that commitment across your entire fleet—regardless of service, region, or tier. When you migrate from SQL Server to Cosmos DB, your commitment moves with you. When you expand PostgreSQL to a new region, your savings follow.
+**Savings Plans and Reservations aren't mutually exclusive**: Azure applies reservation discounts first (deeper discounts, but restricted to matching configurations). The Savings Plan then picks up any remaining eligible usage not covered by a reservation. For teams with stable workloads in some areas and dynamic growth in others, using both in combination gives maximum coverage.
 
-**Reservations vs. Savings Plans**: These aren't mutually exclusive. Azure applies reservation benefits first (they're more restrictive but carry deeper discounts for matching usage). The savings plan covers eligible usage not already addressed by a reservation. If you have a stable SQL Managed Instance core and dynamic growth around it, use both.
-
-For teams managing multi-service database environments or mid-migration workloads, this is the first Azure cost optimization model that doesn't fight against architectural evolution. AWS has had this for years. Azure finally caught up.
+This is how AWS Savings Plans have worked for years. Azure's implementation lands with the same flexibility—and it's overdue. For teams carrying multi-database environments or long migrations, this removes the "commit or stay flexible" tradeoff that's been a real friction point in Azure cost management.
 
 ## .NET Aspire on Azure App Service Hits GA
 
