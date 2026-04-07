@@ -1,0 +1,318 @@
+---
+title: 'Safe OpenClaw, Part Three: Multi-Session, Slack, and the CopilotClient SDK'
+description: >-
+  We closed issue #1. The single-file Telegram extension is now a full
+  TypeScript service: parallel Copilot sessions per chat, a Slack adapter,
+  dedicated cron sessions, and a CI monitor — all built on the CopilotClient
+  SDK.
+pubDate: 2026-04-07T00:00:00.000Z
+tags:
+  - AI
+  - GitHub Copilot
+  - Telegram
+  - Slack
+  - Developer Tools
+  - TypeScript
+draft: false
+---
+
+At the end of [part two](/articles/safe-openclaw-cron-iac-openshell), I called out the one thing the architecture couldn't do yet:
+
+> *"The current architecture is one session, one Telegram conversation. If you want multiple parallel sessions — each with its own context and working directory — you'd need a bridge service that manages multiple `CopilotClient` instances. That's issue #1 in the repo."*
+
+That's closed now. Here's what it took.
+
+## Why One Session Wasn't Enough
+
+The original bridge was a Copilot CLI extension — a `.mjs` file loaded as a child process of `copilot`. It had access to exactly one thing: the session it was forked from. `session.send()`, `session.on("assistant.message")` — one session, one chat, one conversation.
+
+That's fine for a proof of concept. It breaks down the moment you want to work on two unrelated things without contaminating the context. Or run a long research task in the background while keeping your main session clean. Or have your morning cron jobs run in their own isolated sessions that don't interrupt what you're doing.
+
+The extension model is fundamentally single-session because it *is* the session. To get multiple sessions, you need to step outside the extension and use the SDK directly.
+
+## From Extension to Service
+
+The `@github/copilot-sdk` package exposes `CopilotClient` — the same engine the CLI uses, as a programmable API. You call `client.createSession()`, you get a session object. You call `client.resumeSession(id)`, you're back in a saved context. You can create as many as you want, in parallel, and route messages between them.
+
+The entire bridge was rewritten as a standalone TypeScript service. What was two `.mjs` extensions totaling ~880 lines is now a structured project:
+
+```
+src/
+  index.ts            — startup, graceful shutdown
+  config.ts           — env + .env loading, MCP config
+  channels/types.ts   — MessagingChannel interface
+  sessions/manager.ts — CopilotClient + N-session lifecycle
+  telegram/           — adapter, API client, command handler, poller
+  slack/              — adapter, Socket Mode client, command handler, thread router
+  cron/               — scheduler, cron expression parser
+```
+
+The build output goes to `dist/`, deployed via `npm start`. Copilot CLI isn't involved at all — the bridge talks to the SDK directly.
+
+## The Session Manager
+
+The core of the new architecture is `SessionManager`. One instance per messaging channel. One `CopilotClient` inside it. Arbitrarily many sessions tracked in memory.
+
+```typescript
+export class SessionManager {
+  private client: CopilotClient | null = null;
+  private readonly chats = new Map<string, ChatState>();
+  private readonly sessionMap = new Map<string, CopilotSession>();
+  // ...
+}
+```
+
+Each chat (Telegram chat ID, or Slack channel+thread) gets a `ChatState` — a list of session IDs and a pointer to the active one. When you send a message, it goes to the active session. When you run `/new`, a fresh session is created and becomes active. When you run `/switch 2`, session #2 becomes the target. The previous session stays alive in the background.
+
+```typescript
+async sendMessage(chatId: string, prompt: string, attachments?: CopilotAttachments): Promise<void> {
+  // Per-chat mutex — prevents two concurrent messages from racing to create a session
+  const prevLock = this.sendLocks.get(chatId) ?? Promise.resolve();
+  // ...
+  const chatState = this.getChatState(chatId);
+  if (!chatState.activeSessionId || !this.sessionMap.has(chatState.activeSessionId)) {
+    await this.createSession(chatId); // auto-create on first message
+  }
+  await session.send({ prompt, mode: "enqueue" });
+}
+```
+
+One wrinkle that the critic caught before shipping: concurrent messages (rapid-fire texts) could race to create duplicate sessions. The per-chat mutex (`sendLocks`) chains message processing so each chat's messages are sequential, even if they arrive simultaneously.
+
+The full command set over Telegram (and Slack):
+
+| Command | What it does |
+|---------|-------------|
+| `/new` | Start a new parallel session, switch to it |
+| `/switch N` | Switch to session N from `/list` |
+| `/list` | Show all active sessions with ages |
+| `/end` | End current session, fall back to previous |
+| `/status` | Show bridge and CopilotClient state |
+| `/help` | Show command reference |
+
+Sessions survive bridge restarts via `client.resumeSession(id)` — the CLI persists session history to disk, and the SDK can reconnect to any saved session by ID.
+
+## Infinite Sessions
+
+Long-running sessions eventually run into context limits. The SDK's `infiniteSessions` option handles this automatically:
+
+```typescript
+session = await client.createSession({
+  sessionId,
+  onPermissionRequest: approveAll,
+  hooks: sessionHooks,
+  mcpServers,
+  infiniteSessions: {
+    enabled: true,
+    backgroundCompactionThreshold: 0.8,
+    bufferExhaustionThreshold: 0.95,
+  },
+});
+```
+
+At 80% context utilization, the session starts compacting in the background — summarizing older turns and pruning them from the active window. At 95%, compaction becomes blocking before the next send. The user never sees a "context full" error. Sessions just keep going.
+
+## The Channel Abstraction
+
+The first version was Telegram-only. Adding Slack meant not duplicating the session management logic twice. The solution is a tiny interface:
+
+```typescript
+export interface MessagingChannel {
+  readonly name: string;
+  sendMessage(chatId: string, text: string): Promise<void>;
+  sendTypingAction(chatId: string): Promise<void>;
+  start(): Promise<void>;
+  stop(): void;
+}
+```
+
+`SessionManager` takes a `MessagingChannel` as a constructor argument and never imports Telegram or Slack directly. The Telegram adapter and Slack adapter each implement this interface. `index.ts` wires them up at startup based on what's configured:
+
+```typescript
+if (config.telegramBotToken) {
+  const telegram = new TelegramAdapter(config);
+  channels.set("telegram", { channel: telegram, sessionManager: telegram.sessionManager, ... });
+}
+if (config.slackBotToken && config.slackAppToken) {
+  const slack = new SlackAdapter(config);
+  channels.set("slack", { channel: slack, sessionManager: slack.sessionManager, ... });
+}
+```
+
+Both channels can run simultaneously. Configure both tokens, and the same cron job can broadcast to Telegram and Slack — or target one specifically via the `channel` field in `cron.json`.
+
+## Slack via Socket Mode
+
+Slack's adapter uses [Socket Mode](https://api.slack.com/apis/connections/socket) — a persistent WebSocket to Slack's servers. No inbound webhook, no public URL, no ngrok. The sandbox's network policy just needs `wss-primary.slack.com` and `api.slack.com` in the allowlist, both TCP passthrough.
+
+The interesting design question for Slack is how to map threads to sessions. Telegram has explicit chat IDs — each conversation is already isolated. Slack has channels and threads, and a "conversation" could reasonably be either.
+
+The answer: each thread is its own session.
+
+```
+Main channel message → default session (slack-{channelId}-default)
+Reply in thread → thread session (slack-{channelId}-{threadTs})
+/new command → creates a new Slack thread + new session, replies become the conversation
+```
+
+The thread router maps incoming `thread_ts` values to session IDs. Copilot's reply goes back as a thread reply, keeping the conversation self-contained in Slack's UI.
+
+## Dedicated Cron Sessions
+
+Part two's cron scheduler sent jobs to the user's active session. That was the simple implementation. The problem: if your standup summary prompt fires at 9 AM while you're in the middle of a complex refactor, it injects itself into your working context and derails whatever the agent was building up.
+
+Cron jobs now get their own persistent sessions. The ID is deterministic — `cron-{jobId}` — so the session survives bridge restarts and accumulates context over time. A daily standup session that's run 50 times has 50 turns of standup history. The agent knows what "last standup" means.
+
+```typescript
+async sendToCronSession(chatId: string, jobId: string, prompt: string): Promise<void> {
+  const cronSessionId = `cron-${jobId}`;
+
+  if (!this.sessionMap.has(cronSessionId)) {
+    await this.createSession(chatId, cronSessionId);
+    // Don't switch the user's active session — cron runs in the background
+    const chatState = this.getChatState(chatId);
+    const userActive = Array.from(chatState.sessions.values())
+      .find(s => !s.sessionId.startsWith("cron-"));
+    if (userActive) chatState.activeSessionId = userActive.sessionId;
+  }
+
+  const session = this.sessionMap.get(cronSessionId)!;
+  await session.send({ prompt, mode: "enqueue" });
+}
+```
+
+The `/list` command distinguishes cron sessions visually:
+
+```
+
+1. ⏰ cron-daily-standup (2h)
+2. ⏰ cron-pr-review (45m)
+3. 💬 tg-555123-1744000000000 (12m) ◀ active
+```
+
+You can `/switch 1` to inspect a cron session's history, then `/switch 3` to return to your working session.
+
+## Cross-Session Context Hints
+
+All these parallel sessions are only useful if the agent can reason across them. A daily standup summary is in `cron-daily-standup`. Your current work is in `tg-555123-...`. If you ask "what did the standup say about the PR?", the agent needs to know to look.
+
+The hook mechanism handles this. Every user prompt submission injects a small piece of additional context:
+
+```typescript
+private buildSessionHooks() {
+  return {
+    onUserPromptSubmitted: async () => ({
+      additionalContext:
+        "You are in a multi-session environment. Other sessions " +
+        "(including scheduled task sessions prefixed with 'cron-') may contain " +
+        "relevant context. If the user references work from another session or " +
+        "a scheduled task, use session store queries (sql tool with database " +
+        "'session_store') to search across sessions for the needed information.",
+    }),
+  };
+}
+```
+
+No custom tooling, no session federation protocol. Just a nudge. The agent already has the `sql` tool and can query the session store across all sessions. This tells it when to do so. In practice, questions like "what did the weekly review find?" or "what was in this morning's standup?" work exactly as you'd expect.
+
+## MCP Servers Pass-Through
+
+One of the quieter improvements: the bridge now loads MCP server configurations and passes them to every `createSession` / `resumeSession` call. This means your Exa, Perplexity, and YouTube servers are available in bridge sessions exactly as they are when you run Copilot CLI directly — no separate setup.
+
+```typescript
+const mcpServers = Object.keys(this.config.mcpServers).length > 0
+  ? this.config.mcpServers
+  : undefined;
+
+session = await client.createSession({
+  sessionId,
+  onPermissionRequest: approveAll,
+  hooks: sessionHooks,
+  mcpServers,  // 👈
+  // ...
+});
+```
+
+The config loader checks three locations in order: `MCP_CONFIG_PATH` env var, then `./mcp-servers.json`, then `~/.copilot/mcp-config.json` (the native Copilot CLI config). Both formats are supported — the flat `{ "serverName": { ... } }` shape and the native `{ "mcpServers": { ... } }` wrapper.
+
+## CI Monitor Extension
+
+While the main bridge moved to the SDK service model, extensions still have a role. The new `ci-monitor` extension attaches to Copilot CLI sessions started locally and automatically monitors PR CI checks after a push or PR creation.
+
+It hooks into the `onToolCallResult` event, watching for `git push` and `gh pr create` calls. When it detects one, it spins up a background monitor using `gh pr checks --watch` — which blocks until all checks complete. The results come back to your session automatically: which checks passed, which failed, and what the deployment URL is if CI triggered a preview environment.
+
+```
+[ci-monitor] PR #47 opened — watching checks...
+
+ CI passed (2m 14s)
+  • lint: passed
+  • test: passed (247 tests)
+  • deploy-preview: https://preview-47.example.com
+```
+
+No tab-switching to the GitHub UI. No polling. Push your code, keep working, get the result inline.
+
+## Commit-Pinned Deployments
+
+The deploy workflow now passes `GITHUB_SHA` through Terraform to the sandbox setup:
+
+```yaml
+- name: Deploy
+  run: terraform apply -var="git_ref=${{ github.sha }}" -var="git_repo=${{ github.repository }}"
+```
+
+`sandbox-setup.sh` clones the repo at the exact commit being deployed, not `main`. This means what's running in your sandbox matches what was deployed — no drift between the commit that triggered the workflow and whatever was at `HEAD` when setup ran.
+
+Reset operations use the same mechanism: `reset-sandbox.sh` checks out the pinned ref, rebuilds, and restarts the service. Rollbacks are `terraform apply` with a previous SHA.
+
+## The Architecture Now
+
+```
+
+  AWS EC2 (Ubuntu 24.04, t3.medium)                               │
+  Docker + OpenShell gateway                                       │
+                                                                   │
+   │  ┌──────────────────────────────────
+  │  OpenShell Sandbox (policy-enforced)                       │   │
+  │                                                            │   │
+  │  npm start (TypeScript bridge service)                     │   │
+  │  ├── TelegramAdapter                                       │   │
+  │  │     └── SessionManager → CopilotClient → N sessions    │   │
+  ├── SlackAdapter                                          │   │  
+  │  │     └── SessionManager → CopilotClient → N sessions    │   │
+  │  └── CronScheduler                                         │   │
+  │        └── per-job sessions (cron-{jobId})                 │   │
+  │                                                            │   │
+  │  MCP Servers: exa, perplexity, youtube, mslearn            │   │
+  │  Network: default-deny + 13 explicit allowlists            │   │
+   │  └──────────────────────
+
+```
+
+Compare this to part two's diagram — same outer shell, same sandbox, fundamentally different internals. The extensions are gone. `CopilotClient` is the engine. The service manages its own lifecycle.
+
+## Lessons
+
+**The extension SDK and the `CopilotClient` SDK are different entry points to the same system.** Extensions are for composing behavior within an existing session — they get you `session.send()` and event hooks for free, but you're inheriting someone else's session. `CopilotClient` is for owning the session lifecycle — you create them, you resume them, you destroy them, and you can have as many as you want. Pick the right level of abstraction for what you're building.
+
+**Per-chat mutexes matter more than you'd think.** Telegram users type fast. Rapid messages before the first session is created would race to call `createSession()` simultaneously, and you'd end up with two sessions for one chat. The mutex chain is four lines of code, but without it the multi-session model has a subtle race on every new conversation.
+
+**Slack's thread model maps perfectly to sessions.** One thread = one context = one session. This turns out to be more ergonomic than Telegram's `/new` command in some ways — Slack users already think in threads. Starting a new Copilot conversation is just starting a new thread.
+
+**Don't let cron sessions pollute the active conversation.** This seems obvious in retrospect, but the first version of dedicated cron sessions still switched `activeSessionId` to the cron session when it was created. A standup job firing at 9 AM would silently redirect your next message into the standup context. The fix is one check: after creating a cron session, restore the user's last active session as active.
+
+**`--experimental` still matters.** The CI monitor extension requires `--experimental` for extensions support. If you're mixing the bridge service (no flag needed) with local Copilot CLI sessions that use the CI monitor, make sure you're launching the CLI with `--experimental`.
+
+## What's Next
+
+The natural evolution from here is webhook mode for Telegram. Long polling works fine for a single instance, but if you ever want horizontal scaling or faster startup, a registered webhook is cleaner. It requires a public HTTPS endpoint — something the OpenShell sandbox doesn't expose directly — but a lightweight proxy or an API Gateway in front of the sandbox would work.
+
+The other thread: more channel adapters. The `MessagingChannel` interface is four methods. Discord, WhatsApp via Twilio, or even a simple HTTP API for custom clients are all the same exercise: implement the interface, add an adapter, wire it in `index.ts`.
+
+The core insight from the whole series holds: the extension SDK and `CopilotClient` together give you everything you need to build real agent infrastructure. Part one was 420 lines. Part two added cron and IaC. Part three added multi-session, multi-channel, and CI feedback. The stack keeps composing.
+
+The project is at [htekdev/gh-cli-telegram-extension](https://github.com/htekdev/gh-cli-telegram-extension). `terraform apply`. Ten minutes. Live.
+
+---
+
+*Written via the Telegram bridge from my phone, then reviewed by the same bridge from my desk. The session that drafted this is still running.*
