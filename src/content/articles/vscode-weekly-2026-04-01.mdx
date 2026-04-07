@@ -1,0 +1,57 @@
+---
+title: "VS Code Weekly: AI Gets an Effort Dial and Nested Subagents"
+description: "Version 1.113 brings configurable reasoning, nested subagents, and a fresh look as Microsoft settles into weekly releases."
+pubDate: 2026-04-01
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+Microsoft shipped VS Code 1.113 last week—the third release under their new weekly cadence—and it's starting to feel like the editor is settling into a new rhythm. Not just release rhythm, but product rhythm. The features in 1.113 aren't flashy, but they're the kind that make daily work smoother if you're deep in AI-assisted workflows.
+
+## What Actually Shipped
+
+The headline feature is a **Thinking Effort selector** right in the model picker. If you're using reasoning models like Claude Sonnet 4.6 or GPT-5.4, you can now dial the reasoning intensity up or down per request—Low, Medium, High—without touching settings. The picker shows your current level (e.g., "GPT-5.3-Codex · Medium") so you always know what you're running.
+
+This matters because reasoning effort is a cost-quality tradeoff. Need a quick code explanation? Low effort gets you a faster response. Architecting something complex? Crank it to High and let the model think. I've been using this for about a week now, and it's already changed how I prompt. Quick refactors get Low, system design questions get High. Simple, but the fact that it's right there in the UI makes it feel like a different tool.
+
+The two deprecated settings—`github.copilot.chat.anthropic.thinking.effort` and `github.copilot.chat.responsesApiReasoningEffort`—are now deprecated, consolidated into the picker. If you have them in your config, clean them up.
+
+## Nested Subagents and MCP Everywhere
+
+**Nested subagents** are now possible via an opt-in setting: `chat.subagents.allowInvocationsFromSubagents`. Before, subagents couldn't call other subagents to prevent recursion hell. Now they can, which unlocks genuinely complex multi-step workflows where one agent delegates to another, just like how you'd hand off tasks to teammates.
+
+It's powerful but risky—infinite loops are real. Microsoft kept it opt-in for good reason. If you enable it, set clear depth limits in your workflow.
+
+**MCP server support** expanded to Copilot CLI and Claude agents. Previously, MCP servers you configured in VS Code only worked for local agents inside the editor. Now they're bridged automatically to CLI and Claude sessions, including workspace-level `mcp.json` configs. If you've built custom MCP integrations, this makes them useful everywhere, not just in the editor chat.
+
+**Session forking** also landed for CLI and Claude agents (experimental for CLI via `github.copilot.chat.cli.forkSessions.enabled`). You can now branch a conversation at any point to explore different approaches without losing the original context. It's Git branches for AI conversations.
+
+## The Rest of the Improvements
+
+The **Chat Customizations editor** consolidates all your agent setup—custom instructions, prompt files, agents, skills, MCP servers, plugins—into one place with tabs and embedded code editing. You open it via `Ctrl+Shift+P` → "Chat: Open Chat Customizations." If you've been frustrated by scattered settings, this is a relief.
+
+**Image viewer** for chat attachments now has zoom, pan, navigation, and thumbnail strips. No more squinting at tiny previews when you attach screenshots or the agent generates images. It's also available from the Explorer context menu for image files.
+
+The **integrated browser** now supports self-signed certificates. You can temporarily trust them (for one week) during local HTTPS development, just like real browsers. It's a small thing, but it removes the friction of switching to Chrome for SSL testing.
+
+Microsoft replaced the default themes with **VS Code Light** and **VS Code Dark**—cleaner, more modern, and better across screen types. OS theme syncing now defaults to these for new users, so your editor automatically matches your system's light/dark mode.
+
+## What the Weekly Cadence Means
+
+VS Code 1.111 (March 9) was the first weekly stable release. 1.112 followed on March 18, and 1.113 on March 25. This is a dramatic shift from the old monthly cycle with dedicated Endgame testing weeks. [Kai Maetzel announced the change on GitHub](https://github.com/microsoft/vscode/issues/300108), saying quality assurance would fold into continuous delivery instead of a distinct phase.
+
+Some developers are nervous about the pace—asking whether there's a way to stay behind a few versions for stability. That's understandable. Microsoft is clearly trying to match the iteration speed of competitors like Cursor and Windsurf, which ship continuously.
+
+But here's the thing: the features in 1.113 feel incremental, not rushed. Nothing in this release screams "we shipped it too early." The Thinking Effort selector is a straightforward UX improvement. Nested subagents are opt-in. MCP bridging is an obvious gap-fill. These are the kinds of improvements you'd expect from a team that's been working on agentic workflows for a while and knows what needs to be better.
+
+The real test isn't whether they can ship weekly—it's whether they can ship weekly *without* regression explosions. So far, so good. But we're only three weeks in.
+
+## The Bottom Line
+
+If you're using AI agents in VS Code—Copilot, Claude, or custom tools—1.113 makes your life measurably better. The Thinking Effort dial alone is worth the update if you're managing token budgets or just want faster responses for trivial tasks. Nested subagents and MCP everywhere make complex workflows finally practical.
+
+If you're not using agents, this release is skippable. New themes are nice, but cosmetic. The browser cert trust is a niche fix. Most of the substance here is in the agentic experience.
+
+I've written before about [how context engineering matters more than model choice](/articles/context-engineering-key-to-ai-development). The tools in 1.113—session forking, thinking effort control, subagent composition—are all about giving you finer control over that context. You're not just asking the AI a question; you're tuning how it thinks before it answers.
+
+That's where this is headed. Not bigger models. Better control.
