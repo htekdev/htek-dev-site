@@ -14,7 +14,7 @@ The headline feature is a **Thinking Effort selector** right in the model picker
 
 This matters because reasoning effort is a cost-quality tradeoff. Need a quick code explanation? Low effort gets you a faster response. Architecting something complex? Crank it to High and let the model think. I've been using this for about a week now, and it's already changed how I prompt. Quick refactors get Low, system design questions get High. Simple, but the fact that it's right there in the UI makes it feel like a different tool.
 
-The two deprecated settings—`github.copilot.chat.anthropic.thinking.effort` and `github.copilot.chat.responsesApiReasoningEffort`—are now gone, consolidated into the picker. If you have them in your config, clean them up.
+The two deprecated settings—`github.copilot.chat.anthropic.thinking.effort` and `github.copilot.chat.responsesApiReasoningEffort`—are now deprecated, consolidated into the picker. If you have them in your config, clean them up.
 
 ## Nested Subagents and MCP Everywhere
 
@@ -38,9 +38,9 @@ Microsoft replaced the default themes with **VS Code Light** and **VS Code Dark*
 
 ## What the Weekly Cadence Means
 
-VS Code 1.111 (March 9) was the first weekly stable release. 1.112 followed on March 18, and 1.113 on March 25. This is a dramatic shift from the old monthly cycle with dedicated Endgame testing weeks. [Kai Maetzel announced the change on GitHub](https://github.com/microsoft/vscode/issues/230966), saying quality assurance would fold into continuous delivery instead of a distinct phase.
+VS Code 1.111 (March 9) was the first weekly stable release. 1.112 followed on March 18, and 1.113 on March 25. This is a dramatic shift from the old monthly cycle with dedicated Endgame testing weeks. [Kai Maetzel announced the change on GitHub](https://github.com/microsoft/vscode/issues/300108), saying quality assurance would fold into continuous delivery instead of a distinct phase.
 
-Some developers are nervous about the pace—[one Reddit thread](https://www.reddit.com/r/vscode/comments/1bzkqy8/vs_code_is_now_doing_weekly_releases/) asked if there's a way to stay behind a few versions for stability. That's understandable. Microsoft is clearly trying to match the iteration speed of competitors like Cursor and Windsurf, which ship continuously.
+Some developers are nervous about the pace—asking whether there's a way to stay behind a few versions for stability. That's understandable. Microsoft is clearly trying to match the iteration speed of competitors like Cursor and Windsurf, which ship continuously.
 
 But here's the thing: the features in 1.113 feel incremental, not rushed. Nothing in this release screams "we shipped it too early." The Thinking Effort selector is a straightforward UX improvement. Nested subagents are opt-in. MCP bridging is an obvious gap-fill. These are the kinds of improvements you'd expect from a team that's been working on agentic workflows for a while and knows what needs to be better.
 
