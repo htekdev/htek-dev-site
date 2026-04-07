@@ -1,0 +1,104 @@
+---
+title: "GitHub Weekly: Copilot SDK Goes Public, Cloud Agent Breaks Free"
+description: "GitHub unleashed its Copilot SDK in five languages and liberated cloud agent from PR-only workflows. Plus Actions got smarter and Issues search went GA."
+pubDate: 2026-04-07
+tags: ["GitHub Copilot", "DevOps", "Developer Experience", "AI"]
+draft: false
+---
+
+## The Week GitHub Stopped Playing Small
+
+This week wasn't incremental polish—it was infrastructure-level change. GitHub released the [Copilot SDK in public preview](https://github.blog/changelog/2026-04-02-copilot-sdk-in-public-preview/), shipped across five languages, and gave you the same production-tested agent runtime that powers GitHub's own tools. At the same time, [Copilot cloud agent shed its PR-only constraint](https://github.blog/changelog/2026-04-01-research-plan-and-code-with-copilot-cloud-agent/), unlocking research sessions, implementation plans, and branch-first workflows.
+
+This matters because GitHub just commoditized agentic orchestration. You no longer need to build your own tool invocation layer, streaming infrastructure, or permission framework—it's yours to embed directly into your applications.
+
+## Copilot SDK: Five Languages, One Runtime
+
+The [Copilot SDK](https://github.blog/changelog/2026-04-02-copilot-sdk-in-public-preview/) exposes the same agent runtime powering Copilot cloud agent and Copilot CLI. Instead of reinventing multi-turn sessions, tool calling, and streaming responses, you get production-grade building blocks out of the box.
+
+**Now available in:**
+- Node.js / TypeScript: `npm install @github/copilot-sdk`
+- Python: `pip install github-copilot-sdk`
+- Go: `go get github.com/github/copilot-sdk/go`
+- .NET: `dotnet add package GitHub.Copilot.SDK`
+- Java: Available via Maven
+
+**What you get:**
+- **Custom tools and agents**: Define domain-specific tools and let the agent decide when to invoke them
+- **Fine-grained system prompt customization**: Use `replace`, `append`, `prepend`, or dynamic `transform` callbacks to customize sections without rewriting the entire prompt
+- **Streaming responses**: Token-by-token streaming for responsive UX
+- **Blob attachments**: Send images and binary data inline without touching the filesystem
+- **OpenTelemetry support**: Built-in distributed tracing with W3C trace context propagation
+- **Permission framework**: Gate sensitive operations with approval handlers or mark read-only tools to skip permissions entirely
+- **Bring Your Own Key (BYOK)**: Use your own API keys for OpenAI, Microsoft Foundry, or Anthropic
+
+The SDK is available to all Copilot subscribers (including Copilot Free for personal use) and supports BYOK for enterprises. Each prompt counts toward your premium request quota.
+
+If you've been building custom agents or [agentic workflows](/articles/github-agentic-workflows-hands-on-guide), this SDK removes the undifferentiated heavy lifting. You're no longer choosing between building your own orchestration layer or being constrained by GitHub's UI—you can embed Copilot's agentic capabilities directly into your platform.
+
+## Cloud Agent Escapes the PR Cage
+
+Until this week, working with Copilot cloud agent meant opening a pull request. That constraint is gone. [Copilot cloud agent now supports](https://github.blog/changelog/2026-04-01-research-plan-and-code-with-copilot-cloud-agent/):
+
+### Branch-first workflows
+- Copilot generates code on a branch without creating a PR
+- Review the full diff before deciding if you're ready for a pull request
+- Iterate with Copilot until you're satisfied, then click "Create pull request"
+- Want a PR immediately? Just say so in your prompt and Copilot will create one when the session completes
+
+### Implementation plans
+- Ask Copilot to produce an implementation plan and review the approach before any code is written
+- Approve or provide feedback on the plan before Copilot proceeds
+- Once approved, Copilot uses the plan to guide its implementation
+
+### Deep research sessions
+- Kick off research sessions to have Copilot answer questions requiring thorough investigation
+- Ask broad questions about your codebase and get answers grounded in your repository context
+- Launch research sessions directly from Copilot Chat
+
+This is a fundamental shift in how you interact with AI agents. Pre-approved plans let you validate the approach before committing compute. Branch-first workflows let you iterate without polluting your PR history. Research sessions turn Copilot into a codebase analyst, not just a code generator.
+
+If you're using [agentic DevOps patterns](/articles/agentic-devops-next-evolution-of-shift-left), this unlocks new workflows: research → plan → implement → verify, all without creating a PR until you're ready.
+
+## Organization Controls for Cloud Agent
+
+GitHub shipped [organization-level runner controls](https://github.blog/changelog/2026-04-03-organization-runner-controls-for-copilot-cloud-agent) for Copilot cloud agent. Previously, runner configuration lived in per-repository `copilot-setup-steps.yml` files, making consistent defaults painful.
+
+Now organization admins can:
+- Set a default runner to be used automatically across all repositories
+- Lock the runner setting so individual repositories can't override the organization default
+
+This means you can standardize on larger GitHub-hosted runners for better performance or enforce that agents always run on self-hosted runners with access to internal resources. No more repository-by-repository configuration.
+
+## Actions Gets Smarter
+
+The [April Actions updates](https://github.blog/changelog/2026-04-02-github-actions-early-april-2026-updates) shipped three meaningful improvements:
+
+### Service container customization
+You can now override entrypoint and commands on service containers using `entrypoint` and `command` keys in your workflow YAML. The syntax mirrors Docker Compose. This has been a long-standing pain point—no more workarounds.
+
+### OIDC tokens support custom properties
+GitHub Actions OIDC tokens now include repository custom properties as claims (now generally available). This lets you create granular trust policies with cloud providers based on how your organization classifies repositories—environment type, team ownership, compliance tier—without enumerating individual repository names or IDs.
+
+### Azure private networking VNET failover
+Azure private networking for GitHub-hosted runners now supports failover networks in public preview. Configure a secondary Azure subnet (optionally in a different region) so workflows keep running if the primary subnet becomes unavailable. Failover can be triggered manually or automatically by GitHub during a regional outage.
+
+## Smaller Wins That Matter
+
+[Organization custom instructions for Copilot](https://github.blog/changelog/2026-04-02-copilot-organization-custom-instructions-are-generally-available) moved to GA. Organization admins can now set default instructions that guide Copilot's behavior across all repositories. Applied to Copilot Chat on github.com, Copilot code review, and Copilot cloud agent.
+
+[GitHub Mobile refreshed its Copilot tab](https://github.blog/changelog/2026-04-01-github-mobile-stay-in-flow-with-a-refreshed-copilot-tab-and-native-session-logs) with native session logs, in-app controls for agent sessions, and a clearer overview of chat history. You can now view full session logs, create PRs from completed sessions, and stop running sessions—all from your phone.
+
+[Improved search for GitHub Issues](https://github.blog/changelog/2026-04-02-improved-search-for-github-issues-is-now-generally-available) hit GA. Natural language search across issue titles and bodies, hybrid search combining semantic and keyword matching, and API access via REST and GraphQL. When search succeeds, the desired result is in the top three 75% of the time, compared to 66% with traditional search.
+
+GitHub also renamed the Security tab to [Security & quality](https://github.blog/changelog/2026-04-02-the-security-tab-is-now-security-quality), colocating code quality findings alongside security alerts. This lays groundwork for the upcoming GitHub Code Quality GA launch.
+
+## What It Signals
+
+The Copilot SDK release is the real story here. GitHub isn't just building AI-powered tools—it's distributing the infrastructure layer that powers them. That's a fundamentally different strategy.
+
+By shipping the SDK across five languages with BYOK support, GitHub is betting that embedded agentic capabilities become standard infrastructure, not just features in GitHub's own products. If you're building developer platforms, CI/CD systems, or internal tools, you now have production-grade agent orchestration out of the box.
+
+Cloud agent's escape from PR-only workflows signals a shift from "AI writes code" to "AI investigates, plans, and implements." Research sessions and implementation plans mean you're validating the approach before committing compute—critical when [context engineering](/articles/context-engineering-key-to-ai-development) determines success.
+
+The pattern is clear: GitHub is building the plumbing for agentic systems and getting out of the way. The SDK, the unlocked workflows, the organization controls—it's infrastructure for teams to build on, not just features to consume.
