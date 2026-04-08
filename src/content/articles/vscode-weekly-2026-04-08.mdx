@@ -1,0 +1,105 @@
+---
+title: "VS Code Weekly: Agentic Dev Gets Real with 1.115"
+description: "Two weekly releases packed with agent UX fixes, terminal upgrades, and the #codebase overhaul that finally makes semantic search consistent."
+pubDate: 2026-04-08
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+## Microsoft Just Shipped Twice in One Week
+
+VS Code 1.115 dropped this morning, hot on the heels of 1.114 last Tuesday. This weekly release cadence is wild, but what's more interesting is *what* they're shipping: the team is racing to make agentic workflows feel native, not bolted on.
+
+Let me break down what actually matters from these two releases, because there's a clear story here about where Microsoft thinks AI-assisted development is going.
+
+## The #codebase Overhaul: Semantic Search Gets Serious
+
+The biggest change in 1.114 is one that most people will barely notice — but it's critical. Microsoft ripped out all the complexity around workspace indexing and made `#codebase` purely semantic.
+
+Previously, the `#codebase` tool in Copilot Chat would fall back to fuzzy text searches when semantic indexes weren't available. There were "local indexes" (a few thousand files, not always semantic) and "remote indexes" (millions of files, shared across teams). You had to manage this mess yourself.
+
+Now? There's one state: **indexed or not indexed**. No more local vs. remote. No more half-semantic fallbacks. If your codebase is indexed, `#codebase` runs semantic searches. If it's not, agents use other methods (text, grep, symbols).
+
+Why this matters: Agentic workflows fail when tools return inconsistent results. If `#codebase` sometimes returns semantic matches and sometimes returns dumb fuzzy results, agents can't build reliable prompts around it. By making the behavior predictable, Microsoft is giving agents a tool they can actually use correctly.
+
+The tradeoff: Large codebases without GitHub repos might not be indexable yet. Microsoft is rolling out support slowly. But in my testing, agents still get decent results using fallback methods for non-indexed workspaces.
+
+**Bottom line**: This is what "agentic-first design" looks like. Not flashy, but crucial for making agents trustworthy.
+
+## Chat UX Polish: The Little Things Add Up
+
+1.114 also shipped a handful of chat refinements that sound minor but are surprisingly high-impact:
+
+### Copy Final Response
+The new **Copy Final Response** command strips out all the agent's internal thinking, tool calls, and noise — you just get the final Markdown output. This is *huge* for sharing Copilot's work with teammates who don't need to see the sausage being made.
+
+Before this, copying a chat response meant pasting a wall of `[Running tool: workspace_search]` and `[Thinking...]` garbage. Now you get clean Markdown you can drop into a PR comment or Slack thread.
+
+### Video in the Image Carousel
+The image carousel (introduced in 1.113) now supports videos. You can preview videos from chat attachments or the Explorer context menu with playback controls and thumbnail navigation.
+
+This isn't revolutionary, but it's another sign that VS Code is becoming a full IDE for multimodal content — not just code and images, but video, audio, and whatever comes next.
+
+### Troubleshoot Previous Sessions
+The `/troubleshoot` skill can now analyze *previous* chat sessions using `#session` references. This is critical for debugging why custom instructions were ignored or why responses were slow — you can investigate after the fact without reproducing the issue.
+
+From an enterprise perspective, this is a huge win for debugging Copilot customization issues at scale.
+
+## VS Code 1.115: Agent Host Protocol Goes Hard
+
+1.115, which landed this morning, doubles down on the "agentic dev" bet with a cluster of Agent Host Protocol improvements. If you're not familiar, the Agent Host Protocol is VS Code's framework for running AI agents inside the editor with structured access to tools, terminals, and context.
+
+Here's what shipped:
+
+### Background Terminal Upgrades
+Background terminals now **automatically notify agents when commands complete**, including the exit code and output. Prompts for input are also detected and surfaced.
+
+This fixes a longstanding issue: when agents ran commands in the background using `run_in_terminal` with a timeout, terminals would become read-only and lose state. The new `send_to_terminal` tool sends commands with user confirmation and preserves terminal interactivity.
+
+I've hit this exact problem dozens of times. Agents would fire off `npm install` in the background and then have no idea if it succeeded or failed. Now they get clean signal.
+
+### Agent Session File Edit Tracking
+VS Code now tracks and restores **file edits in agent sessions**, delivering diffs, undo/redo, and state restoration for customizations made during a session.
+
+This means agents can make exploratory changes to your codebase, revert them cleanly, and track exactly what they modified. It's the foundation for workflows where agents iterate on solutions without leaving a mess behind.
+
+### Browser Tab Tracking for Agents
+Chat can now track and link to **browser tabs** that were opened or interacted with during a session. Agents can reference open web pages in their context.
+
+Imagine an agent debugging a web app: it opens the page in VS Code's integrated browser, inspects the rendered output, and references specific elements in its next prompt. That's the workflow this enables.
+
+### SSH Remote Connection Automation
+VS Code can now connect to remote machines over SSH and **automatically install the CLI and start it in agent host mode**. This is a major quality-of-life improvement for teams running agents on remote dev boxes or cloud workstations.
+
+### Other Notable Bits
+
+- **Test coverage in the minimap**: You can now see coverage indicators directly in the minimap (finally).
+- **Terminal file paste**: Drag-and-drop images or files into the terminal, or paste with Ctrl+V. Surprisingly useful for SSH workflows.
+- **Pinch-to-zoom in integrated browser**: Mac users can now pinch-to-zoom in the integrated browser. Small, but polished.
+
+## TypeScript 6.0 Ships (And 7.0 Is Coming)
+
+Buried in 1.114 is the TypeScript 6.0 update. This is mostly bug fixes and stability improvements, but it also **deprecates older options** in preparation for the TypeScript 7.0 rewrite.
+
+If you're maintaining TypeScript tooling or extensions, pay attention: TypeScript 7.0 is a ground-up rewrite with breaking changes. The team is using 6.0 as a transition release to surface deprecation warnings early.
+
+Read the [TypeScript 6.0 release notes](https://devblogs.microsoft.com/typescript/) for the full list of deprecated options.
+
+## What This Week Signals
+
+Microsoft is shipping two things in parallel:
+
+1. **Agent infrastructure** (background terminals, session tracking, file diffs, browser context)
+2. **Agent UX polish** (copy final response, troubleshoot sessions, simplified indexing)
+
+The pattern is clear: they're not just adding features to Copilot Chat. They're building a **platform for agentic workflows** where agents have structured, reliable access to tools, and the UX is designed around iterative, multi-step problem-solving.
+
+The weekly cadence helps here. Small, focused releases let them experiment with agent workflows in production without shipping half-baked features in monthly milestones.
+
+## The Bottom Line
+
+If you're building on VS Code's extension APIs or Copilot Chat, these two releases are a signal: **bet on agents having more capabilities, not fewer**. The team is moving fast to give agents access to terminals, file systems, browsers, and remote environments with proper state management and undo.
+
+For individual developers, the takeaway is simpler: keep your VS Code updated. The weekly releases are stable, and the incremental improvements compound fast. The `#codebase` changes alone are worth updating for if you work in large repos.
+
+We're not just getting better chat responses. We're getting a fundamentally different development environment where agents are first-class collaborators with structured access to your tools. That's the bet Microsoft is making, and these two releases are proof they're serious about it.
