@@ -8,13 +8,13 @@ draft: false
 
 ## The Week GitHub Stopped Playing Small
 
-This week wasn't incremental polish—it was infrastructure-level change. GitHub released the [Copilot SDK in public preview](https://github.blog/changelog/2026-04-02-copilot-sdk-in-public-preview/), shipped across five languages, and gave you the same production-tested agent runtime that powers GitHub's own tools. At the same time, [Copilot cloud agent shed its PR-only constraint](https://github.blog/changelog/2026-04-01-research-plan-and-code-with-copilot-cloud-agent/), unlocking research sessions, implementation plans, and branch-first workflows.
+This week wasn't incremental polish—it was infrastructure-level change. GitHub released the [Copilot SDK in public preview](https://github.blog/changelog/2026-04-02-copilot-sdk-in-public-preview), shipped across five languages, and gave you the same production-tested agent runtime that powers GitHub's own tools. At the same time, [Copilot cloud agent shed its PR-only constraint](https://github.blog/changelog/2026-03-31-research-plan-and-code-with-copilot-cloud-agent), unlocking research sessions, implementation plans, and branch-first workflows.
 
 This matters because GitHub just commoditized agentic orchestration. You no longer need to build your own tool invocation layer, streaming infrastructure, or permission framework—it's yours to embed directly into your applications.
 
 ## Copilot SDK: Five Languages, One Runtime
 
-The [Copilot SDK](https://github.blog/changelog/2026-04-02-copilot-sdk-in-public-preview/) exposes the same agent runtime powering Copilot cloud agent and Copilot CLI. Instead of reinventing multi-turn sessions, tool calling, and streaming responses, you get production-grade building blocks out of the box.
+The [Copilot SDK](https://github.blog/changelog/2026-04-02-copilot-sdk-in-public-preview) exposes the same agent runtime powering Copilot cloud agent and Copilot CLI. Instead of reinventing multi-turn sessions, tool calling, and streaming responses, you get production-grade building blocks out of the box.
 
 **Now available in:**
 - Node.js / TypeScript: `npm install @github/copilot-sdk`
@@ -32,13 +32,13 @@ The [Copilot SDK](https://github.blog/changelog/2026-04-02-copilot-sdk-in-public
 - **Permission framework**: Gate sensitive operations with approval handlers or mark read-only tools to skip permissions entirely
 - **Bring Your Own Key (BYOK)**: Use your own API keys for OpenAI, Microsoft Foundry, or Anthropic
 
-The SDK is available to all Copilot subscribers (including Copilot Free for personal use) and supports BYOK for enterprises. Each prompt counts toward your premium request quota.
+The SDK is available to all Copilot and non-Copilot subscribers, including Copilot Free users, and supports BYOK for enterprises. Each prompt counts toward your premium request quota.
 
 If you've been building custom agents or [agentic workflows](/articles/github-agentic-workflows-hands-on-guide), this SDK removes the undifferentiated heavy lifting. You're no longer choosing between building your own orchestration layer or being constrained by GitHub's UI—you can embed Copilot's agentic capabilities directly into your platform.
 
 ## Cloud Agent Escapes the PR Cage
 
-Until this week, working with Copilot cloud agent meant opening a pull request. That constraint is gone. [Copilot cloud agent now supports](https://github.blog/changelog/2026-04-01-research-plan-and-code-with-copilot-cloud-agent/):
+Until this week, working with Copilot cloud agent meant opening a pull request. That constraint is gone. [Copilot cloud agent now supports](https://github.blog/changelog/2026-03-31-research-plan-and-code-with-copilot-cloud-agent):
 
 ### Branch-first workflows
 - Copilot generates code on a branch without creating a PR
@@ -85,7 +85,7 @@ Azure private networking for GitHub-hosted runners now supports failover network
 
 ## Smaller Wins That Matter
 
-[Organization custom instructions for Copilot](https://github.blog/changelog/2026-04-02-copilot-organization-custom-instructions-are-generally-available) moved to GA. Organization admins can now set default instructions that guide Copilot's behavior across all repositories. Applied to Copilot Chat on github.com, Copilot code review, and Copilot cloud agent.
+[Organization custom instructions for Copilot](https://github.blog/changelog/2026-04-02-copilot-organization-custom-instructions-are-generally-available) moved to GA for Copilot Business and Enterprise. Organization admins can now set default instructions that guide Copilot's behavior across all repositories. Applied to Copilot Chat on github.com, Copilot code review, and Copilot cloud agent.
 
 [GitHub Mobile refreshed its Copilot tab](https://github.blog/changelog/2026-04-01-github-mobile-stay-in-flow-with-a-refreshed-copilot-tab-and-native-session-logs) with native session logs, in-app controls for agent sessions, and a clearer overview of chat history. You can now view full session logs, create PRs from completed sessions, and stop running sessions—all from your phone.
 
