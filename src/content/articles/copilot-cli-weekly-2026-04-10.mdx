@@ -1,0 +1,81 @@
+---
+title: "Copilot CLI Weekly: BYOK, Rubber Duck, and Direct Mode Flags"
+description: "GitHub shipped BYOK support, Rubber Duck cross-model reviews, and direct agent mode flags. The CLI is now provider-agnostic and 75% smarter."
+pubDate: 2026-04-10
+tags: ["GitHub Copilot", "Developer Experience", "AI", "Open Source"]
+draft: false
+---
+
+## The CLI Goes Fully Open: BYOK and Local Models
+
+GitHub dropped a [changelog entry on April 7](https://github.blog/changelog/2026-04-07-copilot-cli-now-supports-byok-and-local-models) that fundamentally changes what Copilot CLI is: **you can now bring your own model provider or run fully local models**. No GitHub-hosted routing required. This is BYOK (bring your own key) for the terminal agent, and it's a big deal.
+
+Here's what it means in practice: you configure environment variables pointing to Azure OpenAI, Anthropic, OpenAI, or any OpenAI-compatible endpoint, and Copilot CLI routes all inference through your provider instead of GitHub's model gateway. This works with remote services and locally running models like Ollama, vLLM, and Foundry Local.
+
+The kicker? **GitHub authentication is now optional**. If you're using your own provider, you can start using Copilot CLI with just your model credentials. Sign in to GitHub later if you want features like `/delegate`, GitHub Code Search, and the GitHub MCP server. But the core agentic terminal experience works entirely offline and entirely on your infrastructure.
+
+Set `COPILOT_OFFLINE=true` and all telemetry is disabled. Combined with a local model, this enables fully air-gapped development workflows. Run `copilot help providers` for setup instructions directly in the terminal. Built-in sub-agents (explore, task, code-review) automatically inherit your provider configuration.
+
+This isn't just a feature add — it's a positioning move. Copilot CLI is no longer a GitHub-exclusive tool. It's now a provider-agnostic agentic terminal interface that happens to work great with GitHub's infrastructure but doesn't require it. If you're already paying for Azure OpenAI or running local models, you can use the same agent UX without duplicating inference costs.
+
+I've been saying for months that [context engineering is the real skill](/articles/context-engineering-key-to-ai-development) when working with AI tools. BYOK amplifies this: the CLI's agentic framework (memory, tool routing, sub-agents, MCP integration) is now decoupled from the underlying LLM provider. You control the models. The CLI controls the orchestration.
+
+## Rubber Duck: Cross-Model Reviews Close 75% of the Sonnet-Opus Gap
+
+GitHub [published a blog post on April 6](https://github.blog/ai-and-ml/github-copilot/github-copilot-cli-combines-model-families-for-a-second-opinion/) introducing **Rubber Duck**, an experimental feature that uses a second model from a different AI family to review the primary agent's plans and implementations. The results are striking: **Claude Sonnet 4.6 + Rubber Duck running GPT-5.4 closes 74.7% of the performance gap between Sonnet and Opus** on SWE-Bench Pro, a benchmark of large, difficult, real-world coding problems.
+
+Here's how it works: when you select a Claude model from the model picker as your orchestrator, Rubber Duck uses GPT-5.4 as an independent reviewer. The job of Rubber Duck is to surface high-value concerns at critical checkpoints — details the primary agent may have missed, assumptions worth questioning, and edge cases to consider. It's not self-reflection (where the same model reviews its own work). It's cross-family review, which catches a different set of errors.
+
+Rubber Duck activates automatically at three checkpoints:
+1. **After drafting a plan** — catching suboptimal decisions before they compound downstream
+2. **After a complex implementation** — reviewing edge cases in complex code
+3. **After writing tests, before executing them** — catching gaps in test coverage or flawed assertions
+
+The agent can also invoke Rubber Duck reactively if it gets stuck in a loop or can't make progress. And you can request a critique at any point — Copilot will query Rubber Duck, reason over the feedback, and show you what changed and why.
+
+The blog post includes real examples of what Rubber Duck catches:
+- **Architectural catch** (OpenLibrary/async scheduler): Rubber Duck caught that the proposed scheduler would start and immediately exit, running zero jobs — and that even if fixed, one of the scheduled tasks was itself an infinite loop.
+- **One-liner bug, big impact** (OpenLibrary/Solr): Rubber Duck caught a loop that silently overwrote the same `dict` key on every iteration. Three of four Solr facet categories were being dropped from every search query, with no error thrown.
+- **Cross-file conflict** (NodeBB/email confirmation): Rubber Duck caught three files that all read from a Redis key which the new code stopped writing. The confirmation UI and cleanup paths would have been silently broken on deploy.
+
+Rubber Duck is available today in experimental mode via the `/experimental` slash command. It's enabled for all Claude family models (Opus, Sonnet, Haiku) as orchestrators, paired with GPT-5.4 as the reviewer. GitHub is exploring other model families for both roles.
+
+This is a smart implementation. The agent invokes Rubber Duck sparingly, targeting the moments where the signal is highest, without getting in the way. For the technically curious: Rubber Duck is invoked through Copilot's existing `task` tool — the same infrastructure used for other sub-agents. It's just another agent in the multi-agent architecture.
+
+Combined with [/fleet for parallel multi-agent execution](/articles/copilot-cli-weekly-2026-04-03) (shipped April 1), Copilot CLI now supports both horizontal scaling (multiple agents in parallel) and vertical validation (cross-model review). That's a complete multi-agent development platform.
+
+## v1.0.23: Direct Mode Flags and UX Polish
+
+[Version 1.0.23](https://github.com/github/copilot-cli/releases/tag/v1.0.23) shipped on April 10 with one standout feature and a handful of quality-of-life fixes:
+
+### Direct Agent Mode Flags
+
+The CLI now supports `--mode`, `--autopilot`, and `--plan` flags to **start directly in a specific agent mode**. No more launching the CLI, waiting for the prompt, then typing `/agent` or `/autopilot` every time. This is huge for scripting and automation workflows. You can now invoke the CLI programmatically with the exact mode you need:
+
+````bash
+copilot --mode agent "Refactor the auth module"
+copilot --autopilot "Run all tests and fix failures"
+copilot --plan "Add user preferences feature"
+````
+
+This pairs perfectly with BYOK — you can script the CLI against your own model provider with specific agent modes, no interactive input required.
+
+### Notable Fixes
+
+- **Agent no longer hangs on first turn when memory backend is unavailable** — previously, if the memory backend failed to connect, the agent would hang indefinitely. Now it degrades gracefully.
+- **Bazel/Buck build target labels** (e.g. `//package:target`) are no longer misidentified as file paths — if you're in a monorepo using Bazel or Buck, this was a real annoyance.
+- **Ctrl+L clears the terminal screen without clearing the conversation session** — small UX win for keeping your terminal clean while maintaining context.
+- **Slash command picker shows full skill descriptions and a refined scrollbar** — easier to discover and select the right command.
+- **`/diff`, `/agent`, `/feedback`, `/ide`, and `/tuikit` work while the agent is running** — you can now interrupt and inspect without stopping the agent entirely.
+- **Display reasoning token usage** in the per-model token breakdown when nonzero — useful for tracking extended thinking models.
+- **Shell output with BEL characters no longer causes repeated terminal beeping** — if you've ever been subjected to this, you know why it matters.
+
+## The Bottom Line
+
+This week's releases signal where Copilot CLI is heading: **provider-agnostic orchestration with cross-model collaboration**. BYOK decouples the CLI from GitHub's model gateway. Rubber Duck adds cross-family validation. Direct mode flags make automation workflows seamless.
+
+If you're building [custom Copilot agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents), BYOK means you can test against your own model infrastructure. If you're worried about cost, BYOK lets you use models you're already paying for. If you're in an air-gapped environment, offline mode + local models is now a real option.
+
+Rubber Duck is the kind of feature that sounds experimental but will become table stakes. Cross-model review catches a different class of errors than self-reflection. Closing 75% of the Sonnet-Opus gap is not a marginal improvement — it's a structural change in how agents reason about their own work.
+
+The CLI is no longer just a GitHub tool. It's an agentic terminal platform that happens to integrate deeply with GitHub when you want it to. That's a much more interesting product.
