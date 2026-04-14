@@ -26,9 +26,90 @@ The entire system sits in a single Git repository with a clean separation betwee
 
 **Agents** are Markdown files in `.github/agents/`. Each one defines an AI persona with domain expertise, decision rules, memory loading, and integration points. The `finance-manager` knows how to categorize expenses and track bill due dates. The `dog-parent` tracks feeding schedules and vet appointments. The `task-coach` serves tasks one at a time with momentum tracking — because dumping 30 tasks on someone with ADD is the same as giving them zero tasks.
 
-**Extensions** are Node.js ESM modules in `.github/extensions/`. They expose tools like `add_expense`, `set_meal`, `telegram_send_message`, and `gcal_create_event`. The Copilot CLI [extension SDK](/articles/github-copilot-cli-extensions-complete-guide) lets you create these with a simple `getTools()` function — no framework, no boilerplate.
+Here's what an actual agent definition looks like — this is from the `task-coach`:
 
-**The constitution** (`data/constitution.md`) governs every agent. It defines autonomy levels (create calendar events immediately, ask before sending emails on someone's behalf), communication rules (short messages only to my pregnant wife), and the core principle that makes this work: *"Act first, report after. You are autonomous."*
+```markdown
+# Task Coach — Your Family Productivity Partner
+
+## Identity & Personality
+
+You are the family's productivity coach — you nudge BOTH parents.
+You're energetic, encouraging, and no-nonsense. You understand that
+long lists are paralyzing, context switches are expensive, and
+momentum is everything.
+
+### For {YourName} (ADD-friendly coaching):
+- **One task at a time.** Never dump a list. Always serve the single next thing.
+- **Celebrate wins.** Every completion gets a brief cheer before the next task.
+- **Track momentum.** "You've knocked out 4 tasks today! Keep the streak going."
+
+### For {Spouse} (gentle pregnancy-friendly coaching):
+- **Ultra-short messages.** 2-3 lines max. She's carrying twins.
+- **Don't nag.** If no response, wait 2+ hours. She may be resting.
+```
+
+That's not pseudocode — that's the actual agent file. The `{YourName}` and `{Spouse}` placeholders are what you replace when you fork the repo.
+
+**Extensions** are Node.js ESM modules in `.github/extensions/`. They expose tools like `add_expense`, `set_meal`, `telegram_send_message`, and `gcal_create_event`. The Copilot CLI [extension SDK](/articles/github-copilot-cli-extensions-complete-guide) lets you create these with the `joinSession` API — hooks intercept agent actions in real time.
+
+Here's the `auto-commit` extension — it watches for data changes and auto-saves to Git after every tool call:
+
+```javascript
+// .github/extensions/auto-commit/extension.mjs
+import { execSync } from "node:child_process";
+import { joinSession } from "@github/copilot-sdk/extension";
+
+// Tools that modify family data files
+const FILE_MODIFY_TOOLS = new Set([
+  "add_task", "update_task", "complete_task",
+  "add_to_shopping_list", "check_off_item",
+  "set_meal", "add_recipe",
+  "add_expense", "add_income", "set_budget",
+  "add_maintenance_task", "log_maintenance",
+]);
+
+const session = await joinSession({
+  tools: [],
+  hooks: {
+    onPostToolUse: async (input) => {
+      // After any data-modifying tool, commit and push
+      if (FILE_MODIFY_TOOLS.has(input.toolName)) {
+        execSync("git add -A && git commit -m 'Auto-save'", { cwd: process.cwd() });
+        execSync("git push origin main", { cwd: process.cwd() });
+        return { additionalContext: "[auto-commit] ✅ Committed and pushed" };
+      }
+    },
+  },
+});
+```
+
+Every time an agent logs an expense, completes a task, or sets a meal — the data is automatically committed to Git. No manual saves. No data loss.
+
+**The constitution** (`data/constitution.md`) governs every agent. It defines autonomy levels, communication rules, and the core principles that make this work:
+
+```markdown
+## Core Principles
+
+1. **Act first, report after.** You are autonomous. Detect → act → notify.
+   Never say "would you like me to...?" — just do it and tell them what you did.
+2. **Be specific and actionable.**
+   ✅ "Call MOHELA today — 90 days delinquent. Phone: 1-800-848-0979"
+   ❌ "You might want to look into your MOHELA situation."
+3. **Every correction is permanent.** When the family corrects you,
+   persist the lesson via store_memory, standing-orders.md,
+   AND copilot-instructions.md. Never repeat the same mistake.
+
+## Autonomy Levels
+
+| Do it immediately              | Ask first                       |
+|--------------------------------|---------------------------------|
+| Create calendar events & tasks | Major purchases (>$200)         |
+| Add to shopping lists          | Medical decisions               |
+| Relay messages between family  | Sending emails on someone's behalf |
+| Log expenses, create bills     | Deleting any data               |
+```
+
+Every agent reads this constitution before doing anything else. It's the shared brain that keeps 17 agents behaving consistently.
 
 Here's the actual architecture:
 
@@ -48,6 +129,38 @@ This isn't a toy. Here's what runs every day:
 **Morning briefings** hit Telegram at 5 AM weekdays, 7 AM weekends. Weather, today's calendar, prioritized tasks, unread email summary, today's meals, upcoming bills, and health reminders — all compiled by the `daily-briefing` agent delegating to domain specialists.
 
 **Task coaching** runs every 20 minutes. The `task-coach` checks what's pending, evaluates priorities and dependencies, and nudges with one task at a time. It knows to chain errands by location, front-load deadlines, and serve quick wins first for momentum. Our record was 18 tasks completed in one day — not because we were heroic, but because the system served them in the right order.
+
+All of this is driven by `cron.json` — here's a slice of the actual schedule:
+
+```json
+{
+  "timezone": "America/Chicago",
+  "jobs": [
+    {
+      "id": "morning-briefing",
+      "schedule": "0 5 * * 1-5",
+      "agent": "daily-briefing"
+    },
+    {
+      "id": "task-coach-nudge",
+      "schedule": "*/20 5-22 * * *",
+      "agent": "task-coach"
+    },
+    {
+      "id": "heartbeat",
+      "schedule": "*/30 5-22 * * *",
+      "agent": "checkin"
+    },
+    {
+      "id": "nightly-reflection",
+      "schedule": "0 21 * * *",
+      "agent": "platform-manager"
+    }
+  ]
+}
+```
+
+Fifteen jobs in total. Add an agent, add a cron entry — it starts running on the next cycle.
 
 **Meal planning** happens Saturday mornings. The `nutrition-chef` manages three dietary tracks (I'm on a high-protein cut, my wife has pregnancy dietary needs, and we have a picky 4-year-old). The extension generates grocery lists cross-referenced with recipes and sends them to the shopping list.
 
@@ -81,6 +194,33 @@ The Copilot Home Assistant uses the same layered safety approach I covered in th
 4. **Ask-via-Telegram** — high-stakes decisions route a confirmation prompt to your phone
 
 The [Telegram bridge extension](https://github.com/htekdev/gh-cli-telegram-extension) itself is open source too. It started as a proof of concept and became the [communication backbone](/articles/copilot-cli-telegram-bridge-mobile-ai-terminal) of the entire system.
+
+Here's how the bridge routes incoming Telegram messages to the right agent:
+
+```javascript
+// From .github/extensions/telegram-bridge/extension.mjs
+onUserPromptSubmitted: async (input) => {
+  const prompt = input.prompt || "";
+  if (!prompt.startsWith("[Telegram from")) return;
+
+  // Extract sender identity from the Telegram message
+  const userMatch = prompt.match(
+    /\[Telegram from (.+?) \(user (\d+)\)\]: (.+)/s
+  );
+  if (!userMatch) return;
+  const [, senderName, senderId, userMessage] = userMatch;
+
+  // Inject context: "Pick the best agent and delegate"
+  return {
+    additionalContext:
+      `Message from ${senderName}. ` +
+      `Pick the best agent_type, launch it with the task tool, ` +
+      `and the agent responds via telegram_send_message.`,
+  };
+},
+```
+
+Every Telegram message gets tagged with the sender's identity, then Copilot CLI picks the right domain agent to handle it. I text "what's for dinner?" and the `nutrition-chef` agent responds. I text "what tasks do I have?" and the `task-coach` takes over.
 
 ## How to Use It
 
