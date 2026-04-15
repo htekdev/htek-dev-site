@@ -1,0 +1,99 @@
+---
+title: "VS Code Weekly: GitHub Copilot Ships Built-In, Agents App Goes Live"
+description: "VS Code 1.116 makes Copilot a first-class citizen with zero-install AI, while the new Agents companion app redefines multi-repo workflows."
+pubDate: 2026-04-15
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+VS Code 1.116 dropped today, and it marks a turning point for Microsoft's AI strategy in the editor: **GitHub Copilot is now built-in**. No extension install. No setup friction. Just launch VS Code and start using chat, inline suggestions, and agents from day one.
+
+That's a big deal. But it's not the only news. Last week's 1.115 release introduced the **VS Code Agents companion app**—a preview app that runs alongside Insiders and fundamentally rethinks how we work with AI agents across multiple repositories. Combined with terminal improvements, better accessibility, and integrated browser debugging, these two releases represent the most significant evolution of VS Code's AI capabilities since Copilot Chat launched.
+
+## Copilot Is Now Built-In: Zero-Friction AI
+
+Starting with 1.116, new VS Code users get GitHub Copilot out of the box. No marketplace visit. No manual installation. The extension ships as a built-in component of the editor.
+
+This is the logical conclusion of Microsoft's "open source AI code editor" vision. If AI-powered development is the future, then AI can't be optional infrastructure you bolt on later—it needs to be core to the product. By eliminating the install step, Microsoft removes the biggest barrier to adoption for new developers.
+
+Existing users won't see any change. If you already have the Copilot extension installed, it continues to work exactly as before. And if you prefer not to use AI features, you can disable them with `chat.disableAIFeatures`.
+
+But for everyone else? This changes the default. AI is no longer something you opt into. It's something you opt out of. That's a statement about where the industry is headed.
+
+## VS Code Agents App: Multi-Repo AI Development
+
+The more interesting development is the **VS Code Agents companion app**, which launched in preview with 1.115. This is a separate application (currently Insiders-only) designed specifically for **agent-native development**—a term Microsoft is clearly trying to establish as the next evolution of AI-assisted coding.
+
+Here's what makes it different from regular VS Code:
+
+### Parallel Sessions Across Repos
+
+The Agents app lets you kick off multiple agent sessions simultaneously, each working in its own isolated worktree across different repositories. You can have one agent refactoring a frontend component while another debugs a backend service, then quickly switch between them without losing context.
+
+This is fundamentally different from VS Code's single-workspace model. The Agents app treats repositories as fungible units that agents can parallelize across, rather than forcing you to manually context-switch between workspace windows.
+
+### Unified Review Interface
+
+The app provides a dedicated review UI where you can track session progress, view diffs inline, leave feedback for agents, and create pull requests—all without bouncing between windows. It's optimized for the human-in-the-loop workflow where you're managing multiple AI workstreams rather than writing code directly.
+
+### Your Customizations Work Everywhere
+
+Custom instructions, prompt files, custom agents, MCP servers, hooks, and plugins all carry over from VS Code to the Agents app. Even your themes persist. It's a separate executable, but it's not a separate environment—it's an alternate interface for the same underlying VS Code platform.
+
+You can launch it from your OS application launcher or run `Chat: Open Agents Application` from the Command Palette. No extra install required—it ships with Insiders.
+
+## What This Signals About AI Development Tooling
+
+The Agents app is Microsoft's bet that the future of development tooling isn't just "better autocomplete" or "smarter chat"—it's **orchestration layers for autonomous agents**. The app exists because the traditional single-editor, single-workspace model doesn't scale when you're managing multiple long-running, partially autonomous tasks.
+
+This mirrors what we're seeing across the AI development ecosystem. [Agentic workflows](/articles/agentic-devops-next-evolution-of-shift-left) are pushing tools to become **control planes** rather than just editors. The human developer's role shifts from writing every line to directing, reviewing, and approving work done by agents.
+
+VS Code isn't replacing the editor—it's augmenting it with a purpose-built layer for the parts of development that are increasingly delegated to AI. That's a pragmatic architectural choice.
+
+## Terminal Tools Level Up
+
+Both 1.115 and 1.116 brought significant improvements to how agents interact with terminal sessions.
+
+**Foreground terminal support** means agents can now read from and send input to any visible terminal, not just background terminals they created. That includes REPLs, interactive installers, and debugging sessions. Previously, if you had a `node` REPL open, the agent couldn't touch it. Now it can.
+
+**Background terminal notifications** (enabled by default in 1.116) mean agents automatically receive notifications when background commands complete, time out, or need input. The agent doesn't have to poll for output anymore—it gets an event when something happens. That reduces latency and token waste.
+
+**Smarter input handling** also shipped in 1.116. The old LLM-based "is the terminal waiting for input?" detection is gone. Instead, the agent handles input directly via `send_to_terminal` and uses the question carousel to defer to you when it's ambiguous. When the agent needs terminal input—like a password prompt—you get a **Focus Terminal** button in the carousel to jump directly to the terminal and type your response.
+
+These are small changes individually, but together they make terminal-based workflows dramatically more reliable for agents. Interactive installers like `npm init`, SSH sessions, and password prompts all work better now.
+
+## Integrated Browser Gets Production-Ready
+
+The integrated browser—which lets agents interact with web apps directly inside VS Code—got several quality-of-life improvements.
+
+**Easier access** via `View > Browser` or the keyboard shortcut `Ctrl+Alt+/` (macOS: `Cmd+Opt+/`) makes it feel less like a hidden feature and more like a first-class tool.
+
+**Better agent tool labels** mean you can actually tell what the agent is doing when it invokes browser tools. Instead of generic "Run Playwright Code," you now see descriptive labels with links to the target browser tab.
+
+**Long-running script support** means Playwright automation that takes more than five seconds returns a deferred result the agent can poll, rather than timing out and failing.
+
+**Pinch-to-zoom** on macOS is a small thing, but it's the kind of polish that makes the integrated browser feel less like a prototype and more like a tool you'd actually use daily.
+
+And crucially, **debugging with the integrated browser** now works. You can set breakpoints, step through code, and inspect variables directly in the browser without leaving VS Code. The new `editor-browser` debug type works with most existing `chrome` and `msedge` configurations, which means your existing debug launch configs probably already work.
+
+This matters because it closes the loop on browser-based agent workflows. The agent can modify code, reload the browser, and you can debug failures without context-switching to Chrome DevTools. That's a complete workflow.
+
+## Accessibility Wins
+
+The Agents app now has comprehensive accessibility support, which is rare for preview software. You get an accessibility help dialog (`Alt+F1`), keyboard navigation commands to focus key views, and proper ARIA labels and landmarks throughout.
+
+The main editor also improved. Screen reader users searching in the Keyboard Shortcuts editor now hear navigation instructions: "Use Ctrl+Down Arrow to access the searched shortcut details." Small, but crucial for discoverability.
+
+Microsoft's track record on accessibility is strong, and these features shipping in preview rather than "we'll add it later" suggests they're treating it as a first-class design constraint, not an afterthought.
+
+## The Bottom Line
+
+VS Code 1.116's built-in Copilot isn't just a distribution strategy—it's Microsoft declaring that AI is core infrastructure, not an add-on. The Agents app, meanwhile, is a glimpse at what development environments look like when agents become first-class participants rather than assistants.
+
+The shift from "AI helps you code" to "you orchestrate AI that codes" is happening fast. Tools are adapting. VS Code is adapting faster than most.
+
+If you're doing any serious work with AI agents, the Agents app is worth trying. It's preview software, but the architecture is sound, and the bet it's making—that multi-repo, multi-agent orchestration is the future—looks increasingly correct.
+
+Weekly stable releases mean features ship faster now. That's good. It also means the gap between "experimental preview" and "production default" is shrinking. The Agents app might be Insiders-only today, but I'd bet we see a stable release before the end of Q2.
+
+The editor wars are over. The orchestration wars are just beginning.
