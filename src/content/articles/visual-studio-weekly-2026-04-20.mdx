@@ -1,0 +1,94 @@
+---
+title: 'Visual Studio Weekly: The Debugger Agent Just Got Serious'
+description: >-
+  Visual Studio 18.5 brings runtime-validated debugging, Azure MCP built-in, and agent skills. Debugging is about to feel very different.
+pubDate: 2026-04-20
+tags:
+  - Developer Experience
+  - AI
+  - Visual Studio
+  - Productivity
+draft: false
+---
+
+Visual Studio 18.5 dropped on April 14, and buried in the release notes is one of the most significant debugging improvements I've seen in years: the Debugger Agent now validates bugs against *live runtime behavior* instead of guessing from static code. If you've ever spent an hour reproducing a vague bug report just to figure out where to set your first breakpoint, this update changes the game.
+
+## The Debugger Agent Gets a Runtime Loop
+
+Traditional debugging is a guessing game. A bug report lands with "app crashes sometimes" and zero repro steps. You set scattershot breakpoints, stare at call stacks, and hope you're in the right neighborhood. Visual Studio's new Debugger Agent workflow eliminates most of that friction.
+
+Here's how it works: Open your solution, switch to Debugger mode in Copilot Chat, and paste an issue URL or describe the bug ("crashes when saving a file"). The Agent doesn't just read your code—it *runs* it and watches what happens.
+
+The workflow is fully interactive:
+
+1. **Hypothesis & Preparation** — The Agent analyzes the issue and proposes a root cause. If it seems solid, it sets intelligent breakpoints and prepares to launch your project.
+2. **Active Reproduction** — The Agent stays connected while you trigger the bug, watching runtime state as you move through repro steps.
+3. **Real-Time Validation** — As breakpoints hit, the Agent evaluates variables and call stacks to systematically confirm or eliminate causes.
+4. **The Fix & Verification** — Once the root cause is isolated, the Agent proposes a solution. If you approve, it applies the fix and reruns the session to validate the resolution.
+
+From the [Visual Studio blog](https://devblogs.microsoft.com/visualstudio/stop-hunting-bugs-meet-the-new-visual-studio-debugger-agent/):
+
+> The workflow is interactive and powered by runtime debugging, meaning the Agent doesn't just read your code; it feels how it's running.
+
+This is the difference between an AI chatbot and an AI *partner*. The Agent isn't suggesting fixes based on patterns it's seen before—it's verifying hypotheses against your actual application state. That's a fundamentally different debugging model.
+
+The 18.5 GA release focuses on reproducible scenarios like exceptions, logic inconsistencies, and state corruption. Microsoft says they're working toward progressively automating the end-to-end workflow. I'm watching this closely—if they nail the execution, this could redefine what debugging feels like.
+
+## Azure MCP Tools: No Extension, No Friction
+
+Another quiet but important change: Azure MCP tools now ship built into Visual Studio 2022 as part of the Azure development workload. No separate extension to install, no VSIX dialogs, no restarts.
+
+Previously, using Azure MCP tools meant finding the "GitHub Copilot for Azure (VS 2022)" extension in the Marketplace, walking through the installer, and restarting VS. If something broke, you uninstalled and reinstalled the whole thing. That friction added up.
+
+Now, if you have the Azure development workload installed, the Azure MCP Server is already there. You enable it once in Copilot Chat's "Select tools" dialog, and it stays enabled across sessions. Over 230 tools across 45 Azure services, all accessible through natural language prompts.
+
+Examples from the [announcement](https://devblogs.microsoft.com/visualstudio/azure-mcp-tools-now-ship-built-into-visual-studio-2022-no-extension-required/):
+
+- `List my storage accounts in my current subscription` → Copilot queries your Azure subscription and returns a list with names, locations, and SKUs.
+- `Deploy my ASP.NET Core app to Azure` → Copilot identifies your project, creates an App Service resource, and initiates deployment.
+- `Query my Log Analytics workspace for exceptions` → Copilot generates and runs a KQL query, returning recent exceptions with stack traces.
+
+This is the right move. Azure MCP tools are useful enough that they shouldn't require hunting through the Marketplace. Making them first-class in the Azure workload means they get updated with regular Visual Studio releases and just *work*.
+
+## Agent Skills: Reusable Instructions for Copilot
+
+Visual Studio 18.5 also introduces agent skills—reusable instruction sets that teach Copilot agents how to handle specific tasks. Define a skill once, and agents automatically discover and use it when relevant.
+
+Skills are discovered from:
+
+- Workspace skills: `.github/skills/`, `.claude/skills/`, `.agents/skills/`
+- Personal skills: `~/.copilot/skills/`, `~/.claude/skills/`, `~/.agents/skills/`
+
+Each skill is a directory with a `SKILL.md` file following the [agentskills.io/specification](https://agentskills.io/specification) format. You can add scripts, examples, or other resources alongside it.
+
+This is the natural evolution of [custom agents](/articles/visual-studio-weekly-2026-04-06), which I covered two weeks ago. Custom agents let you build specialized Copilot modes for your team. Skills let you decompose those modes into reusable pieces. An agent might use a "run build pipeline" skill, a "query internal docs" skill, and a "follow coding standards" skill—all discovered automatically.
+
+It's early, but the [awesome-copilot](https://github.com/github/awesome-copilot) repo already has community examples. The framework is there; now it's about building the library of skills that actually save time.
+
+## Copilot Polish: Less Noise, More Control
+
+A few smaller Copilot improvements round out the release:
+
+- **IntelliSense priority** — IntelliSense now takes priority over Copilot completions, so you only see one suggestion at a time. When IntelliSense is active, Copilot temporarily suppresses completions.
+- **Customizable shortcuts** — You can now customize keyboard shortcuts for accepting Copilot suggestions (full, next word, next line) in standard keyboard settings.
+- **Chat history panel** — The chat history dropdown is now a dedicated panel showing each chat title, message preview, and last updated timestamp.
+
+These are quality-of-life fixes, but they matter. Seeing both IntelliSense and Copilot at the same time was genuinely distracting. Fixing that makes the editing experience smoother.
+
+## Cloud Agents and C++ Tooling
+
+Two other updates worth noting:
+
+**Cloud agent integration** — You can now start new cloud agent sessions directly from Visual Studio. Select "Cloud" from the agent picker, describe your work, and the agent creates an issue and prepares a PR on remote infrastructure. You can close Visual Studio and come back later; the cloud agent keeps working.
+
+**C++ code editing tools for agent mode** — Copilot agents can now map class inheritance hierarchies and follow function call chains in C++ projects. These tools are generally available by default in 18.5 and work best with models that support tool-calling.
+
+## What This Signals
+
+Visual Studio's AI strategy is becoming clear: deep integration with live development workflows, not just chat-based assistance. The Debugger Agent validates against runtime state. Azure MCP tools query real infrastructure. Skills compose into agents that understand your specific codebase.
+
+This is what I wrote about in [Context Engineering: The Key to AI Development](/articles/context-engineering-key-to-ai-development)—AI tools are only as good as the context they have access to. Visual Studio is giving Copilot access to the debugger, the profiler, the build system, and your Azure resources. That context makes the difference between a chatbot that suggests plausible fixes and a partner that knows if they actually work.
+
+The Debugger Agent is the most interesting piece. If Microsoft can automate the reproduce-instrument-validate loop reliably, debugging becomes less about manual investigation and more about confirming or rejecting AI-generated hypotheses. That's a fundamentally different workflow.
+
+I'm watching how this evolves. Visual Studio 18.5 is available now—if you're doing .NET or C++ work, the Debugger Agent workflow alone is worth the update.
