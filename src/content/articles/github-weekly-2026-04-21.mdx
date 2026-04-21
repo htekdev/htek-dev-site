@@ -1,0 +1,90 @@
+---
+title: "GitHub Weekly: Copilot Hits Infrastructure Limits, Security Gets Smarter"
+description: "GitHub paused Copilot signups as agentic workflows strain infrastructure, while security tools gained OIDC, issue tracking, and smarter secret detection."
+pubDate: 2026-04-21
+tags: ["GitHub Copilot", "DevOps", "Developer Experience", "AI"]
+draft: false
+---
+
+## When Agentic AI Breaks Your Pricing Model
+
+[GitHub paused new signups for Copilot Pro, Pro+, and Student plans](https://github.blog/news-insights/company-news/changes-to-github-copilot-individual-plans/) this week and tightened usage limits across the board. The reason? Agentic workflows are consuming far more compute than the original pricing model was built to handle. According to GitHub, it's now common for "a handful of requests to incur costs that exceed the plan price."
+
+This is the first major public acknowledgment from a platform vendor that agentic coding fundamentally changes the economics of AI-powered development tools. Long-running, parallelized agent sessions—the kind that use `/fleet` mode or multi-step workspace agents—aren't just heavier than autocomplete. They're orders of magnitude heavier.
+
+GitHub's response: pause new signups, show usage limits directly in VS Code and Copilot CLI, and push Pro users toward Pro+ (which has 5× the token limits but costs more). Opus models are gone from Pro plans entirely. Opus 4.7 stays on Pro+, but Opus 4.5 and 4.6 are being retired.
+
+**What this means for developers:**
+
+If you're using Copilot for simple autocompletions, nothing changes. If you're running multi-step agent workflows—especially parallel subagents tackling complex refactors—you'll start hitting visible usage warnings. GitHub now surfaces token consumption in real time so you can see how close you are to limits.
+
+The broader signal? Every AI coding platform is going to hit this wall. Agentic workflows deliver 3-5× productivity gains (per [Stanford research on AI-assisted development](https://arxiv.org/abs/2409.15152)), but they also consume 10-20× more compute per task. Pricing models designed for autocomplete don't scale to agents doing multi-hour refactoring sessions across 50 files.
+
+I've written before about [how context engineering determines AI ROI](/articles/context-engineering-key-to-ai-development)—this is the flip side. Better context enables more powerful agents, but more powerful agents cost more to run. Platforms are figuring out sustainable pricing in real time.
+
+## Claude Opus 4.7 Arrives with Better Agentic Execution
+
+[Claude Opus 4.7 is now generally available](https://github.blog/changelog/2026-04-16-claude-opus-4-7-is-generally-available/) on GitHub Copilot for Pro+, Business, and Enterprise users. According to GitHub's early testing, Opus 4.7 delivers "stronger multi-step task performance and more reliable agentic execution" compared to its predecessors.
+
+This launch comes with a 7.5× premium request multiplier through April 30 as promotional pricing, then presumably increases. It's rolling out gradually across VS Code, Visual Studio, Copilot CLI, GitHub.com, JetBrains, and mobile.
+
+The timing is notable—GitHub is streamlining model offerings just as they're tightening usage limits. Opus 4.5 and 4.6 are being phased out, leaving Opus 4.7 as the flagship Opus model. This consolidation suggests GitHub is optimizing for service reliability and cost predictability rather than model proliferation.
+
+For developers building [custom Copilot agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents), Opus 4.7's improved long-horizon reasoning should help with multi-step workflows—exactly the kind that are now bumping into usage limits.
+
+## Remote Control for Copilot CLI Sessions
+
+[Copilot CLI sessions can now be controlled remotely](https://github.blog/changelog/2026-04-13-remote-control-cli-sessions-on-web-and-mobile-in-public-preview) from GitHub.com or GitHub Mobile (public preview). Start a session on your workstation, walk away, and pick it up from your browser or phone.
+
+This is one of those features that sounds like a demo until you actually use it. Long-running agent tasks—like "refactor this authentication system" or "migrate these 30 API endpoints to the new SDK"—can now continue while you're away from your terminal. You can monitor progress, approve permission requests, or steer the session from anywhere.
+
+**How it works:**
+
+- Type `/remote` in an active CLI session or start with `gh copilot --remote`
+- CLI displays a URL (`github.com/OWNER/REPO/tasks/TASK_ID`) and QR code
+- Open the link in any browser or scan with GitHub Mobile
+- Session remains local (all file operations and commands run on your machine), but you control it remotely
+- Only the account that started the session can view or interact with it
+
+The security model is smart: execution stays local, only the control interface is remote. This sidesteps the trust issues of fully remote code execution while still solving the "I need to step away but the agent isn't done" problem.
+
+For teams using [agentic DevOps workflows](/articles/agentic-devops-next-evolution-of-shift-left), this is a quality-of-life upgrade that compounds over time. You're no longer tied to your terminal when agents are doing multi-hour tasks.
+
+## Security: OIDC, Issue Tracking, and Smarter Secrets
+
+GitHub shipped a cluster of security improvements this week, all pointing toward tighter integration and better workflows:
+
+**[OIDC authentication for Dependabot and code scanning](https://github.blog/changelog/2026-04-14-oidc-support-for-dependabot-and-code-scanning)** eliminates long-lived credentials for private registries. Org admins can configure OIDC-based authentication for AWS CodeArtifact, Azure DevOps Artifacts, and JFrog Artifactory—no more storing registry credentials as repository secrets. Cloudsmith and Google Artifact Registry support coming in the next four weeks.
+
+This is the same OIDC federation model GitHub Actions already uses. Short-lived tokens, centralized org-level config, no secrets in repos. If you're running Dependabot or code scanning at scale, this cuts credential sprawl significantly.
+
+**[Code scanning alerts can now link to GitHub Issues](https://github.blog/changelog/2026-04-14-link-code-scanning-alerts-to-github-issues/)**, bringing security remediation into existing planning workflows. You can filter alerts by tracking status (`has:tracking` or `no:tracking`) and see which alerts are already assigned to issues.
+
+The UX is clean: link alerts from the alert page or from the issue page via a new "Security alerts" section in the Relationships panel. For teams that already track work in GitHub Issues, this removes the context-switching between security dashboards and project boards.
+
+**[Secret scanning got a major upgrade](https://github.blog/changelog/2026-04-14-secret-scanning-pattern-updates-and-product-improvements/)** with Cloudflare as a new partner, expanded push protection defaults (Figma, GCP, Langchain, OpenVSX, PostHog), and API improvements. Key additions:
+
+- Push protection now walks fork ancestry—if the parent repo has push protection enabled, all forks inherit it
+- You can manually set `validity` on custom pattern alerts via API (mark as `active` or `inactive`)
+- Alert responses now include `provider` and `provider_slug` fields for easier filtering and automation
+- AI-detected secrets now appear in the scan history API
+
+The fork inheritance is clever—it closes a gap where EMU developers could fork org repos and bypass push protection in their personal namespaces. Now protection follows the repo hierarchy.
+
+## Rule Insights Dashboard and Unified Filters
+
+[GitHub's new rule insights dashboard](https://github.blog/changelog/2026-04-16-rule-insights-dashboard-and-unified-filter-bar/) gives visual, time-series data on how repository rulesets are performing. See spikes in blocked pushes, track adoption trends, and spot patterns like "every Monday morning we get 50 blocked commits."
+
+Repository rulesets are powerful—branch protection, required reviews, status checks—but until now you couldn't easily see trends. The new dashboard lives in Settings → Rules and shows what's actually happening with your enforcement policies.
+
+The unified filter bar across rulesets, custom properties, and deployment contexts means you can slice data by team, topic, or deployment status without jumping between interfaces. If you're managing dozens of repos with rulesets, this is a meaningful UX win.
+
+## The Bottom Line
+
+This week's announcements cluster around two themes: infrastructure strain from agentic workflows, and security tools getting smarter about integration and automation.
+
+GitHub's usage limit squeeze is the canary in the coal mine—every AI coding platform will face this. Agentic workflows deliver real productivity gains, but they cost more to run than anyone's 2023 pricing models anticipated. Expect more platforms to adjust limits, pricing, and model availability as they figure out sustainable economics.
+
+On the security side, OIDC for Dependabot/code scanning, issue tracking for alerts, and smarter secret detection all point toward less manual work and better integration with existing workflows. The pattern is clear: security tools are becoming more autonomous and more embedded in day-to-day development, not standalone dashboards you check weekly.
+
+If you're building [agentic workflows](/articles/github-agentic-workflows-hands-on-guide) or running Copilot at scale, watch your usage metrics. The era of unlimited agent compute at flat subscription pricing is already over.
