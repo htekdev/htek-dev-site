@@ -1,0 +1,90 @@
+---
+title: "Copilot CLI Weekly: Remote Sessions and 10 Releases in 7 Days"
+description: "GitHub shipped remote CLI control, auto model selection, and document attachments. Plus 10 releases in one week."
+pubDate: 2026-04-17
+tags: ["GitHub Copilot", "Developer Experience", "AI", "Open Source"]
+draft: false
+---
+
+## GitHub Shipped 10 CLI Releases This Week
+
+Between April 10 and today, [GitHub shipped 10 Copilot CLI releases](https://github.com/github/copilot-cli/releases) — from v1.0.23 to v1.0.32-0. That's more than one release per day. Some were single-bug fixes. Others introduced genuinely impactful features that change how you use the tool. If you haven't run `/update` in the past week, you're missing a lot.
+
+The headline features this week: **remote session control** from web and mobile, **auto model selection**, and **document attachment support**. Plus improved rate limiting, better table rendering, and a configurable status bar. The CLI is getting denser with capabilities while staying fast and lightweight.
+
+I'm writing this article because this week's velocity deserves attention. Not every release warrants a deep dive, but when a tool ships 10 versions in 7 days and introduces features that fundamentally change where and how you can use it, that's worth documenting.
+
+## Remote Sessions: Take Your Terminal Anywhere
+
+On April 13, GitHub [announced `copilot --remote`](https://github.blog/changelog/2026-04-13-remote-control-cli-sessions-on-web-and-mobile-in-public-preview) in public preview. This is the biggest new capability this week. The Copilot CLI is no longer a purely local experience. You can now monitor and control a running CLI session directly from [GitHub on the web](https://github.com) or in the [GitHub Mobile apps](https://play.google.com/apps/testing/com.github.android).
+
+Here's how it works: start a session with `copilot --remote` or enable it mid-session with `/remote`. The CLI streams your session activity to GitHub in real time and displays a link + QR code. Open that link on another device — your phone, a tablet, a different laptop — and you get a live view of the session. Activity stays in sync across the CLI and GitHub. Actions you take in one place are reflected in the other. Each remote session is private and visible only to the user who started it.
+
+Remote sessions support the full CLI feature set:
+- Send mid-session steering messages and new messages to keep the agent going
+- Review and modify plans before implementation begins
+- Switch between plan, interactive, and autopilot mode, or stop your session entirely
+- Approve or deny permissions requests based on your CLI settings
+- Respond to questions from Copilot prompted via the `ask_user` tool
+
+This matters for two reasons. First, it decouples the CLI from physical proximity to your terminal. You can start a long-running task at your desk, walk away, and monitor it from your phone. If the agent asks for approval or hits a permissions dialog, you can respond from wherever you are. Second, it makes the CLI usable on devices that don't have great keyboard support. Reviewing a plan on your phone is now viable — the interactive controls are designed for touch.
+
+The mobile experience is in beta. Try it on [Google Play](https://play.google.com/apps/testing/com.github.android) or [iOS TestFlight](https://testflight.apple.com/join/NLskzwi5). For longer tasks, use `/keep-alive` to prevent your machine from sleeping while the CLI is running.
+
+Note: Copilot Business and Enterprise users need an admin to [enable remote control and CLI policies](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-remote-access#administering-remote-access) before this works. Join the discussion in [GitHub Community](https://github.com/orgs/community/discussions/191814).
+
+## Auto Model Selection and Document Attachments
+
+Today's release — [v1.0.32-0](https://github.com/github/copilot-cli/releases/tag/v1.0.32-0) — introduces two features that should be defaults for most users.
+
+**Auto model selection** lets Copilot pick the best available model for each session. Instead of manually choosing Claude Sonnet, Opus, GPT-5, or GPT-5-mini every time, you select `auto` from the model picker and Copilot decides based on the task. This works like the auto mode in other Copilot surfaces — simpler queries use faster models, complex multi-step tasks use the most capable models available to you.
+
+For most workflows, this is the right default. You get intelligent model routing without thinking about it. If you know you want a specific model for a specific task — like forcing Opus for architecture decisions — you can still select it manually. But for day-to-day usage, `auto` is now the easiest choice.
+
+**Document attachment support** lets you attach supported document files to prompts for the agent to read and reason about. This has been a missing piece in the CLI experience. If you're debugging based on logs, API documentation, or spec files, you can now paste or attach the content directly instead of manually copying it into a message. The agent reads the file, understands the format, and reasons about it in context.
+
+Supported formats include common document types — PDFs, text files, markdown, and structured data formats. This brings the CLI closer to feature parity with other Copilot surfaces where document and image attachments have been available for months. If you've ever wanted to say "analyze this error log" or "implement this spec", you can now do it by attaching the file instead of pasting thousands of lines into the chat.
+
+## Better Rate Limiting and Usage Visibility
+
+Rate limiting has been a pain point. When you hit your weekly usage cap or encounter a rate limit, the CLI would drop messages or fail silently. Not anymore.
+
+**v1.0.32-0 improves rate-limited session handling**: when you hit a rate limit, the CLI now pauses queued messages and automatically retries instead of dropping them. You don't lose work. The agent waits and resumes when capacity is available.
+
+The CLI also now **shows warnings when you approach 75% and 90% of your weekly usage limit**. This is basic visibility that should have existed from day one. If you're close to hitting your cap, you see a warning before the CLI stops working. This gives you time to wrap up, switch models, or decide whether to continue.
+
+Rate limit error messages now show specific context based on the type of limit reached. Instead of a generic "rate limit exceeded" message, you see whether you hit a per-minute, hourly, or weekly limit, and how long until capacity resets.
+
+On the metrics side, GitHub [updated the usage metrics API](https://github.blog/changelog/2026-04-10-copilot-cli-activity-now-included-in-usage-metrics-totals-and-feature-breakdowns) to include CLI activity in top-level totals and dimensional breakdowns. Previously, CLI usage was reported separately in a `totals_by_cli` section. Now, CLI activity is integrated into the same fields and breakdowns as IDE activity. This matters if you're tracking Copilot adoption across your org — top-level totals now reflect all Copilot surfaces, not just the IDE.
+
+## Polish: Tables, Session Idle Timeout, and /statusline
+
+The rest of the releases this week are polish — dozens of small fixes and UX improvements that make the CLI feel more stable and responsive.
+
+**Tables render correctly now**. v1.0.32-0 fixes table column widths, emoji support, and border stability during terminal resize. This sounds minor until you're reviewing a large comparison table from the agent and it's unreadable because columns are misaligned or borders are breaking mid-scroll.
+
+**Session idle timeout is now configurable** via `--session-idle-timeout`. By default, idle timeout is disabled — your session stays open until you explicitly close it. If you want sessions to auto-close after inactivity, you can set a timeout. This is useful for shared machines or CI environments where you don't want orphaned sessions consuming resources.
+
+**The status bar is now customizable** via `/statusline` (or `/footer`). You can choose which items appear: directory, branch, effort estimate, context window usage, and quota. If you don't care about quota or effort, remove them. If you only want directory and branch, keep those. The status bar is now a preference instead of a fixed UI element.
+
+**Skills that exceed the token limit are still discoverable and invocable by name**. Previously, if a skill's definition was too large to fit in the agent's context window, it would be completely hidden. Now, the agent can still discover and invoke the skill by name even if the full definition isn't loaded. This matters for projects with large skill libraries where not everything fits in context simultaneously.
+
+Other fixes: `copilot login --host` now correctly authenticates with GitHub Enterprise Cloud instances. Terminal progress indicators stay visible while the agent is thinking. Mouse wheel scrolling works in the `/ask` dialog. Multiline input is preserved when using `/plan`. Image paste from clipboard works again after a regression. All small, but they add up.
+
+## What This Week Signals
+
+Ten releases in seven days isn't normal. Even for a project with automated release pipelines, this level of velocity suggests active development, rapid user feedback integration, and a team prioritizing iteration speed over long stabilization cycles.
+
+Remote sessions, auto model selection, and document attachments are all capabilities that bring the CLI closer to feature parity with Copilot in VS Code and GitHub.com. The CLI launched as a terminal-native agentic interface with a distinct UX. Now it's catching up on features that were missing at launch — document handling, remote access, intelligent model routing — while preserving the terminal-first interaction model.
+
+The trajectory is clear: GitHub is treating the CLI as a first-class Copilot surface, not a side project. Last week's BYOK support made it provider-agnostic. This week's remote sessions make it device-agnostic. The CLI is becoming a more flexible, more capable, and more integrated tool.
+
+If you're still treating the CLI as an experiment, stop. It's stable, it's shipping fast, and it's getting features that make it competitive with the IDE experience. Run `/update` and try `copilot --remote`. You'll see what I mean.
+
+## The Bottom Line
+
+GitHub shipped 10 Copilot CLI releases between April 10 and April 17. The standout features: remote session control from web and mobile, auto model selection, and document attachment support. Plus improved rate limiting, better table rendering, configurable idle timeouts, and a customizable status bar.
+
+If you haven't updated in a week, you're missing a lot. The CLI is denser with capabilities, more stable, and more flexible than it was last Monday. This level of iteration speed signals that GitHub is serious about making the terminal a first-class Copilot surface.
+
+Run `/update`. Try `copilot --remote`. Attach a document. The CLI is no longer just fast — it's feature-complete.
