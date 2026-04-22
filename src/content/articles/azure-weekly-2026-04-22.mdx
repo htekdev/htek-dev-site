@@ -1,0 +1,109 @@
+---
+title: "Azure Weekly: Microsoft Goes All-In on Agent-Native Infrastructure"
+description: "Microsoft Foundry Hosted Agents, AI SDK security fixes, and database modernization with 35% savings—Azure bets on agents as first-class infrastructure citizens."
+pubDate: 2026-04-22
+tags: ["Azure", "AI", "DevOps", "Developer Experience"]
+draft: false
+---
+
+Microsoft shipped a clear signal this week: **agents are no longer experimental add-ons—they're infrastructure primitives**. The April 2026 Azure updates center on one question: how do you run AI agents in production without reinventing the entire hosting stack?
+
+Here's what shipped and why it matters.
+
+## Microsoft Foundry Hosted Agents: Purpose-Built for Agentic Workloads
+
+The biggest announcement is [**Microsoft Foundry Hosted Agents**](https://devblogs.microsoft.com/all-things-azure/hostedagent/), a new hosting model that treats agents as first-class citizens instead of forcing them into container orchestration patterns designed for stateless microservices.
+
+Traditional hosting options—Azure Container Apps, AKS, App Service, Functions—all work for agents. But they weren't designed for the **long-running conversations, tool orchestration, and stateful workflows** that define modern agent architectures. You can make them work, but you're fighting the abstractions.
+
+Hosted Agents flip the model. Instead of deploying containers and wiring up observability yourself, you get:
+
+- **Agent-native abstractions**: Conversations, responses, and tool calls are built-in concepts, not something you implement on top of HTTP endpoints.
+- **Managed lifecycle**: Create, start, stop, scale-to-zero with simple API calls. No Kubernetes manifests.
+- **Built-in OpenTelemetry**: Traces, metrics, and logs out of the box. No manual instrumentation.
+- **Bring your own framework**: Works with LangGraph, Microsoft Agent Framework, or custom code via a hosting adapter.
+
+The hosting adapter is the key piece. It wraps your existing agent code and exposes it as an HTTP service with automatic protocol translation, conversation management, streaming support, and observability. For LangGraph, it's literally a one-liner:
+
+````python
+from azure.ai.agentserver.langgraph import from_langgraph
+
+app = graph.compile()
+
+if __name__ == "__main__":
+    from_langgraph(app).run()
+````
+
+Deploy with `azd up` and you're running on managed infrastructure without writing Dockerfiles or Kubernetes YAML.
+
+The decision framework is straightforward:
+
+- **Use Azure Functions or App Service** if your agent is simple, stateless, and fits into traditional request/response patterns.
+- **Use Azure Container Apps or AKS** if you need maximum control, multi-cluster deployments, or complex networking.
+- **Use Hosted Agents** if you want the simplicity of managed infrastructure with the flexibility of custom agent code.
+
+This is Azure acknowledging that agents introduce architectural patterns—multi-turn conversations, tool execution, persistent state—that don't map cleanly to traditional application hosting. The infrastructure should adapt to the workload, not the other way around.
+
+## Azure SDK April 2026: Security First, AI Agents GA
+
+The [Azure SDK April release](https://devblogs.microsoft.com/azure-sdk/azure-sdk-release-april-2026/) shipped security fixes and major version bumps across the AI stack.
+
+### Cosmos DB RCE Vulnerability Fixed
+
+The Java Cosmos DB library (4.79.0) patches a critical Remote Code Execution (RCE) vulnerability (CWE-502) by replacing Java deserialization with JSON-based serialization. If you're running Java workloads with Cosmos DB, this is a **must-upgrade release**. The fix eliminates the entire class of Java deserialization attacks in `CosmosClientMetadataCachesSnapshot`, `AsyncCache`, and `DocumentCollection`.
+
+The release also adds N-Region synchronous commit support and a Query Advisor feature for hybrid search optimization.
+
+### AI Foundry 2.0.0 and AI Agents 2.0.0 Hit GA
+
+Both the `Azure.AI.Projects` (.NET) and Azure AI Agents (Java) libraries reached general availability with breaking changes for consistency:
+
+- **AI Foundry 2.0.0** splits evaluations and memory operations into separate namespaces (`Azure.AI.Projects.Evaluation`, `Azure.AI.Projects.Memory`) and renames types for clarity (`Insights` → `ProjectInsights`, `Schedules` → `ProjectSchedules`).
+- **AI Agents 2.0.0** converts enums to `ExpandableStringEnum`-based classes, renames `*Param` models to `*Parameter`, and fixes casing inconsistencies (`MCPToolConnectorId` → `McpToolConnectorId`).
+
+These are the usual 1.x → 2.0 breaking changes that clean up early API decisions. If you've been running agents on Azure AI Foundry, budget migration time—but the long-term API surface is more consistent.
+
+### Mandatory MFA Coming to Azure Identity Libraries
+
+A heads-up buried in the SDK blog: **mandatory multifactor authentication is coming to Azure Identity libraries**. No timeline specified, but the warning is clear—start planning how your automation, CI/CD pipelines, and service principals will handle MFA requirements. This affects any code using `DefaultAzureCredential` or similar identity abstractions.
+
+## Foundry Fine-Tuning: Global Training and New Graders
+
+[Reinforcement Fine-Tuning (RFT) updates](https://devblogs.microsoft.com/foundry/whats-new-in-foundry-finetune-april-2026/) focus on cost and accessibility:
+
+- **Global Training for o4-mini** now available from 13 Azure regions with lower per-token training rates. If you're fine-tuning models at scale, this is a meaningful cost reduction—especially for distributed teams.
+- **New model graders**: GPT-4.1, GPT-4.1-mini, and GPT-4.1-nano are now available as graders for scoring model outputs during reinforcement learning. More options = better cost/quality tradeoffs.
+- **RFT best practices** published as a guide for designing graders, preparing data, and avoiding common pitfalls.
+
+Fine-tuning is still a specialist tool—most teams get better results from prompt engineering and [context engineering](/articles/context-engineering-key-to-ai-development)—but if you're training custom models for agentic or reasoning-heavy workloads, these updates make it cheaper and more accessible.
+
+## Azure Accelerate for Databases: 35% Savings and Zero-Cost Migration Support
+
+Microsoft launched [**Azure Accelerate for Databases**](https://azure.microsoft.com/en-us/blog/introducing-azure-accelerate-for-databases-modernize-your-data-for-ai-with-experts-and-investments/), a program designed to remove financial and expertise barriers to database modernization.
+
+The pitch: 60% of AI projects fail due to data infrastructure problems. Modernizing your database estate is table stakes for AI readiness, but migration costs and complexity are blockers.
+
+Azure Accelerate bundles:
+
+- **Savings Plan for Databases**: Up to 35% savings (vs. pay-as-you-go) with flexible, spend-based pricing that adapts to evolving workloads.
+- **Cloud Accelerate Factory**: Zero-cost delivery support from Microsoft engineers.
+- **Azure credits and delivery funding**: Lower upfront costs.
+- **Skilling content and 50% off certification exams**: Build internal capability during the migration.
+
+The savings plan is the interesting piece. Instead of managing multiple reservations per SKU/region/configuration, you commit to a fixed hourly spend and Azure automatically applies savings to the most valuable usage each hour. When usage exceeds the commitment, you pay-as-you-go.
+
+This is Microsoft acknowledging that database modernization is a **prerequisite for AI adoption**, not a separate initiative. If your team is running legacy SQL Server, Oracle, or PostgreSQL instances and planning to build AI agents or retrieval-augmented generation (RAG) pipelines, this program is worth evaluating.
+
+Thomson Reuters is the case study: 18,000 databases, 500 terabytes, migrated to Azure SQL Managed Instance with Cloud Accelerate Factory support. The result: better performance during peak tax season and a platform ready to support intelligent applications at scale.
+
+## The Bottom Line
+
+This week's Azure updates reinforce a clear strategy: **agents are infrastructure, not applications**. Microsoft is building hosting models, observability primitives, and lifecycle management tools specifically for agentic workloads—because containers and functions weren't designed for multi-turn conversations and tool orchestration.
+
+The AI SDK updates—security fixes, breaking changes, mandatory MFA warnings—signal that the AI stack is maturing from experimental libraries to production-grade infrastructure. If you're running AI agents on Azure, expect the same operational rigor you apply to databases and compute.
+
+And the database modernization push? That's the foundation. AI-ready data infrastructure isn't optional—it's the prerequisite for everything else.
+
+Azure's bet is that agent-native infrastructure will define the next generation of cloud architecture. If they're right, Hosted Agents is the early version of a hosting model that will eventually replace traditional container orchestration for entire classes of applications.
+
+For now, the question is: are you still deploying agents as containers, or are you ready to treat them as first-class infrastructure citizens?
