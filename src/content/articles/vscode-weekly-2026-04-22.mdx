@@ -1,0 +1,88 @@
+---
+title: "VS Code Weekly: BYOK Unlocks Model Freedom for Enterprise Teams"
+description: "VS Code 1.117 gives Business and Enterprise teams the ability to bring their own model keys—finally breaking free from one-size-fits-all AI."
+pubDate: 2026-04-22
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+VS Code 1.117 shipped today, and buried in the release notes is a feature that changes everything for Enterprise and Business teams: **Bring Your Own Key (BYOK)** for language models. This isn't a minor convenience—it's Microsoft acknowledging that compliance, cost, and model diversity matter more than ever, and teams need the freedom to route their AI workloads through the models they choose.
+
+If you've been blocked from using Copilot because your company requires specific models, regional endpoints, or cost controls, this is your unlock.
+
+## BYOK: The Freedom to Choose Your Models
+
+Here's the setup: Copilot Business and Enterprise admins can now enable a **Bring Your Own Language Model Key** policy in GitHub's [Copilot policy settings](https://github.com/settings/copilot/features). Once enabled, developers in that organization can connect their own API keys for providers like OpenRouter, Ollama, Google, OpenAI, and more—then use those models directly in VS Code chat.
+
+Why does this matter? Because **one-size-fits-all AI doesn't work for everyone**. Some teams need to use models hosted in specific regions for data residency compliance. Others need cost control and want to route requests through their own Azure OpenAI endpoints. Still others want access to specialized models that GitHub doesn't offer out of the box—domain-specific LLMs, models optimized for non-English languages, or bleeding-edge research models from providers like Anthropic or Cohere.
+
+BYOK removes the middleman. Your organization controls which providers are allowed, and developers connect their keys directly. No friction. No blocked workflows. Just the models your team actually needs.
+
+This is a **massive** shift from the walled-garden approach most AI dev tools have taken. Instead of forcing you to adapt your workflows to the platform's limitations, VS Code is adapting to yours.
+
+## Chat UX Gets Faster, More Fluid
+
+The other big change in 1.117 is **incremental chat rendering**—an experimental feature that makes streaming responses feel significantly more responsive. Instead of the old timer-based rendering that showed chunks of text at fixed intervals, incremental rendering streams content **block-by-block** as tokens arrive, with optional animations to smooth the transition.
+
+You can configure it with three settings:
+
+- `chat.experimental.incrementalRendering.enabled` — Turn it on or off (default: `true`)
+- `chat.experimental.incrementalRendering.animationStyle` — Choose from `none`, `fade`, `rise`, `blur`, `scale`, `slide`, `reveal` (default: `fade`)
+- `chat.experimental.incrementalRendering.buffering` — Control how content is buffered before rendering: `off`, `word`, or `paragraph` (default: `off`)
+
+The default `fade` animation with no buffering is the most aggressive—it shows text as soon as it arrives, which can sometimes result in incomplete sentences or partially-formed Markdown. If that bothers you, switch to `paragraph` buffering to get cleaner block-level rendering at the cost of slightly higher latency.
+
+This is one of those subtle UX improvements that you don't notice until you go back to the old version and realize how much slower it felt. Perceived latency matters just as much as actual latency, and incremental rendering makes Copilot feel more conversational.
+
+## Agent Sessions Get Smarter, More Persistent
+
+If you're working with [multi-agent workflows](/articles/agentic-devops-next-evolution-of-shift-left), 1.117 brings two quality-of-life improvements:
+
+### Sortable Agent Sessions
+
+The **Agent Sessions** view can now sort by **Created** or **Updated** date. This is a small change, but it's critical when you're juggling dozens of long-running sessions. Instead of hunting through a flat list, you can pull up the most recent sessions instantly and pick up where you left off.
+
+### System Notifications for Terminal Commands
+
+When an agent runs a long-running terminal command in the background (like a build, test suite, or deployment), VS Code now surfaces that command as a **System notification** in the chat response. You don't have to manually switch to the terminal to monitor progress—it's tracked inline in the chat UI.
+
+This matters because agents are increasingly autonomous. You kick off a task, move on to something else, and come back later. Surfacing background activity in the chat keeps you in the loop without forcing you to babysit the terminal.
+
+## VS Code Agents App Evolves (Insiders Only)
+
+The [VS Code Agents companion app](/articles/vscode-weekly-2026-04-15)—introduced in 1.115 and [refined in 1.116](/articles/vscode-weekly-2026-04-15)—continues to mature in 1.117. Key updates:
+
+- **Sub-sessions**: You can now click `+` in a session title to spawn a sub-session. This is useful for parallel research, code reviews, or exploratory refactors that branch off the main task without losing context.
+- **Inline change rendering**: Improved diff rendering makes it easier to scan and compare changes when the agent modifies your code.
+- **Update experience**: Smoother update flow across operating systems, especially on macOS where the app now supports self-updating.
+- **Theming, chat UX, and polish**: Continued refinements to session list rendering, response display, and overall UX consistency.
+
+The Agents app is still Insiders-only and ships alongside VS Code Insiders. You can launch it from your OS application menu, run `Chat: Open Agents Application` from the Command Palette, or click the welcome page prompt.
+
+If you're not using it yet, you should. It's the clearest signal of where Microsoft thinks AI-assisted development is headed: **orchestration layers for multi-repo, multi-agent workflows**.
+
+## Terminal Tooling Gets Cleaner
+
+Two terminal improvements in 1.117 make agent CLI workflows less janky:
+
+### Launch Copilot CLI from Any Terminal Profile
+
+You can now launch the **GitHub Copilot CLI** terminal profile even when your default shell is set to something non-standard like `fish`, `zsh`, or Git Bash. Previously, this configuration would fail with a `No terminal profile options provided for id 'copilot-cli'` error. Now it just works.
+
+### Terminal Titles for Agent CLIs
+
+Agent CLIs like Copilot CLI, Claude Code, and Gemini CLI typically run as `node` processes, which meant the terminal title showed a generic `node` label. That made it nearly impossible to tell which agent was running in which terminal.
+
+1.117 fixes this by detecting agent CLIs as a distinct shell type and using the **OSC title sequence** emitted by the CLI as the terminal title. Now each terminal clearly identifies the agent it's hosting.
+
+This works for Copilot CLI, Claude Code, and Gemini CLI on macOS, Linux, and Windows. (Codex doesn't emit an OSC title sequence on macOS yet, so it's not detected.) You can toggle this behavior with `terminal.integrated.tabs.allowAgentCliTitle`.
+
+## TypeScript 6.0.3: Bug Fixes, No Breaking Changes
+
+VS Code 1.117 ships with [TypeScript 6.0.3](https://github.com/microsoft/typescript/issues?q=milestone%3A%22TypeScript%206.0.3%22), a recovery release that fixes a handful of import bugs and regressions from 6.0.2. No new features. No breaking changes. Just stability fixes for teams running TypeScript 6.x.
+
+## The Bottom Line
+
+BYOK is the headline feature in 1.117, and it fundamentally changes what VS Code's AI capabilities can be used for. If your organization has been waiting for a way to bring its own models into the Copilot workflow, this is it. Combined with incremental rendering, better agent session management, and terminal UX improvements, this release continues Microsoft's push toward **agentic, multi-model AI development**.
+
+The future isn't about being locked into a single AI provider. It's about orchestration, flexibility, and control. VS Code 1.117 takes a major step in that direction.
