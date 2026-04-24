@@ -1,0 +1,84 @@
+---
+title: "Copilot CLI Weekly: Tab Completion for Slash Commands and Named Sessions"
+description: "Slash commands now autocomplete like shell commands. Plus named sessions, session deletion, and dozens of UX refinements from v1.0.35."
+pubDate: 2026-04-24
+tags: ["GitHub Copilot", "Developer Experience", "AI", "Open Source"]
+draft: false
+---
+
+## Slash Commands Now Tab-Complete
+
+The [Copilot CLI v1.0.35 release](https://github.com/github/copilot-cli/releases/tag/v1.0.35) shipped on April 23 with a feature I've wanted since day one: **tab completion for slash commands and their arguments**. Type `/sess`, hit Tab, and it expands to `/session`. Type `/session del`, hit Tab, and you get `/session delete`. This is how shell commands have worked for decades. It's now how CLI slash commands work too.
+
+This might sound minor, but it's a velocity shift when you're working fast. I use `/session`, `/context`, `/update`, and `/statusline` constantly. Typing them fully every time adds friction. Tab completion removes that friction. You get the same muscle memory benefit you have with `git sta<Tab>` → `git status`.
+
+It's not just top-level commands. Subcommands and arguments autocomplete too. Type `/session <Tab>` and you get `list`, `delete`, `delete-all`, and the other available options. This works for @-mentions, path completions, and skill slash commands as well. If you've installed custom agents with their own slash commands (like `/skill-name`), those autocomplete now. The CLI recognizes them correctly even when passed via `-i` on startup.
+
+Beyond tab, you can also press **Ctrl+Y** to accept the highlighted completion. This is particularly useful in completion popups where you're navigating with arrow keys and want an alternative to Tab for selection.
+
+## Named Sessions Change How You Resume Work
+
+Before this release, resuming sessions meant remembering session IDs or relying on `--continue` to resume the most recent one. That works until you're juggling multiple contexts — a refactoring in one session, a debugging task in another, and a docs update in a third.
+
+v1.0.35 introduces **named sessions**. Start a session with `--name=<name>` and resume it later with `--resume=<name>`. Names are easier to remember than IDs. They let you give each session a semantic label tied to what you're working on.
+
+````bash
+copilot --name=auth-refactor
+# ... work happens ...
+# Later, from a different directory:
+copilot --resume=auth-refactor
+````
+
+This pairs well with the improved session selector, which now shows branch names, idle/in-use status, and has better search with cursor support. When you're context-switching between tasks, being able to scan your active sessions by name and branch makes it easier to pick up where you left off.
+
+Session management also got **explicit deletion commands**: `/session delete`, `/session delete <id>`, and `/session delete-all`. Before this, cleaning up old sessions required manual file operations or just letting them accumulate. Now you can delete directly from the TUI, or press `x` in the session picker to mark sessions for deletion.
+
+## Shell Escape Respects Your $SHELL
+
+When you run a shell command with `!command` inside the CLI, it used to always invoke `/bin/sh` regardless of your configured shell. As of v1.0.35, **shell escapes now use `$SHELL` when set**. If you've got Zsh, Fish, or Bash configured, `!` commands run in that shell instead of defaulting to POSIX sh.
+
+This matters for two reasons. First, your shell aliases and functions now work inside CLI shell escapes. Second, syntax differences between shells no longer cause silent failures when you're expecting your configured shell's behavior.
+
+It's a small fix, but it removes an impedance mismatch. The CLI feels more integrated with your terminal environment now.
+
+## Context Window Visibility and Settings Isolation
+
+The status line script now **includes context window fields** that match the model badge and `/context` output. This gives you a real-time view of how much context you're using without running a command. If you're working near the context limit on a long session, you can see it directly in the status bar.
+
+By default, the context window indicator is **hidden** in the status line. You can toggle it on with `/statusline` if you want it visible. GitHub seems to be moving toward showing this data only when it's explicitly requested, which keeps the default UI clean.
+
+On the backend, **user settings are now stored in `~/.copilot/settings.json`** instead of being mixed into `config.json`. This separates user preferences from internal CLI state, making it easier to back up your settings or share them across machines without accidentally copying session-specific data.
+
+## Permissions Prompts, Session Sync, and Windows Support
+
+A few bug fixes and UX improvements shipped alongside the new features:
+
+- **Permission prompts now appear correctly in remote sessions** for the CLI TUI. This was broken in earlier remote preview builds. It's fixed in v1.0.35.
+- **Model change notifications** now show both the previous and new model name, so you can see what you switched from and to instead of just the new model.
+- **/update and /version commands** now honor your configured update channel. If you're on stable, experimental, or a custom channel, these commands respect that setting instead of defaulting to stable.
+- **Session sync prompt** uses clearer labels and explains GitHub.com cross-device sync. The previous wording was ambiguous about what "sync" meant.
+- **COPILOT_GH_HOST environment variable** is now supported for setting the GitHub hostname, taking precedence over `GH_HOST`. This is useful for GitHub Enterprise Server users who need to point the CLI at a custom instance.
+- **Configure Copilot agent now has shell access on Windows**. This was previously limited to Unix-like systems. It's now consistent across platforms.
+- **Show a helpful error message with install instructions** when clipboard utilities (`wl-clipboard` or `xclip`) are missing on Linux. Before this, clipboard operations would fail silently or with cryptic errors.
+
+## The Bigger Context: CLI Velocity in April
+
+This is the third Copilot CLI weekly article I've written this month. GitHub shipped 10 releases between April 10 and April 17 — covered in [last week's article](/articles/copilot-cli-weekly-2026-04-17) — and another 4 releases between April 17 and today (v1.0.33, v1.0.34, v1.0.35, and prerelease v1.0.36-1). That's **14 releases in two weeks**.
+
+Some were single-bug fixes. Others, like today's v1.0.35, introduced multiple user-facing features. The velocity is sustained and deliberate. Each release includes changelogs that are detailed enough to understand exactly what changed and why it matters.
+
+For comparison, the [Copilot CLI launched in general availability](https://github.blog/ai-and-ml/github-copilot/run-multiple-agents-at-once-with-fleet-in-copilot-cli/) in early April with features like `/fleet` for parallel multi-agent orchestration and [Rubber Duck review mode](https://github.blog/ai-and-ml/github-copilot/github-copilot-cli-combines-model-families-for-a-second-opinion) for cross-model critiques. Since then, GitHub has layered on [remote session control](https://github.blog/changelog/2026-04-13-remote-control-cli-sessions-on-web-and-mobile-in-public-preview), [auto model selection](https://github.blog/changelog/2026-04-17-github-copilot-cli-now-supports-copilot-auto-model-selection/), and [BYOK/local model support](https://github.blog/changelog/2026-04-07-copilot-cli-now-supports-byok-and-local-models/). Each of those is a major capability expansion. The tab completion and named sessions in v1.0.35 are smaller, but they're indicative of a team that's tightening the UX while adding new features.
+
+## What This Signals
+
+Tab completion isn't just a convenience feature. It's a signal that GitHub is treating the CLI as a first-class developer tool, not an experiment. Shell commands have tab completion. If the CLI is going to live in the terminal alongside `git`, `docker`, and `kubectl`, it needs to behave like those tools. The fact that it now does — for slash commands, for arguments, for subcommands — suggests GitHub is serious about making this feel like native terminal infrastructure.
+
+Named sessions and session deletion are in the same category. They're not flashy. They won't make headlines. But they're the kind of ergonomic improvements that reduce cognitive load when you're managing multiple contexts. The more sessions you run, the more these features matter.
+
+If I had to predict where this is going: the CLI is positioning itself as the primary interface for Copilot in any environment where you're doing heavy implementation work. Not just local terminals, but remote sessions, mobile monitoring, and eventually CI/CD contexts. The velocity in April — 14 releases, multiple GA features, sustained UX polish — is what you'd expect from a team that's building a platform, not a side project.
+
+## The Bottom Line
+
+Run `/update` if you haven't in the past week. You're missing tab completion, named sessions, and a dozen other quality-of-life improvements. The CLI is getting tighter every release. If you're using it daily, these changes add up fast.
+
+For more on how to use the CLI effectively, see [my guide to GitHub Agentic Workflows](/articles/github-agentic-workflows-hands-on-guide) and [my breakdown of custom agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents).
