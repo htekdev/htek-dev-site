@@ -1,0 +1,178 @@
+---
+title: "Auto-Maintaining Reference Pages with GitHub Copilot CLI"
+description: >-
+  How I use GitHub Copilot's SWE agent to spin up curated reference sites on
+  GitHub Pages and keep them automatically updated — the pattern, the workflow,
+  and why curated beats generic every time.
+pubDate: 2026-04-27
+tags:
+  - GitHub Copilot
+  - GitHub Pages
+  - Automation
+  - DevOps
+  - Documentation
+draft: false
+---
+
+## The Problem with Generic Documentation
+
+Every technology I demo has official documentation. Microsoft Learn, GitHub Docs, MDN — they're comprehensive, authoritative, and... overwhelming. When I'm live in front of a customer showing GitHub Copilot in Visual Studio and someone asks "where can I see what's new?", I don't want to navigate them through five levels of Microsoft Learn. I want one URL that answers the question in three seconds.
+
+That's the gap: official docs optimize for completeness. Demo-ready references optimize for **speed to answer**. I needed curated, opinionated reference pages that surface exactly the information my audience needs — and nothing else.
+
+## The Pattern: One Repo, One Page, One Purpose
+
+Every reference site I build follows the same pattern:
+
+1. **One GitHub repo** with a clear, single purpose
+2. **Static site** deployed to GitHub Pages (zero infrastructure cost)
+3. **Curated content** — I decide what goes in, not an algorithm
+4. **Auto-maintenance** — GitHub Copilot's SWE agent keeps it current
+
+The key insight is that each site is a **curated lens** on top of existing documentation. I'm not duplicating Microsoft Learn. I'm building a fast-access layer that links to the authoritative source while providing the context, organization, and editorial opinion that official docs can't.
+
+Here's what the portfolio looks like today:
+
+| Site | Purpose | URL |
+|------|---------|-----|
+| **Copilot CLI Reference** | Single-page CLI ecosystem guide for demos | [htekdev.github.io/copilot-cli-reference](https://htekdev.github.io/copilot-cli-reference/) |
+| **Copilot Visual Studio Guide** | Video library + changelog + resource hub | [htekdev.github.io/copilot-visual-studio-guide](https://htekdev.github.io/copilot-visual-studio-guide/) |
+| **Home OS Docs** | Landing page for the Home OS framework | [htekdev.github.io/home-os-site](https://htekdev.github.io/home-os-site/) |
+| **Agentic DevOps** | Deep-dive reference on agent governance | [htek.dev/agentic-devops](https://htek.dev/agentic-devops) |
+
+Each one took less than a day to build. The Copilot CLI Reference was literally built in a single Copilot CLI session — I described what I wanted, and the agent scaffolded the HTML, populated the content, and deployed it. The Visual Studio guide was an Astro project that Copilot's SWE agent scaffolds and maintains through weekly PRs.
+
+## How Auto-Maintenance Works
+
+The real value isn't in building the site — it's in **never having to manually update it**. Here's the workflow that keeps my reference pages current:
+
+### Step 1: The Weekly Cron
+
+Each auto-maintained repo has a GitHub Actions workflow with a `schedule` trigger:
+
+```yaml
+on:
+  schedule:
+    - cron: '0 10 * * 1'  # Every Monday at 10 AM UTC
+  workflow_dispatch:        # Manual trigger for ad-hoc updates
+```
+
+This triggers Copilot's coding agent (SWE agent) with a detailed prompt that tells it exactly what to research and update.
+
+### Step 2: The Agent Researches
+
+The workflow includes a Markdown file (`.github/workflows/weekly-content-update.md`) that serves as the agent's instructions. It tells the agent:
+
+- Which official sources to check (GitHub Changelog, Microsoft Learn, Visual Studio Blog)
+- What sections of the site map to which data sources
+- How to format new entries to match existing conventions
+- What constitutes a meaningful update vs. noise
+
+The agent reads the current site content, compares it against the latest official sources, and identifies what's changed since the last update. It's not just scraping — it's making editorial decisions about what's worth including.
+
+### Step 3: The PR
+
+The agent commits its changes to a branch, opens a PR with a summary of what was updated and why, and assigns it for review. The PR typically looks like:
+
+> **Weekly Content Update — 2026-04-21**
+>
+> - Added 3 new entries to "What's New" (Copilot completions UI refresh, agent mode GA, MCP tooling update)
+> - Updated video library with 2 new official videos
+> - Refreshed resource links (1 broken link fixed, 2 new Learn modules added)
+> - Updated release velocity chart data
+
+### Step 4: Merge & Deploy
+
+Once the PR is reviewed (or auto-merged if it passes checks), GitHub Pages automatically deploys the updated site. Total human effort: a 30-second PR review.
+
+## Why Curated Beats Generic
+
+There's a reason I don't just embed Microsoft Learn in an iframe. Curated reference pages provide three things that generic docs can't:
+
+### 1. Editorial Opinion
+
+Official docs are deliberately neutral. They list every feature equally because they have to. My reference pages are opinionated — I highlight the features that matter for my audience and de-emphasize the ones that don't. When I'm demoing Copilot CLI to an enterprise DevOps team, they don't need to know about the Xcode integration. They need to see the `copilot-instructions.md` customization system, the agent hooks, and the MCP server configuration. My CLI reference page leads with those.
+
+### 2. Speed to Answer
+
+A customer asks: "What changed in Copilot for Visual Studio this month?" On Microsoft Learn, that's a multi-page journey through the Visual Studio release notes, the GitHub Copilot changelog, and possibly the Visual Studio Blog. On my reference page, it's one click to the "What's New" section, organized chronologically with the exact features and their dates.
+
+### 3. Demo Continuity
+
+Every link on my reference pages works. Every section is up-to-date. Every screenshot reflects the current UI. That sounds basic, but it's the difference between a demo that flows and one that stumbles over "oh, they must have changed that page."  Auto-maintenance via Copilot's SWE agent means I don't have to manually verify 50 links before every demo.
+
+## The Technical Stack
+
+I use two approaches depending on the site's complexity:
+
+### Static HTML (Simple References)
+
+For single-page references like the Copilot CLI guide, I use plain HTML with embedded CSS. No build step, no dependencies, no framework. The `index.html` file is the entire site. GitHub Pages deploys it directly from the `main` branch.
+
+**Pros:** Zero maintenance burden, instant deploys, works forever
+**Cons:** Harder to componentize, manual styling
+
+### Astro (Multi-Page Sites)
+
+For sites with multiple pages, navigation, and structured content (like the Visual Studio guide), I use [Astro](https://astro.build). It's a static site generator that outputs pure HTML with zero JavaScript by default — perfect for reference pages that don't need interactivity.
+
+**Pros:** Component reuse, content collections, TypeScript, great DX
+**Cons:** Build step required, Node.js dependency
+
+Both approaches deploy through GitHub Pages with a simple Actions workflow:
+
+```yaml
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+permissions:
+  pages: write
+  id-token: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'  # Or './dist' for Astro builds
+      - uses: actions/deploy-pages@v4
+```
+
+## Lessons Learned
+
+After building and maintaining five reference sites this way, here's what I'd pass along:
+
+### Keep the agent's instructions specific
+
+Vague prompts like "update the site" produce vague results. My weekly update instructions are 200+ lines of Markdown that specify exactly which sources to check, how to format entries, and what editorial standards to apply. The more specific the instructions, the less I need to review.
+
+### Structure content for machine readability
+
+If you want an AI agent to update your site, structure your content so it can be parsed programmatically. Use consistent heading levels, date formats, and section markers. The agent needs to know where to insert new content and how it should look.
+
+### Don't fight the official docs — complement them
+
+My reference pages link heavily to official documentation. They're a curated entry point, not a replacement. This means I never have to maintain the actual technical content — I just maintain the curation layer.
+
+### GitHub Pages is underrated
+
+Zero cost, global CDN, automatic HTTPS, custom domain support, and deployment from any branch. For reference pages that don't need server-side logic, GitHub Pages is genuinely the best option. I've deployed five sites and haven't paid a cent.
+
+### One purpose per site
+
+The temptation is to make a mega-reference that covers everything. Resist it. Each of my sites has one job. The CLI reference is for CLI demos. The Visual Studio guide is for VS demos. Keeping them separate means each one loads fast, stays focused, and can be updated independently.
+
+## The Bigger Picture
+
+This pattern — curated reference sites auto-maintained by Copilot — is a small example of a larger trend: **using AI agents for content operations, not just code generation**. The same workflow that keeps my reference pages current could maintain internal knowledge bases, customer-facing changelogs, or team onboarding docs.
+
+The infrastructure is simple: a repo, a cron, an agent with good instructions, and a deployment pipeline. The value compounds over time — every week, the sites get a little more current, a little more comprehensive, and a little more useful. And I spend exactly zero time on manual updates.
+
+If you're building demos, running enablement sessions, or maintaining any kind of reference documentation, I'd encourage you to try this pattern. Spin up a GitHub Pages site with the content you wish existed, point Copilot's SWE agent at it with clear instructions, and let it handle the upkeep. You'll wonder why you were ever doing it manually.
+
+---
+
+*All of my GitHub Pages sites are listed on the [GitHub Pages index](/github-pages). The source code for each is public on [github.com/htekdev](https://github.com/htekdev).*
