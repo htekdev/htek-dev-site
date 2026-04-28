@@ -1,0 +1,103 @@
+---
+title: 'GitHub Weekly: GPT-5.5 Lands on Copilot, Cloud Agents Speed Up, Actions Gets Smarter'
+description: 'OpenAI's agentic GPT-5.5 model arrives on GitHub Copilot with 82.7% on coding benchmarks, cloud agents start 20% faster, and Actions gains service container overrides.'
+pubDate: 2026-04-28
+tags: ['GitHub Copilot', 'DevOps', 'Developer Experience', 'AI']
+draft: false
+---
+
+## GPT-5.5 Brings State-of-the-Art Agentic Coding to Copilot
+
+[OpenAI's GPT-5.5 is now rolling out on GitHub Copilot](https://github.blog/changelog/2026-04-24-gpt-5-5-is-generally-available-for-github-copilot) for Pro+, Business, and Enterprise users. According to GitHub's early testing, GPT-5.5 "resolves real-world coding challenges previous GPT models couldn't." The headline numbers back that up: 82.7% on Terminal-Bench 2.0 (command-line workflows requiring planning and tool use), 58.6% on SWE-Bench Pro (real-world GitHub issue resolution), and strong gains on Expert-SWE (long-horizon tasks with ~20 hour median human completion times).
+
+This is a fully retrained model built specifically for agentic coding—not an incremental improvement on GPT-5.4. [OpenAI's release notes](https://openai.com/index/introducing-gpt-5-5/) emphasize its ability to complete complex, multi-step tasks without human direction, and crucially, it uses **fewer tokens** to complete the same tasks than GPT-5.4 while matching its per-token latency. More capable _and_ more efficient is a rare combination in LLM releases.
+
+GPT-5.5 is available in the model picker across VS Code, Visual Studio, Copilot CLI, GitHub.com, JetBrains, Xcode, Eclipse, and GitHub Mobile. The catch? It launches with a **7.5× premium request multiplier** as promotional pricing, and Copilot Enterprise/Business admins must explicitly enable it in Copilot settings.
+
+**Why this matters:**
+
+Last week I covered how [GitHub paused Copilot signups](/articles/github-weekly-2026-04-21) because agentic workflows were overwhelming infrastructure. Now they're rolling out the most powerful agentic model yet—one that can solve multi-hour refactoring tasks end-to-end—with a 7.5× cost multiplier. The economics are becoming explicit: advanced agentic capabilities cost significantly more to run.
+
+For developers using Copilot's cloud agent (the one that autonomously resolves GitHub issues), GPT-5.5's ability to reason across longer horizons should translate to fewer abandoned tasks and more complete solutions. But if you're on a usage-limited plan, expect to hit those limits faster when you lean on GPT-5.5 for heavyweight work.
+
+## Copilot Cloud Agent Now Starts 20% Faster
+
+[Copilot cloud agent startup time improved by over 20%](https://github.blog/changelog/2026-04-27-copilot-cloud-agent-starts-20-faster-with-actions-custom-images) this week, thanks to prebuilt runner environments using GitHub Actions custom images. When you assign an issue to `@copilot`, mention it in a PR, or start a task from the Agents tab, the agent spins up a cloud-based environment to do its work. That environment now launches significantly faster.
+
+This builds on the [50% startup improvement shipped in March](https://github.blog/changelog/2026-03-19-copilot-coding-agent-now-starts-work-50-percent-faster/), cutting the feedback loop even shorter. Combined, these two changes mean cloud agents start working on your code about 60% faster than they did two months ago.
+
+The technical implementation is smart: GitHub is using [custom Actions images](https://docs.github.com/actions/using-github-hosted-runners/using-larger-runners/managing-larger-runners#configuring-a-custom-image)—a feature that went GA in March—to prebuild the agent's runtime environment with all necessary tools, dependencies, and configurations. Instead of installing everything on-demand, the agent boots straight into a ready-to-go environment.
+
+This is one of those infrastructure improvements that doesn't ship with big headlines but compounds over time. If you're running dozens of agent sessions a week, shaving 20-30 seconds off each startup adds up fast.
+
+## GitHub Actions Gets Three Long-Awaited Improvements
+
+[GitHub Actions shipped a bundle of updates in early April](https://github.blog/changelog/2026-04-02-github-actions-early-april-2026-updates) that address real pain points:
+
+### Service Container Overrides (Finally)
+
+You can now override the `entrypoint` and `command` for service containers directly in your workflow YAML. This has been a [top community request](https://github.com/actions/runner/issues/1573) for years—previously, you needed brittle workarounds to customize how service containers start. The new syntax matches Docker Compose, so it should feel familiar:
+
+````yaml
+services:
+  postgres:
+    image: postgres:16
+    entrypoint: /custom-entrypoint.sh
+    command: postgres -c config_file=/etc/postgresql/custom.conf
+````
+
+Small change, massive quality-of-life improvement for anyone running complex containerized test environments.
+
+### OIDC Tokens Now Support Custom Properties (GA)
+
+[Actions OIDC tokens now include repository custom properties as claims](https://docs.github.com/actions/concepts/security/openid-connect), and this feature is generally available after a preview period. You can now define trust policies based on how your organization classifies repositories—like environment type, team ownership, or compliance tier—without maintaining per-repo cloud role configurations.
+
+This is particularly useful for orgs with hundreds of repos that need different levels of cloud access. Instead of enumerating repository names in your OIDC trust policy, you can say "any repo tagged `production: true` gets access to production AWS resources." Governance at scale without manual maintenance.
+
+### Azure Private Networking Supports VNET Failover (Preview)
+
+If you're using [Azure private networking for GitHub-hosted runners](https://docs.github.com/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise), you can now configure a secondary subnet—optionally in a different region—so workflows keep running if the primary subnet becomes unavailable. Failover can be triggered manually or automatically during regional outages.
+
+This is a public preview feature aimed at enterprise accounts with business-critical workflows that can't tolerate Azure regional issues. Not something most teams need, but essential for the ones that do.
+
+## Copilot Chat Understands Pull Requests Better
+
+[Copilot Chat now provides richer context when working with diffs and PRs](https://github.blog/changelog/2026-04-23-copilot-chat-improvements-for-pull-requests). Ask about a pull request on github.com/copilot or via the global Copilot navigation, and it now includes data like comments, file changes, commits, and reviews in its responses.
+
+Three new abilities shipped:
+
+- **Pull request understanding:** Copilot Chat reads comments, changes, commits, and reviews to answer questions
+- **Pull request review:** Ask Copilot to review a PR, and it provides a structured review
+- **Pull request summary:** Ask for a summary, get a concise overview of what changed
+
+Public preview users can also click the Copilot button directly on a diff to ask questions. This is part of GitHub's broader push to embed Copilot deeper into code review workflows—[I've written before](/articles/agentic-devops-next-evolution-of-shift-left) about how AI code review is moving from reactive linting to proactive design feedback. This update moves in that direction.
+
+## Security and Dependency Updates
+
+Two smaller but important announcements on the security side:
+
+### Dependabot Gets Smarter About Python Dependencies
+
+[Python projects now see more complete and accurate transitive dependency trees](https://github.blog/changelog/2026-04-23-dependabot-graphs-for-python) in their dependency graphs and SBOMs. Dependabot now builds a dependency snapshot and uploads it to the Dependency Submission API—similar to autosubmission, but without incurring Actions minutes and with access to org-wide private registry configs.
+
+This supports pip, uv, and Poetry (v1 and v2). If you've ever dealt with incomplete Python dependency graphs that missed transitive dependencies from private packages, this fixes it.
+
+### GitHub App Tokens Are Getting Longer (And Your Code Might Break)
+
+[Starting April 27 and rolling out over the next few weeks](https://github.blog/changelog/2026-04-24-notice-about-upcoming-new-format-for-github-app-installation-tokens), newly issued GitHub App installation tokens will use a new stateless format that's ~520 characters long (up from 40). The format changes from `ghs_[40 chars]` to `ghs_APPID_JWT`.
+
+**If your code assumes tokens are exactly 40 characters long, it will break.** Check for hardcoded length validations, regex patterns like `ghs_[A-Za-z0-9]{36}`, and database columns that can't fit 520+ characters.
+
+The rollout starts with `GITHUB_TOKEN` in Actions and first-party integrations (Dependabot, Slack, Teams), then expands to all GitHub App installation tokens by late June. Existing tokens continue to work until they expire, but new tokens will use the new format immediately.
+
+This is an infrastructure improvement for GitHub—stateless tokens improve issuance performance under load—but it requires downstream changes from app developers. If you're maintaining a GitHub App or Actions workflow that handles tokens, audit your codebase now.
+
+## The Bottom Line
+
+This week's releases show GitHub's dual focus: making AI agents more powerful (GPT-5.5, faster cloud agents, better PR understanding) while managing the infrastructure reality of running those agents at scale (custom images, usage multipliers, stateless tokens).
+
+The GPT-5.5 launch is the most significant—this is the first model explicitly trained for multi-hour, autonomous coding tasks, and it's now available inside Copilot. Combined with the startup speed improvements, cloud agents are getting genuinely useful for complex work. But the 7.5× cost multiplier is a reminder that agentic AI doesn't come cheap.
+
+On the Actions side, the service container overrides and OIDC custom properties are quality-of-life wins that unblock patterns teams have been hacking around for months. These aren't flashy features, but they're the kind that save hours every week for teams running sophisticated CI/CD pipelines.
+
+If you're building [custom GitHub Copilot agents](/articles/top-5-mistakes-creating-custom-github-copilot-agents) or integrating AI into your DevOps workflows, this week's updates give you more powerful tools—just be mindful of the usage costs.
