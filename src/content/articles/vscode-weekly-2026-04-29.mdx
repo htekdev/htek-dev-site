@@ -1,0 +1,87 @@
+---
+title: "VS Code Weekly: 1.118.0 Ships Remote CLI Control and Token Efficiency Overhaul"
+description: "VS Code 1.118 brings remote Copilot CLI control, semantic search for all repos, and aggressive token savings ahead of usage-based billing."
+pubDate: 2026-04-29
+tags: ["Developer Experience", "AI", "Open Source", "VS Code"]
+draft: false
+---
+
+## The Billing Change That Changed Everything
+
+VS Code 1.118.0 dropped today, and it's the most consequential release in months. Not because of flashy new features—though there are several—but because of what's driving them: on June 1, 2026, [GitHub Copilot switches to usage-based billing](https://github.blog/news-insights/company-news/github-copilot-is-moving-to-usage-based-billing/). Every token you send costs real money. And suddenly, the VS Code team has a very different optimization target.
+
+The result? This release reads like an all-hands sprint to slash token usage without degrading quality. Prompt caching refinements. Deferred tool loading. Purpose-built small models for search and execution. WebSocket connections for lower latency. I've watched Microsoft ship incremental AI features for two years—this is the first time I've seen them move with this kind of urgency on _efficiency_.
+
+But efficiency isn't the only story here. Remote control for Copilot CLI sessions, semantic search for non-GitHub repos, and Chronicle (a local SQLite index of your entire chat history) all shipped alongside the token work. Let's break down what matters.
+
+## Remote Control: Copilot CLI Untethered
+
+The headliner is remote control for Copilot CLI sessions. Previously, if you kicked off a long-running agent task and left your desk, the work stalled the moment it hit an approval prompt or needed clarification. Now, with the experimental `github.copilot.chat.cli.remote.enabled` setting, you can monitor and steer those sessions from GitHub.com or the GitHub mobile app.
+
+Run `/remote on` in a Copilot CLI chat, walk away, and check your phone when you get a notification. Approve the file change, answer the question, and the agent keeps working. It's a small UX change with outsized impact for anyone running long builds, test suites, or deployment workflows through the CLI.
+
+This is part of a larger pattern: VS Code is betting hard on agent workflows that span hours, not minutes. Remote control only makes sense if you expect agents to run long enough that you might not be at your machine when they need you. That's a different model than "autocomplete with extra steps."
+
+## Semantic Search for Everyone
+
+Semantic search—the ability to ask "where do we handle user authentication?" and get files that use `signIn`, `OAuth`, or `verifyCredentials` instead of just literal "authentication" matches—has been available for GitHub and Azure DevOps repos since [1.115](https://code.visualstudio.com/updates/v1_115). As of 1.118, it works for _any_ workspace.
+
+The index builds automatically. GitHub/ADO repos can search immediately. Local or non-hosted repos take a few minutes to index on first run. Either way, you get the same semantic grounding that previously required a hosted repository. This is a meaningful unlock for private codebases, monorepos, and anyone working in environments where pushing to GitHub isn't an option.
+
+There's also a new `githubTextSearch` tool that does grep-style searches across GitHub repos or entire orgs. It complements the existing `githubRepo` tool (which does semantic search within a single repo). Together, they give agents a much richer view of code outside your current workspace—critical for understanding patterns across microservices or finding references to deprecated APIs across an org.
+
+## The Token Efficiency Overhaul
+
+Here's where things get technical. VS Code has been quietly rewriting how it structures requests to Anthropic and OpenAI models to maximize cache reuse and minimize token usage. Most of these changes are already live; a few are behind opt-in flags.
+
+**Prompt caching efficiency.** Cache breakpoints are now placed at stable boundaries: end of system prompt, end of tools, end of the most recent tool turn. Once a session is underway, **over 93% of each request is reused from cache** instead of being charged as new input. For Anthropic models, cached tokens are billed at roughly 1/10th the cost of new tokens. That's a 10x multiplier on every turn after the first.
+
+**Tool search tool.** Instead of loading all ~100+ tools into every request, VS Code now splits them into two groups: a core set of ~30 tools (covering ~88% of calls) that's always loaded, and a deferred set that's only loaded on-demand when the agent explicitly requests them via `tool_search`. The agent runs a client-side semantic search over tool descriptions and loads only the relevant ones. This is already default for Claude Sonnet 4.5+ and Opus 4.5+, saving **up to 20% in tokens**. As of 1.118, it's rolling out to GPT-5.4 and GPT-5.5 via the Responses API.
+
+**Agentic search and execution tools.** Two new specialized tools—one for codebase exploration, one for terminal commands—are powered by fine-tuned small language models. When the main agent needs context or has to run a build, it hands the task off to these smaller models, which are faster and significantly cheaper to run. The search tool does parallel grep, file search, semantic search, and file reading in a minimal number of turns. The execution tool runs terminal commands and filters the output down to what a coding agent actually needs, keeping verbose build logs from eating into your token budget. Early results show **up to 20% token savings** with these tools enabled.
+
+**WebSocket mode for OpenAI.** Chat requests to OpenAI models now use [WebSocket mode](https://developers.openai.com/api/docs/guides/websocket-mode) on the Responses API instead of opening a new HTTP request per turn. The server retains conversation state, so VS Code only sends new input items and a response ID. Result: **12% faster** on follow-up turns, particularly noticeable in agent workflows with many back-and-forth calls.
+
+All of this infrastructure work is invisible to the user. You don't have to change how you prompt or which models you use. But when usage-based billing hits on June 1, these optimizations could mean the difference between a manageable monthly bill and sticker shock.
+
+## Chronicle: Your Chat History as a Database
+
+Here's the wildcard feature: Chronicle, an experimental tool (behind the `github.copilot.chat.localIndex.enabled` setting) that tracks every chat session in a local SQLite database. It records session metadata (branch, repo, timestamps), conversation turns, files touched via tool calls, and external references (PRs, issues, commits). Then it lets you query that history in natural language.
+
+Three commands are exposed:
+
+- `/chronicle:standup` — generates a standup report from the last 24 hours, grouped by feature/branch, with summaries, file lists, and PR links.
+- `/chronicle:tips` — analyzes 7 days of usage to give personalized tips on prompting, tool usage, and workflow.
+- `/chronicle [query]` — free-form queries like "what files did I edit yesterday?"
+
+This is fascinating because it turns your chat history into a first-class data source. If you're pairing heavily with Copilot, your chat log _is_ your work log. Chronicle makes it queryable. I can see this evolving into a foundation for team-level insights: what are your engineers spending time on? Which files are generating the most chat activity? Where are prompts failing?
+
+It's experimental, but the ambition is clear: Microsoft wants chat history to be structured data, not just scrollback.
+
+## Enterprise Control and Sandboxing Hardening
+
+Two trust and security updates worth noting:
+
+**Approved account organizations policy.** Enterprises can now gate chat and AI feature activation on approved GitHub organization membership via the `ChatApprovedAccountOrganizations` device policy. Chat features don't activate until the user is signed into a GitHub account with membership in an approved org _and_ the account-based policy has been resolved. This is fail-closed behavior—useful for enterprises that configure account-based policies on GitHub.com and need eligibility enforced before chat is shown.
+
+**Sandboxing default read permissions.** Read access is no longer automatically enabled for all paths under `$HOME`. Before any command runs in sandbox, read permissions are added based on the executing command only. Everything else under `$HOME` is denied. This strengthens sandbox isolation and ensures commands only access files they explicitly need.
+
+Neither of these are flashy, but both are table stakes for enterprise adoption. Microsoft is clearly balancing velocity on AI features with the governance controls that Fortune 500 companies demand.
+
+## What This Means
+
+VS Code 1.118 is a hinge release. The efficiency work—prompt caching, tool search, agentic search/execution, WebSocket mode—represents months of infrastructure investment that's now paying off in token savings. The timing isn't subtle: this all lands a month before usage-based billing goes live.
+
+But the bigger shift is strategic. Remote CLI control, Chronicle, and semantic search for all repos signal that Microsoft is designing for agent workflows that are longer, more complex, and more intertwined with your actual work than autocomplete ever was. Agents that run in the background while you're in a meeting. Agents that reference your chat history to understand context. Agents that search across repos and orgs to find patterns you didn't know existed.
+
+This is the [context engineering](/articles/context-engineering-key-to-ai-development) future I wrote about in January playing out in real time. Your codebase quality, your prompt hygiene, and your tooling choices now directly determine how much value you extract from these agents—and how much you pay for it.
+
+The token efficiency work makes that future affordable. The feature work makes it useful. And the usage-based billing announcement on April 27 makes it urgent.
+
+## The Bottom Line
+
+If you're using Copilot in VS Code, update to 1.118 before June 1. The token savings alone are worth it. If you're running agent workflows through Copilot CLI, enable remote control and see if it changes how you work. And if you're an enterprise admin, review the approved account organizations policy—it's exactly the kind of granular control you've been asking for.
+
+The full release notes are at [code.visualstudio.com/updates/v1_118](https://code.visualstudio.com/updates/v1_118). TypeScript 7.0 beta support, optimized webview loading, and Dev Container lockfiles also shipped in this release, but the AI work is the headline.
+
+This is the release where Microsoft stopped treating token usage as an abstraction and started treating it as a cost center. Every editor decision from here on out will be shaped by that reality.
