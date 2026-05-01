@@ -27,7 +27,7 @@ So I built [agent-mesh](https://github.com/htekdev/agent-mesh). It's a single-fi
 
 ## How It Works
 
-The concept is deliberately simple. Every Copilot CLI session that loads the extension automatically registers itself in a shared SQLite database. Each session gets a heartbeat, a workspace name (derived from your git repo), and a polling loop that checks for incoming messages every 10 seconds.
+The concept is deliberately simple. Every Copilot CLI session that loads the extension automatically registers itself in a shared SQLite database the moment the extension is loaded — before any user message is sent. Each session gets a heartbeat, a workspace name (derived from your git repo), and a polling loop that checks for incoming messages every 10 seconds.
 
 ```
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
@@ -117,6 +117,10 @@ Retrieves a message and all its replies. Useful for checking if someone answered
 
 The simplicity is the point. Because the mesh is just SQLite, it's fast, reliable, and zero-maintenance. But what you can _do_ with cross-session communication is where it gets interesting.
 
+### Instant Discovery
+
+A subtle but important detail: agents register the moment the extension loads — not when the first user message arrives. This means if you open three terminals, all three are immediately visible to each other via `get_agents()` before anyone types a single prompt. Early registration makes the mesh feel alive from the instant you launch your sessions, and it means automated workflows (like cron jobs) can discover and message agents that haven't received any user input yet.
+
 ### Multi-Repo Coordination
 
 Working on a full-stack feature? Your frontend agent can ask the backend agent about API contracts, shared types, or auth flows — and get answers grounded in the actual backend code, not guesses:
@@ -187,7 +191,7 @@ CREATE TABLE agent_messages (
 );
 ```
 
-Two tables. That's the entire data model. The extension handles everything else — auto-registration on session start, heartbeats every 10 seconds, stale session cleanup after 10 minutes of no heartbeat, rate limiting (max 10 messages per pair per minute), and message purging after 24 hours.
+Two tables. That's the entire data model. The extension handles everything else — auto-registration at extension load time, heartbeats every 10 seconds, stale session cleanup after 10 minutes of no heartbeat, rate limiting (max 10 messages per pair per minute), and message purging after 24 hours.
 
 The database runs in WAL mode with `busy_timeout = 5000` and `synchronous = NORMAL` — optimized for concurrent multi-process access where readers never block writers. The extension also creates indexes on the message queue for efficient polling — check [the source](https://github.com/htekdev/agent-mesh/blob/main/extension.mjs) for the full DDL. SQLite handles this IPC workload trivially.
 
