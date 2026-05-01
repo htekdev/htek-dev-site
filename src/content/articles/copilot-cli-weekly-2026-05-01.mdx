@@ -1,0 +1,92 @@
+---
+title: "Copilot CLI Weekly: Headless OAuth, Background Tasks, and /research Overhaul"
+description: "v1.0.40 ships OAuth headless auth for MCP servers, Ctrl+X → B for background tasks, and a rebuilt /research command with orchestrator agents."
+pubDate: 2026-05-01
+tags: ["GitHub Copilot", "Developer Experience", "AI", "Open Source"]
+draft: false
+---
+
+## Headless OAuth for MCP Servers
+
+The [Copilot CLI v1.0.40 release](https://github.com/github/copilot-cli/releases/tag/v1.0.40) shipped today with a feature that matters if you're running the CLI on remote servers, in CI, or anywhere you don't have a browser: **`client_credentials` OAuth grant type support for MCP servers**. This enables fully headless authentication without needing to spawn a browser for the OAuth flow.
+
+Before this, connecting an MCP server that required OAuth meant you needed an interactive browser session to complete the authorization flow. That's fine on your laptop. It's not fine on a headless build server, inside a container, or over SSH where you don't have X forwarding. The typical workaround was to pre-authenticate elsewhere and copy tokens manually, or skip OAuth-protected MCP servers entirely on those environments.
+
+Now MCP servers can use the `client_credentials` grant type — a machine-to-machine OAuth flow that exchanges a client ID and secret for an access token without user interaction. This is the same flow services use to talk to other services. If your MCP server supports it (check its config), the CLI can now authenticate in environments with no browser, no display, and no user present.
+
+This extends the reach of MCP-powered workflows. My [GitHub Agentic Workflows setup](/articles/github-agentic-workflows-hands-on-guide) runs entirely in GitHub Actions. Adding an MCP server that previously required OAuth meant either hacking around it or not using it. That limitation is gone.
+
+## Background Tasks with Ctrl+X → B
+
+v1.0.40 introduces a keybinding I've wanted for months: **Ctrl+X → B to move the current running task or shell command to the background**. Press it while a long-running command is executing and it detaches, freeing your prompt while the task continues. You can queue another task, send more messages, or switch contexts without killing the running process.
+
+This is particularly useful when you've asked the agent to run something that takes longer than expected — a build, a test suite, a heavy search operation. Before, your options were to wait, cancel, or open a second CLI session. Now you background it and move on. The task keeps running. You see updates in the timeline. When it finishes, the output appears and you can review it.
+
+The implementation is solid. Backgrounded tasks don't block new input. They continue streaming output to the timeline as they run. If you background multiple tasks, they all run concurrently. The statusline shows the count of active background tasks so you know what's still executing.
+
+I've already used this a dozen times today. Run `npm test`, realize it's slow, background it, ask for a file edit, come back to the test results when they're done. It's the workflow I wanted.
+
+## /research Now Uses Orchestrator Agents
+
+The `/research` command got a major architecture change in v1.0.40. Instead of a single-agent linear search, **it now uses an orchestrator/subagent model for more thorough and reliable deep research results**. The orchestrator breaks the research task into subtasks, dispatches subagents to handle each part, aggregates their findings, and synthesizes a final answer.
+
+This addresses the biggest weakness of the old `/research`: incomplete coverage. When you asked it to research something complex, it would often latch onto the first good source it found and stop. The orchestrator approach forces broader exploration. Subagents work in parallel on different aspects of the query. The orchestrator ensures coverage before synthesizing.
+
+I tested this on a question that previously gave shallow results: "Compare auth patterns in Next.js vs. Remix for server-rendered apps with session management." Old `/research` gave me a summary of Next.js auth middleware and called it done. New `/research` dispatched subagents to investigate Next.js patterns, Remix loader auth, session storage strategies, and then synthesized a comparison across the findings. The result was substantially more complete.
+
+The tradeoff is latency. Orchestration adds overhead. For quick factual lookups, the old linear search was faster. For anything requiring synthesis across multiple dimensions, the new architecture is worth the wait.
+
+## Autopilot Continuation Limits
+
+Autopilot mode — where the agent continues working autonomously until the task is complete — now has a **default limit of 5 continuation messages** (configurable with `--max-autopilot-continues`). This prevents runaway loops where the agent gets stuck in an unproductive cycle and burns through tokens without making progress.
+
+Before this, autopilot would continue indefinitely until it reached a terminal state or hit a model-level token limit. That's fine when it's working. It's expensive and frustrating when it's not. I've had sessions where autopilot spent 15+ messages trying variations of the same failing approach because it couldn't detect the loop.
+
+The new default stops after 5 continues. If the task isn't done, the agent reports its progress and returns control to you. You can assess, redirect, or let it continue with another `--max-autopilot-continues` invocation. This makes autopilot safer to use on ambiguous tasks where the agent might spiral.
+
+If you're running autopilot in fully automated contexts (like [my article automation workflows](/articles/github-agentic-workflows-hands-on-guide)) and you know the task scope, you can raise the limit. The default is conservative by design.
+
+## Session History and /chronicle for All Users
+
+Two features that were previously gated are now **available to all users**: session history and the `/chronicle` command. Session history records every message, tool call, and state change across your sessions. `/chronicle` generates a summary of a session's activity — what you asked for, what the agent did, what changed, and what the outcome was.
+
+I use `/chronicle` at the end of long refactoring sessions to document what happened. It's particularly useful when handing off work or returning to a session after days away. Instead of reading through the full timeline to reconstruct context, `/chronicle` gives you a condensed narrative.
+
+The fact that this is now available to all users means you can use it in team workflows without worrying about whether everyone has the right tier. If you're building agents that need audit trails or summaries of their own actions, `/chronicle` can provide that.
+
+## v1.0.39: ACP Extensions, Background Tasks, and Slash Commands
+
+Three days before v1.0.40, [v1.0.39](https://github.com/github/copilot-cli/releases/tag/v1.0.39) shipped with its own set of meaningful changes. If you're using the [Agentic Client Protocol (ACP)](https://docs.github.com/copilot/agent-control-protocol) to integrate the CLI with other editors (like Zed), you got:
+
+- **Four new slash commands for ACP sessions**: `/compact`, `/context`, `/usage`, and `/env`. These were previously CLI-only. Now they work when controlling the CLI via ACP, giving you the same introspection tools in any client.
+- **Allow-all permission mode toggle**: ACP clients can now programmatically enable or disable the allow-all permission mode via session configuration. This is useful for workflows that start restricted and need to escalate permissions midway through a task.
+
+And the **Ctrl+X → B background task feature** actually shipped in v1.0.39. I mentioned it above under v1.0.40 because that's when I tested it extensively, but credit where due: v1.0.39 introduced the keybinding.
+
+## Secure-by-Default Prompt Mode
+
+One change that impacts certain workflows: **prompt mode (`-p`) now gates repo hooks and workspace MCP behind opt-in environment variables**. Specifically, `GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS` and `GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP`. If those aren't set, repo hooks and workspace MCP servers don't load in prompt mode.
+
+This is a security-by-default decision. Prompt mode is often used in scripting contexts where you're piping input directly to the CLI without interactive oversight. If that input is untrusted or comes from an external source, you don't want it triggering repo hooks or workspace MCP servers that might have privileged access.
+
+If you're using prompt mode with repos that have hooks or workspace MCP servers, and you trust the input, set those env vars. If you're piping arbitrary input, leave them unset.
+
+## Polish Across the Board
+
+The rest of v1.0.40 is dominated by UX polish and bug fixes. Highlights:
+
+- **Smoother streaming**: Assistant responses stream with better text chunking, reducing the "stutter" effect during long outputs.
+- **Faster startup**: Custom CA certificates load asynchronously, shaving noticeable time off CLI initialization in environments with custom certs.
+- **Better session resume**: The resume session picker no longer shows duplicate entries for Mission Control-backed sessions. Summaries display on a single line, truncated to fit the column width.
+- **Improved remote context**: Remote session statusline shows the remote working directory and branch instead of misleading local context.
+- **MCP tool name sanitization**: MCP tool names with dots or invalid characters are now sanitized correctly instead of causing tool call failures.
+
+And one small but appreciated change: **Ctrl+C and double-Esc now remove pending queued messages one at a time** instead of all at once. If you've queued several messages and realize halfway through that the first one is wrong, you can selectively back out instead of losing the whole queue.
+
+## The Bottom Line
+
+Two releases in one week. Headless OAuth unlocks MCP servers in CI and remote environments. Background tasks via Ctrl+X → B fix a major workflow friction point. The `/research` overhaul makes deep research actually useful. Autopilot limits prevent runaway loops. And the pile of UX polish removes a dozen small annoyances.
+
+If you're running the CLI in headless environments, v1.0.40's OAuth support changes what's possible. If you're using `/research` for complex queries, the orchestrator model is a clear upgrade. And if you've ever been stuck waiting for a long task to finish before you can interact with the CLI again, Ctrl+X → B is the feature you didn't know you needed.
+
+The pace of meaningful iteration continues. Next week might bring model updates, agent framework improvements, or more MCP tooling. The team is shipping fast. The CLI is getting better every week.
